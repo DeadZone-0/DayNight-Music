@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.core.widget.NestedScrollView
+     xmlns:android="http://schemas.android.com/apk/res/android"
+     xmlns:app="http://schemas.android.com/apk/res-auto"
+     android:layout_height="match_parent"
+     android:layout_width="match_parent"
+     android:background="@color/background"
+     android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+         android:layout_height="wrap_content"
+         android:layout_width="match_parent"
+         android:padding="16dp">
+
+        <com.google.android.material.imageview.ShapeableImageView
+             android:layout_height="120dp"
+             android:layout_width="120dp"
+             android:scaleType="centerCrop"
+             android:src="@drawable/placeholder_profile"
+             app:layout_constraintTop_toTopOf="parent"
+             app:layout_constraintStart_toStartOf="parent"
+             app:shapeAppearanceOverlay="@style/CircleImageView"
+             app:layout_constraintEnd_toEndOf="parent"
+             android:layout_marginTop="24dp"
+             android:id="@+id/profile_image" />
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             app:layout_constraintStart_toStartOf="parent"
+             android:textSize="24sp"
+             android:textColor="@color/text_primary"
+             app:layout_constraintEnd_toEndOf="parent"
+             android:layout_marginTop="16dp"
+             app:layout_constraintTop_toBottomOf="@id/profile_image"
+             android:id="@+id/profile_name"
+             android:text="Dead"
+             android:textStyle="bold" />
+
+        <TextView
+             android:layout_height="wrap_content"
+             android:layout_width="wrap_content"
+             app:layout_constraintStart_toStartOf="parent"
+             android:textSize="16sp"
+             android:textColor="@color/text_secondary"
+             app:layout_constraintEnd_toEndOf="parent"
+             android:layout_marginTop="4dp"
+             app:layout_constraintTop_toBottomOf="@id/profile_name"
+             android:id="@+id/profile_email"
+             android:text="dead@gmail.com" />
+
+        <com.google.android.material.card.MaterialCardView
+             android:layout_height="wrap_content"
+             android:layout_width="match_parent"
+             app:cardElevation="4dp"
+             app:cardBackgroundColor="@color/surface"
+             android:layout_marginTop="32dp"
+             app:cardCornerRadius="8dp"
+             app:layout_constraintTop_toBottomOf="@id/profile_email"
+             android:id="@+id/settings_card">
+
+            <LinearLayout
+                 android:layout_height="wrap_content"
+                 android:layout_width="match_parent"
+                 android:orientation="vertical">
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="wrap_content"
+                     android:layout_margin="16dp"
+                     android:textSize="20sp"
+                     android:textColor="@color/text_primary"
+                     android:text="Settings"
+                     android:textStyle="bold" />
+
+                <com.google.android.material.switchmaterial.SwitchMaterial
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:layout_marginVertical="8dp"
+                     android:layout_marginHorizontal="16dp"
+                     android:textSize="16sp"
+                     android:textColor="@color/text_primary"
+                     android:checked="true"
+                     android:id="@+id/dark_mode_switch"
+                     android:text="Dark Mode" />
+
+                <View
+                     android:layout_height="1dp"
+                     android:layout_width="match_parent"
+                     android:background="@color/card_background"
+                     android:layout_marginHorizontal="16dp" />
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:background="?attr/selectableItemBackground"
+                     android:padding="16dp"
+                     android:textSize="16sp"
+                     android:textColor="@color/text_primary"
+                     android:id="@+id/about_button"
+                     android:text="About" />
+
+                <View
+                     android:layout_height="1dp"
+                     android:layout_width="match_parent"
+                     android:background="@color/card_background"
+                     android:layout_marginHorizontal="16dp" />
+
+                <TextView
+                     android:layout_height="wrap_content"
+                     android:layout_width="match_parent"
+                     android:background="?attr/selectableItemBackground"
+                     android:padding="16dp"
+                     android:textSize="16sp"
+                     android:textColor="@color/error"
+                     android:id="@+id/logout_button"
+                     android:text="Logout" />
+
+            </LinearLayout>
+
+        </com.google.android.material.card.MaterialCardView>
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</androidx.core.widget.NestedScrollView>

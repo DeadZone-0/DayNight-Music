@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="CircleImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item>
+    </style>
+    <style name="ShapeAppearance.Album" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">16dp</item>
+    </style>
+
+    <style name="Theme.MidnightMusic.NoActionBar" parent="Theme.MidnightMusic">
+        <item name="windowActionBar">false</item>
+        <item name="windowNoTitle">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:windowTranslucentNavigation">true</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+    </style>
+
+    <!-- Playlist Dialog Style -->
+    <style name="PlaylistDialogStyle" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="android:background">@drawable/bg_rounded_dialog</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="colorAccent">@color/accent</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="buttonBarPositiveButtonStyle">@style/PlaylistDialogButtonStyle</item>
+        <item name="buttonBarNegativeButtonStyle">@style/PlaylistDialogButtonStyle</item>
+        <item name="buttonBarNeutralButtonStyle">@style/PlaylistDialogButtonStyle</item>
+        <item name="android:windowMinWidthMajor">60%</item>
+        <item name="android:windowMinWidthMinor">60%</item>
+        <item name="android:layout_gravity">center</item>
+        <item name="android:windowTitleStyle">@style/PlaylistDialogTitleStyle</item>
+    </style>
+
+    <style name="PlaylistDialogTitleStyle" parent="TextAppearance.MaterialComponents.Headline6">
+        <item name="android:textSize">16sp</item>
+        <item name="android:textColor">@color/white</item>
+        <item name="android:paddingBottom">4dp</item>
+    </style>
+
+    <style name="PlaylistDialogButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/accent</item>
+        <item name="rippleColor">@color/accent_20</item>
+    </style>
+    
+    <!-- Settings Alert Dialog Theme -->
+    <style name="AlertDialogTheme" parent="ThemeOverlay.MaterialComponents.Dialog.Alert">
+        <item name="colorSurface">@color/surface</item>
+        <item name="colorOnSurface">@color/white</item>
+        <item name="android:textColorPrimary">@color/white</item>
+        <item name="android:textColorSecondary">@color/colorSecondaryText</item>
+        <item name="colorAccent">@color/primary</item>
+        <item name="buttonBarPositiveButtonStyle">@style/PositiveButtonStyle</item>
+        <item name="buttonBarNegativeButtonStyle">@style/NegativeButtonStyle</item>
+        <item name="android:windowMinWidthMajor">65%</item>
+        <item name="android:windowMinWidthMinor">65%</item>
+        <item name="android:background">@color/surface</item>
+    </style>
+
+    <style name="PositiveButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/primary</item>
+        <item name="rippleColor">@color/accent_20</item>
+    </style>
+
+    <style name="NegativeButtonStyle" parent="Widget.MaterialComponents.Button.TextButton.Dialog">
+        <item name="android:textColor">@color/colorSecondaryText</item>
+        <item name="rippleColor">@color/ripple_light</item>
+    </style>
+</resources> 
