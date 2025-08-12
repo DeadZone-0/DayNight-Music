@@ -1,10 +1,10 @@
 # Midnight Music
 
 
-[![GitHub Stars](https://img.shields.io/github/stars/Anonymous-Krypton/Midnight_Music?style=social)](https://github.com/Anonymous-Krypton/Midnight_Music/stargazers)
-[![Forks](https://img.shields.io/github/forks/Anonymous-Krypton/Midnight_Music?style=social)](https://github.com/Anonymous-Krypton/Midnight_Music/network/members)
-[![Issues](https://img.shields.io/github/issues/Anonymous-Krypton/Midnight_Music)](https://github.com/Anonymous-Krypton/Midnight_Music/issues)
-[![License](https://img.shields.io/github/license/Anonymous-Krypton/Midnight_Music)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/DeadZone-0/DayNight-Music?style=social)](https://github.com/DeadZone-0/DayNight-Music/stargazers)
+[![Forks](https://img.shields.io/github/forks/DeadZone-0/DayNight-Music?style=social)](https://github.com/DeadZone-0/DayNight-Music/network/members)
+[![Issues](https://img.shields.io/github/issues/DeadZone-0/DayNight-Music)](https://github.com/DeadZone-0/DayNight-Music/issues)
+[![License](https://img.shields.io/github/license/DeadZone-0/DayNight-Music)](LICENSE)
 
 Midnight Music is a beautiful dark-themed Android music streaming app with a modern UI inspired by **Spotify**, developed during a vacation project. It uses an **unofficial JioSaavn API** to stream and display music content.
 
