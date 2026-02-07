@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme Colors -->
+    <color name="primary">#7A2BE2</color>
+    <color name="primary_variant">#6A1FD3</color>
+    <color name="accent">#7A2BE2</color>
+    <color name="accent_variant">#9747FF</color>
+    
+    <!-- Background Colors -->
+    <color name="background">#0A0A0A</color>
+    <color name="surface">#151515</color>
+    <color name="card_background">#1A1A1A</color>
+    <color name="overlay">#1A000000</color>
+    
+    <!-- Text Colors -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#B3B3B3</color>
+    <color name="text_hint">#80FFFFFF</color>
+    
+    <!-- Standard Colors -->
+    <color name="black">#000000</color>
+    <color name="white">#FFFFFF</color>
+    <color name="error">#CF6679</color>
+    
+    <!-- Material Colors -->
+    <color name="on_primary">#FFFFFF</color>
+    <color name="on_background">#FFFFFF</color>
+    <color name="on_surface">#FFFFFF</color>
+    <color name="on_error">#000000</color>
+    
+    <!-- Ripple Colors -->
+    <color name="ripple_light">#33FFFFFF</color>
+    <color name="ripple_accent">#337A2BE2</color>
+    
+    <!-- Gradient Colors -->
+    <color name="gradient_start">#7A2BE2</color>
+    <color name="gradient_end">#9747FF</color>
+    
+    <!-- Button Colors -->
+    <color name="button_disabled">#66B3B3B3</color>
+    <color name="button_enabled">@color/accent</color>
+    
+    <!-- New colors for the player theme -->
+    <color name="gray_light">#B3FFFFFF</color>
+    <color name="gray_dark">#4D4D4D</color>
+    
+    <!-- New color for accent_20 -->
+    <color name="accent_20">#337A2BE2</color>
+    
+    <!-- Additional colors for our new UI -->
+    <color name="colorPrimary">@color/primary</color>
+    <color name="colorPrimaryDark">#070707</color>
+    <color name="colorAccent">@color/accent</color>
+    <color name="colorBackground">@color/background</color>
+    <color name="colorSurface">@color/surface</color>
+    <color name="colorBottomNav">@color/surface</color>
+    <color name="colorOnBackground">@color/on_background</color>
+    <color name="colorOnSurface">@color/on_surface</color>
+    <color name="colorSecondaryText">@color/text_secondary</color>
+    <color name="colorEnabled">@color/primary</color>
+    <color name="colorDisabled">#535353</color>
+</resources>

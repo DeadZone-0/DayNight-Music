@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/mobile_navigation"
+    app:startDestination="@+id/navigation_home">
+
+    <fragment
+        android:id="@+id/navigation_home"
+        android:name="com.example.midnightmusic.ui.home.HomeFragment"
+        android:label="Home">
+        <action
+            android:id="@+id/action_navigation_home_to_settingsFragment"
+            app:destination="@id/navigation_settings"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/navigation_search"
+        android:name="com.example.midnightmusic.ui.search.SearchFragment"
+        android:label="Search" />
+
+    <fragment
+        android:id="@+id/navigation_library"
+        android:name="com.example.midnightmusic.ui.library.LibraryFragment"
+        android:label="Library" />
+
+    <fragment
+        android:id="@+id/navigation_premium"
+        android:name="com.example.midnightmusic.ui.premium.PremiumFragment"
+        android:label="Premium" />
+
+    <fragment
+        android:id="@+id/navigation_profile"
+        android:name="com.example.midnightmusic.ui.profile.ProfileFragment"
+        android:label="Profile" />
+        
+    <fragment
+        android:id="@+id/navigation_settings"
+        android:name="com.example.midnightmusic.ui.settings.SettingsFragment"
+        android:label="Settings" />
+
+</navigation> 

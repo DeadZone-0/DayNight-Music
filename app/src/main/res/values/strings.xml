@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Midnight Music</string>
+
+    <!-- Player Controls -->
+    <string name="play_pause">Play/Pause</string>
+    <string name="previous">Previous</string>
+    <string name="next">Next</string>
+    <string name="like">Like</string>
+    <string name="unlike">Remove from Liked</string>
+    <string name="queue">Queue</string>
+    <string name="options">Options</string>
+    <string name="close">Close</string>
+    <string name="shuffle">Shuffle</string>
+    <string name="repeat">Repeat</string>
+    
+    <!-- Playlist Feature -->
+    <string name="create_playlist">Create Playlist</string>
+    <string name="rename_playlist">Rename</string>
+    <string name="delete_playlist">Delete</string>
+    <string name="enter_playlist_name">Enter playlist name</string>
+    <string name="playlist_name">Playlist name</string>
+    <string name="create">Create</string>
+    <string name="cancel">Cancel</string>
+    <string name="add_to_playlist">Add to playlist</string>
+    <string name="more_options">More options</string>
+    <string name="playlist_image">Playlist cover image</string>
+    <string name="liked_songs">Liked Songs</string>
+    <string name="playlist_created">Playlist created</string>
+    <string name="playlist_renamed">Playlist renamed</string>
+    <string name="playlist_deleted">Playlist deleted</string>
+    <string name="song_added_to_playlist">Song added to playlist</string>
+    <string name="song_removed_from_playlist">Song removed from playlist</string>
+    <string name="confirm_delete_playlist">Are you sure you want to delete "%1$s"? This cannot be undone.</string>
+
+    <!-- Playlist Dialog Strings -->
+    <string name="rename">Rename</string>
+    <string name="delete">Delete</string>
+    <string name="save">Save</string>
+    
+    <!-- Queue UI -->
+    <string name="now_playing">Now Playing</string>
+    <string name="close_queue">Close queue</string>
+</resources>
