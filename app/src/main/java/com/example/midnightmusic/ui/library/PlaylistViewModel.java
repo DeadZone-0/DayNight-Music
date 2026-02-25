@@ -6,70 +6,64 @@ import androidx.annotation.NonNull;
 import androidx.lifecycle.AndroidViewModel;
 import androidx.lifecycle.LiveData;
 
-import com.example.midnightmusic.data.db.AppDatabase;
-import com.example.midnightmusic.data.db.PlaylistDao;
 import com.example.midnightmusic.data.model.Playlist;
-import com.example.midnightmusic.data.model.PlaylistSongCrossRef;
 import com.example.midnightmusic.data.model.PlaylistWithSongs;
 import com.example.midnightmusic.data.model.Song;
+import com.example.midnightmusic.data.repository.MusicRepository;
 
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 
 public class PlaylistViewModel extends AndroidViewModel {
-    private final PlaylistDao playlistDao;
-    private final Executor executor;
-    
+    private final MusicRepository repository;
+
     public PlaylistViewModel(@NonNull Application application) {
         super(application);
-        AppDatabase db = AppDatabase.getInstance(application);
-        playlistDao = db.playlistDao();
-        executor = Executors.newSingleThreadExecutor();
+        repository = MusicRepository.getInstance(application);
     }
-    
+
     public LiveData<List<PlaylistWithSongs>> getAllPlaylists() {
-        return playlistDao.getAllPlaylistsWithSongs();
+        return repository.getAllPlaylists();
     }
-    
+
     public LiveData<PlaylistWithSongs> getPlaylistWithSongs(long playlistId) {
-        return playlistDao.getPlaylistWithSongs(playlistId);
+        return repository.getPlaylist(playlistId);
     }
-    
+
+    public LiveData<Integer> getLikedSongsCount() {
+        return repository.getLikedSongsCount();
+    }
+
     public void createPlaylist(String name) {
-        executor.execute(() -> {
-            Playlist playlist = new Playlist(name);
-            playlistDao.insert(playlist);
+        repository.createPlaylist(name, new MusicRepository.PlaylistCallback() {
+            @Override
+            public void onSuccess(long playlistId) {
+                // Playlist created successfully
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // Handle error
+            }
         });
     }
-    
+
     public void renamePlaylist(Playlist playlist, String newName) {
-        executor.execute(() -> {
-            playlist.setName(newName);
-            playlistDao.update(playlist);
-        });
+        repository.renamePlaylist(playlist.getId(), newName, null);
     }
-    
+
     public void deletePlaylist(Playlist playlist) {
-        executor.execute(() -> {
-            playlistDao.delete(playlist);
-        });
+        repository.deletePlaylist(playlist, null);
     }
-    
+
     public void addSongToPlaylist(long playlistId, Song song) {
-        executor.execute(() -> {
-            // Make sure song is in the database
-            playlistDao.insert(song);
-            
-            // Create cross reference
-            PlaylistSongCrossRef crossRef = new PlaylistSongCrossRef(playlistId, song.getId());
-            playlistDao.insert(crossRef);
-        });
+        repository.addSongToPlaylist(playlistId, song, null);
     }
-    
+
     public void removeSongFromPlaylist(long playlistId, Song song) {
-        executor.execute(() -> {
-            playlistDao.removeSongFromPlaylist(playlistId, song.getId());
-        });
+        repository.removeSongFromPlaylist(playlistId, song.getId(), null);
+    }
+
+    public void getOrCreateLikedPlaylist(MusicRepository.PlaylistCallback callback) {
+        repository.getOrCreateLikedPlaylist(callback);
     }
 }

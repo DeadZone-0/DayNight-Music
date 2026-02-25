@@ -76,6 +76,9 @@ dependencies {
     implementation "androidx.media3:media3-exoplayer:$media3_version"
     implementation "androidx.media3:media3-ui:$media3_version"
     implementation "androidx.media3:media3-session:$media3_version"
+
+    // Media compat (for MediaSessionCompat and MediaStyle notification)
+    implementation "androidx.media:media:1.7.0"
     
     // Glide for image loading
     implementation 'com.github.bumptech.glide:glide:4.16.0'

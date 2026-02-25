@@ -3,11 +3,15 @@
 <manifest 
     xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <!-- Add required permissions -->
+    <!-- Network -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Foreground service for media playback notification -->
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
+
+    <!-- Required on Android 13+ to show notifications -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
     <application 
         android:allowBackup="true" 
@@ -35,6 +39,12 @@
         <activity
             android:name=".ui.playlist.PlaylistDetailActivity"
             android:theme="@style/Theme.MidnightMusic"
+            android:exported="false" />
+
+        <!-- Media playback notification service -->
+        <service
+            android:name=".service.MusicService"
+            android:foregroundServiceType="mediaPlayback"
             android:exported="false" />
 
     </application>

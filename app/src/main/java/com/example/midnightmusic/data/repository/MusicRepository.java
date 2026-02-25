@@ -108,6 +108,13 @@ public class MusicRepository {
     }
 
     /**
+     * Get count of liked songs
+     */
+    public LiveData<Integer> getLikedSongsCount() {
+        return songDao.getLikedSongsCount();
+    }
+
+    /**
      * Toggle like status for a song
      */
     public void toggleLikeSong(Song song, LikeCallback callback) {

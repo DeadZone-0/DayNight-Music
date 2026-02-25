@@ -1,31 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     android:layout_height="wrap_content"
-     android:layout_width="match_parent"
-     android:padding="10dp"
-     android:orientation="vertical"
-     android:background="@color/surface">
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:minWidth="320dp"
+    android:padding="24dp"
+    android:orientation="vertical"
+    android:background="@drawable/bg_rounded_dialog">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="@string/create_playlist"
+        android:textColor="@color/text_primary"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="20dp" />
 
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="2dp"
+        android:layout_marginBottom="8dp"
         app:boxStrokeColor="@color/accent"
+        app:boxBackgroundColor="@color/card_background"
         app:hintTextColor="@color/accent"
-        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.Dense">
+        app:boxCornerRadiusTopStart="12dp"
+        app:boxCornerRadiusTopEnd="12dp"
+        app:boxCornerRadiusBottomStart="12dp"
+        app:boxCornerRadiusBottomEnd="12dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             android:hint="@string/playlist_name"
-             android:importantForAutofill="no"
-             android:maxLines="1"
-             android:textColor="@color/white"
-             android:inputType="text"
-             android:id="@+id/edit_playlist_name" />
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:hint="@string/enter_playlist_name"
+            android:importantForAutofill="no"
+            android:maxLines="1"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:inputType="text"
+            android:paddingVertical="16dp"
+            android:id="@+id/edit_playlist_name" />
     </com.google.android.material.textfield.TextInputLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="16dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="@string/cancel"
+            android:textColor="@color/text_secondary"
+            android:layout_marginEnd="12dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            app:rippleColor="@color/ripple_light" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_create"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="@string/create"
+            android:textColor="@color/white"
+            app:backgroundTint="@color/accent"
+            app:cornerRadius="24dp"
+            app:rippleColor="@color/ripple_light" />
+    </LinearLayout>
 
 </LinearLayout>

@@ -30,12 +30,14 @@ public class PlaylistAdapter extends ListAdapter<PlaylistWithSongs, PlaylistAdap
     private final PlaylistListener listener;
     private static final int[] PLACEHOLDER_COLORS = {
             Color.parseColor("#000000"), // black
-           
+
     };
 
     public interface PlaylistListener {
         void onPlaylistClick(PlaylistWithSongs playlist);
+
         void onPlaylistRename(PlaylistWithSongs playlist);
+
         void onPlaylistDelete(PlaylistWithSongs playlist);
     }
 
@@ -85,68 +87,64 @@ public class PlaylistAdapter extends ListAdapter<PlaylistWithSongs, PlaylistAdap
         }
 
         void bind(PlaylistWithSongs playlistWithSongs) {
-            if (playlistWithSongs == null) return;
+            if (playlistWithSongs == null)
+                return;
 
             playlistTitle.setText(playlistWithSongs.playlist.getName());
-            playlistSongs.setText(playlistWithSongs.getFormattedSongCount());
 
-            // Special style for "Liked Songs" playlist
+            // Format: "12 songs" or "12 songs • 45m"
+            String countText = playlistWithSongs.getFormattedSongCount();
+            playlistSongs.setText(countText);
+
+            // Hide menu for "Liked Songs" just in case it slips through
             boolean isLikedPlaylist = playlistWithSongs.playlist.getName().equals("Liked Songs");
             if (isLikedPlaylist) {
-                menuButton.setVisibility(View.INVISIBLE); // Can't delete or rename Liked Songs
-                // Use a heart icon for Liked Songs
-                playlistImage.setVisibility(View.INVISIBLE);
-                playlistInitials.setVisibility(View.VISIBLE);
-                playlistInitials.setText("🤍"); // Heart symbol
-                playlistInitials.setTextSize(48); // Bigger text for heart
-                // Set a gradient background for Liked Songs
-                cardView.setCardBackgroundColor(Color.parseColor("#8A2BE2")); // Purple color
+                menuButton.setVisibility(View.INVISIBLE);
             } else {
                 menuButton.setVisibility(View.VISIBLE);
-                
-                List<String> imageUrls = playlistWithSongs.getImageUrls(4);
-                if (imageUrls != null && !imageUrls.isEmpty()) {
-                    playlistImage.setVisibility(View.VISIBLE);
-                    playlistInitials.setVisibility(View.GONE);
-                    
-                    // Load first image or implement collage in a more complex view
-                    Glide.with(itemView.getContext())
+            }
+
+            List<String> imageUrls = playlistWithSongs.getImageUrls(4);
+            if (imageUrls != null && !imageUrls.isEmpty()) {
+                playlistImage.setVisibility(View.VISIBLE);
+                playlistInitials.setVisibility(View.GONE);
+
+                Glide.with(itemView.getContext())
                         .load(imageUrls.get(0))
                         .apply(RequestOptions.centerCropTransform())
                         .placeholder(R.drawable.placeholder_album)
                         .into(playlistImage);
-                } else {
-                    // Show initials for empty playlists
-                    playlistImage.setVisibility(View.INVISIBLE);
-                    playlistInitials.setVisibility(View.VISIBLE);
-                    
-                    String name = playlistWithSongs.playlist.getName();
-                    String initials = getInitials(name);
-                    playlistInitials.setText(initials);
-                    playlistInitials.setTextSize(32); // Reset text size
-                    
-                    // Use consistent color based on playlist name
-                    int colorIndex = Math.abs(name.hashCode()) % PLACEHOLDER_COLORS.length;
-                    cardView.setCardBackgroundColor(PLACEHOLDER_COLORS[colorIndex]);
-                }
+            } else {
+                // Show initials for empty playlists or no images
+                playlistImage.setVisibility(View.INVISIBLE);
+                playlistInitials.setVisibility(View.VISIBLE);
+
+                String name = playlistWithSongs.playlist.getName();
+                String initials = getInitials(name);
+                playlistInitials.setText(initials);
+
+                // Use consistent color based on playlist name
+                int colorIndex = Math.abs(name.hashCode()) % PLACEHOLDER_COLORS.length;
+                playlistInitials.setBackgroundColor(PLACEHOLDER_COLORS[colorIndex]);
             }
         }
 
         private void showPopupMenu(View view, int position) {
-            if (position == RecyclerView.NO_POSITION) return;
-            
+            if (position == RecyclerView.NO_POSITION)
+                return;
+
             Context context = view.getContext();
             PlaylistWithSongs playlist = getItem(position);
-            
+
             PopupMenu popup = new PopupMenu(context, view);
             popup.inflate(R.menu.menu_playlist_options);
-            
+
             // Don't allow deleting Liked Songs playlist
             if (playlist.playlist.getName().equals("Liked Songs")) {
                 popup.getMenu().findItem(R.id.action_delete_playlist).setVisible(false);
                 popup.getMenu().findItem(R.id.action_rename_playlist).setVisible(false);
             }
-            
+
             popup.setOnMenuItemClickListener(item -> {
                 int id = item.getItemId();
                 if (id == R.id.action_rename_playlist) {
@@ -158,23 +156,24 @@ public class PlaylistAdapter extends ListAdapter<PlaylistWithSongs, PlaylistAdap
                 }
                 return false;
             });
-            
+
             popup.show();
         }
-        
+
         private String getInitials(String text) {
-            if (text == null || text.isEmpty()) return "?";
-            
+            if (text == null || text.isEmpty())
+                return "?";
+
             StringBuilder initials = new StringBuilder();
             String[] words = text.split("\\s+");
             int count = Math.min(3, words.length);
-            
+
             for (int i = 0; i < count; i++) {
                 if (!words[i].isEmpty()) {
                     initials.append(words[i].charAt(0));
                 }
             }
-            
+
             return initials.toString().toUpperCase();
         }
     }
@@ -188,7 +187,7 @@ public class PlaylistAdapter extends ListAdapter<PlaylistWithSongs, PlaylistAdap
         @Override
         public boolean areContentsTheSame(@NonNull PlaylistWithSongs oldItem, @NonNull PlaylistWithSongs newItem) {
             return oldItem.playlist.getName().equals(newItem.playlist.getName()) &&
-                   oldItem.getSongCount() == newItem.getSongCount();
+                    oldItem.getSongCount() == newItem.getSongCount();
         }
     }
-} 
+}

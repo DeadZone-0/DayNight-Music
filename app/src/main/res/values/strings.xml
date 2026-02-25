@@ -41,4 +41,9 @@
     <!-- Queue UI -->
     <string name="now_playing">Now Playing</string>
     <string name="close_queue">Close queue</string>
+    
+    <!-- Playlist UI -->
+    <string name="your_playlists">Your Playlists</string>
+    <string name="no_playlists_yet">No playlists yet</string>
+    <string name="create_first_playlist">Create your first playlist to get started</string>
 </resources>

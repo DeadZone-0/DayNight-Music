@@ -5,88 +5,139 @@
     android:id="@+id/playlist_card"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="8dp"
-    android:layout_marginVertical="4dp"
+    android:layout_marginHorizontal="12dp"
+    android:layout_marginVertical="6dp"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="6dp"
+    app:strokeWidth="0dp">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="12dp">
+        android:padding="16dp"
+        android:foreground="?attr/selectableItemBackground">
 
-        <FrameLayout
+        <!-- Playlist Cover with Gradient Overlay -->
+        <com.google.android.material.card.MaterialCardView
             android:id="@+id/playlist_image_container"
-            android:layout_width="64dp"
-            android:layout_height="64dp"
+            android:layout_width="72dp"
+            android:layout_height="72dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
-            <ImageView
-                android:id="@+id/playlist_image"
+            <FrameLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:src="@drawable/placeholder_album"
-                app:layout_constraintBottom_toBottomOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                android:contentDescription="@string/playlist_image" />
+                android:layout_height="match_parent">
 
-            <TextView
-                android:id="@+id/playlist_initials"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:gravity="center"
-                android:textColor="@color/white"
-                android:textSize="24sp"
-                android:textStyle="bold"
-                android:visibility="gone"
-                tools:text="PS"
-                tools:visibility="visible" />
+                <ImageView
+                    android:id="@+id/playlist_image"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/placeholder_album"
+                    android:contentDescription="@string/playlist_image" />
 
-        </FrameLayout>
+                <!-- Play icon overlay -->
+                <View
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:background="@drawable/gradient_playlist_overlay" />
 
-        <TextView
-            android:id="@+id/playlist_title"
+                <ImageView
+                    android:id="@+id/play_icon"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_play"
+                    android:visibility="gone"
+                    app:tint="@color/white"
+                    android:contentDescription="@string/play_pause" />
+
+                <!-- Initials fallback -->
+                <TextView
+                    android:id="@+id/playlist_initials"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:gravity="center"
+                    android:textColor="@color/white"
+                    android:textSize="28sp"
+                    android:textStyle="bold"
+                    android:background="@color/accent"
+                    android:visibility="gone"
+                    tools:text="PL"
+                    tools:visibility="visible" />
+            </FrameLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- Playlist Info -->
+        <LinearLayout
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="16dp"
             android:layout_marginEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="@style/TextAppearance.MidnightMusic.BodyMedium"
-            android:textColor="@color/text_primary"
-            app:layout_constraintBottom_toTopOf="@id/playlist_songs"
-            app:layout_constraintEnd_toStartOf="@id/playlist_menu"
-            app:layout_constraintStart_toEndOf="@id/playlist_image_container"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_chainStyle="packed"
-            tools:text="Playlist Title" />
-
-        <TextView
-            android:id="@+id/playlist_songs"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
-            android:layout_marginTop="4dp"
-            android:layout_marginEnd="8dp"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textAppearance="@style/TextAppearance.MidnightMusic.BodySmall"
-            android:textColor="@color/text_secondary"
+            android:orientation="vertical"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toStartOf="@id/playlist_menu"
             app:layout_constraintStart_toEndOf="@id/playlist_image_container"
-            app:layout_constraintTop_toBottomOf="@id/playlist_title"
-            tools:text="12 songs" />
+            app:layout_constraintTop_toTopOf="parent">
 
+            <TextView
+                android:id="@+id/playlist_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_primary"
+                android:textSize="17sp"
+                android:textStyle="bold"
+                tools:text="My Favorite Playlist" />
+
+            <TextView
+                android:id="@+id/playlist_songs"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:textColor="@color/text_secondary"
+                android:textSize="13sp"
+                tools:text="24 songs • 1h 42m" />
+
+            <!-- Tags/badges row -->
+            <LinearLayout
+                android:id="@+id/tags_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                android:visibility="gone"
+                tools:visibility="visible">
+
+                <TextView
+                    android:id="@+id/tag_liked"
+                    android:layout_width="wrap_content"
+                    android:layout_height="24dp"
+                    android:paddingHorizontal="10dp"
+                    android:gravity="center"
+                    android:text="♥ Liked"
+                    android:textColor="@color/accent"
+                    android:textSize="11sp"
+                    android:background="@drawable/bg_queue_button"
+                    android:visibility="gone"
+                    tools:visibility="visible" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Menu button -->
         <ImageButton
             android:id="@+id/playlist_menu"
-            android:layout_width="32dp"
-            android:layout_height="32dp"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:padding="8dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/more_options"
             android:src="@drawable/ic_more_vert"
@@ -97,4 +148,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-</com.google.android.material.card.MaterialCardView> 
+</com.google.android.material.card.MaterialCardView>

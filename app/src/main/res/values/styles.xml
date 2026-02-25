@@ -27,8 +27,7 @@
         <item name="buttonBarPositiveButtonStyle">@style/PlaylistDialogButtonStyle</item>
         <item name="buttonBarNegativeButtonStyle">@style/PlaylistDialogButtonStyle</item>
         <item name="buttonBarNeutralButtonStyle">@style/PlaylistDialogButtonStyle</item>
-        <item name="android:windowMinWidthMajor">60%</item>
-        <item name="android:windowMinWidthMinor">60%</item>
+
         <item name="android:layout_gravity">center</item>
         <item name="android:windowTitleStyle">@style/PlaylistDialogTitleStyle</item>
     </style>

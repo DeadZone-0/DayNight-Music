@@ -1,7 +1,10 @@
 package com.example.midnightmusic;
 
+import android.Manifest;
 import android.app.ActivityOptions;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
@@ -10,7 +13,10 @@ import android.util.Pair;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
@@ -23,6 +29,7 @@ import com.example.midnightmusic.ui.player.PlayerActivity;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
     private ActivityMainBinding binding;
     private MusicPlayerManager playerManager;
     private NavController navController;
@@ -33,10 +40,40 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        
+
         setupNavigation();
         setupMiniPlayer();
+        requestNotificationPermission();
     }
+
+    /**
+     * Request POST_NOTIFICATIONS permission on Android 13+ (API 33).
+     * Without this, the media notification will not appear.
+     */
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST_CODE);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Notification permission granted");
+            } else {
+                Log.w(TAG, "Notification permission denied — media controls won't show in notifications");
+            }
+        }
+    }
+
 
     @Override
     protected void onResume() {
@@ -44,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
         // Force update play state to ensure UI is consistent
         if (playerManager != null) {
             playerManager.forcePlayStateUpdate();
-            
+
             // Also update the mini player if there's a current song
             Song currentSong = playerManager.getCurrentSong();
             if (currentSong != null) {
@@ -66,29 +103,24 @@ public class MainActivity extends AppCompatActivity {
         // Handle click on mini player to open full player with slide up animation
         binding.miniPlayer.miniPlayerContainer.setOnClickListener(v -> {
             Intent intent = new Intent(this, PlayerActivity.class);
-            
+
             // Create transition pairs for shared elements
             Pair<View, String> albumArt = Pair.create(
-                binding.miniPlayer.imgMiniArt, 
-                "transition_album_art"
-            );
+                    binding.miniPlayer.imgMiniArt,
+                    "transition_album_art");
             Pair<View, String> songTitle = Pair.create(
-                binding.miniPlayer.txtMiniTitle, 
-                "transition_song_title"
-            );
+                    binding.miniPlayer.txtMiniTitle,
+                    "transition_song_title");
             Pair<View, String> artistName = Pair.create(
-                binding.miniPlayer.txtMiniArtist, 
-                "transition_artist_name"
-            );
+                    binding.miniPlayer.txtMiniArtist,
+                    "transition_artist_name");
             Pair<View, String> playButton = Pair.create(
-                binding.miniPlayer.btnMiniPlayPause,
-                "transition_play_button"
-            );
+                    binding.miniPlayer.btnMiniPlayPause,
+                    "transition_play_button");
 
             ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(
-                this, albumArt, songTitle, artistName, playButton
-            );
-            
+                    this, albumArt, songTitle, artistName, playButton);
+
             startActivity(intent, options.toBundle());
             overridePendingTransition(R.anim.slide_up, R.anim.stay);
         });
@@ -102,10 +134,10 @@ public class MainActivity extends AppCompatActivity {
                 // Update UI immediately for better responsiveness
                 boolean isCurrentlyPlaying = playerManager.isPlaying();
                 updatePlayPauseButton(!isCurrentlyPlaying);
-                
+
                 // Then perform the actual toggle
                 playerManager.togglePlayPause();
-                
+
                 // Apply click animation
                 v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
             } catch (Exception e) {
@@ -137,7 +169,7 @@ public class MainActivity extends AppCompatActivity {
 
         // Observe current song
         playerManager.getCurrentSongLiveData().observe(this, this::updateMiniPlayer);
-        
+
         // Observe playback state
         playerManager.getPlayingLiveData().observe(this, this::updatePlayPauseButton);
 
@@ -162,8 +194,7 @@ public class MainActivity extends AppCompatActivity {
                     if (song != null && binding.miniPlayer.getRoot().getVisibility() != View.VISIBLE) {
                         binding.miniPlayer.getRoot().setVisibility(View.VISIBLE);
                         binding.miniPlayer.getRoot().startAnimation(
-                            AnimationUtils.loadAnimation(this, R.anim.slide_up)
-                        );
+                                AnimationUtils.loadAnimation(this, R.anim.slide_up));
                     } else if (song == null) {
                         binding.miniPlayer.getRoot().setVisibility(View.GONE);
                     }
@@ -172,7 +203,7 @@ public class MainActivity extends AppCompatActivity {
                 Log.e(TAG, "Error updating miniplayer visibility", e);
             }
         });
-        
+
         // Add direct listener to player for immediate updates
         playerManager.getPlayer().addListener(new androidx.media3.common.Player.Listener() {
             @Override
@@ -185,15 +216,16 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateMiniPlayer(Song song) {
         try {
-            if (song == null || binding == null || binding.miniPlayer == null) return;
+            if (song == null || binding == null || binding.miniPlayer == null)
+                return;
 
             binding.miniPlayer.txtMiniTitle.setText(song.getSong());
             binding.miniPlayer.txtMiniArtist.setText(song.getSingers());
-            
+
             Glide.with(this)
-                .load(song.getImageUrl())
-                .placeholder(R.drawable.placeholder_song)
-                .into(binding.miniPlayer.imgMiniArt);
+                    .load(song.getImageUrl())
+                    .placeholder(R.drawable.placeholder_song)
+                    .into(binding.miniPlayer.imgMiniArt);
 
             // Update play/pause button state
             updatePlayPauseButton(playerManager.isPlaying());
@@ -209,11 +241,10 @@ public class MainActivity extends AppCompatActivity {
                 mainHandler.post(() -> updatePlayPauseButton(isPlaying));
                 return;
             }
-            
+
             if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniPlayPause != null) {
                 binding.miniPlayer.btnMiniPlayPause.setImageResource(
-                    isPlaying ? R.drawable.ic_pause : R.drawable.ic_play
-                );
+                        isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error updating play/pause button", e);
@@ -226,4 +257,4 @@ public class MainActivity extends AppCompatActivity {
         mainHandler.removeCallbacksAndMessages(null);
         binding = null;
     }
-} 
+}

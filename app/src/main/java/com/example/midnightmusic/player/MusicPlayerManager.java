@@ -13,6 +13,7 @@ import androidx.media3.exoplayer.ExoPlayer;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.example.midnightmusic.data.model.Song;
+import com.example.midnightmusic.service.MusicService;
 import com.example.midnightmusic.utils.AudioCacheManager;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -32,7 +33,7 @@ public class MusicPlayerManager {
     private AudioCacheManager audioCacheManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AtomicBoolean isProcessingAction = new AtomicBoolean(false);
-    
+
     private final MutableLiveData<Boolean> isPlayingLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Song> currentSongLiveData = new MutableLiveData<>();
     private final MutableLiveData<Long> currentPosition = new MutableLiveData<>();
@@ -41,6 +42,7 @@ public class MusicPlayerManager {
 
     public interface PlayerCallback {
         void onPlaybackStateChanged(boolean isPlaying);
+
         void onSongChanged(Song song);
     }
 
@@ -85,6 +87,9 @@ public class MusicPlayerManager {
                         });
                     }
                     isPlayingLiveData.postValue(isPlaying);
+
+                    // Update the notification to reflect new play/pause state
+                    MusicService.updateNotification(context);
                 } catch (Exception e) {
                     Log.e(TAG, "Error in onIsPlayingChanged", e);
                 }
@@ -109,12 +114,15 @@ public class MusicPlayerManager {
                         currentSongLiveData.postValue(song);
                         // Always update play state when song changes
                         isPlayingLiveData.postValue(player.isPlaying());
+
+                        // Update the notification with new song info
+                        MusicService.updateNotification(context);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Error in onMediaItemTransition", e);
                 }
             }
-            
+
             @Override
             public void onPlayerError(@NonNull androidx.media3.common.PlaybackException error) {
                 Log.e(TAG, "Player error: " + error.getMessage(), error);
@@ -130,7 +138,7 @@ public class MusicPlayerManager {
                 }, 1000);
             }
         });
-        
+
         // Start a periodic position update
         mainHandler.post(new Runnable() {
             @Override
@@ -172,7 +180,7 @@ public class MusicPlayerManager {
                 Log.e(TAG, "Cannot play null song");
                 return;
             }
-            
+
             synchronized (queue) {
                 queue.clear();
                 queue.add(song);
@@ -190,12 +198,12 @@ public class MusicPlayerManager {
                 Log.e(TAG, "Cannot play empty song list");
                 return;
             }
-            
+
             if (startIndex < 0 || startIndex >= songs.size()) {
                 Log.e(TAG, "Invalid start index: " + startIndex);
                 startIndex = 0;
             }
-            
+
             synchronized (queue) {
                 queue.clear();
                 queue.addAll(songs);
@@ -213,7 +221,7 @@ public class MusicPlayerManager {
                 Log.e(TAG, "Cannot add null song to queue");
                 return;
             }
-            
+
             synchronized (queue) {
                 queue.add(song);
                 if (queue.size() == 1) {
@@ -232,7 +240,7 @@ public class MusicPlayerManager {
                 Log.e(TAG, "Cannot queue null song");
                 return;
             }
-            
+
             synchronized (queue) {
                 if (currentIndex >= 0) {
                     queue.add(currentIndex + 1, song);
@@ -253,14 +261,14 @@ public class MusicPlayerManager {
                 Log.d(TAG, "Already processing an action, ignoring skipToNext");
                 return;
             }
-            
+
             synchronized (queue) {
                 if (currentIndex < queue.size() - 1) {
                     currentIndex++;
                     playCurrentSong();
                 }
             }
-            
+
             isProcessingAction.set(false);
         } catch (Exception e) {
             Log.e(TAG, "Error in skipToNext", e);
@@ -274,14 +282,14 @@ public class MusicPlayerManager {
                 Log.d(TAG, "Already processing an action, ignoring skipToPrevious");
                 return;
             }
-            
+
             synchronized (queue) {
                 if (currentIndex > 0) {
                     currentIndex--;
                     playCurrentSong();
                 }
             }
-            
+
             isProcessingAction.set(false);
         } catch (Exception e) {
             Log.e(TAG, "Error in skipToPrevious", e);
@@ -297,25 +305,42 @@ public class MusicPlayerManager {
                     song = queue.get(currentIndex);
                 }
             }
-            
+
             if (song == null || song.getMediaUrl() == null) {
                 Log.e(TAG, "Invalid song or media URL");
                 return;
             }
-            
+
             final String mediaUrl = song.getMediaUrl();
             final Song finalSong = song;
-            
+
+            // Build MediaMetadata
+            androidx.media3.common.MediaMetadata metadata = new androidx.media3.common.MediaMetadata.Builder()
+                    .setTitle(song.getSong())
+                    .setArtist(song.getSingers())
+                    .setAlbumTitle(song.getAlbum())
+                    .setArtworkUri(Uri.parse(song.getImageUrl()))
+                    .build();
+
+
             // Check if the song is already cached
             if (audioCacheManager.isUrlCached(mediaUrl)) {
                 String cachedPath = audioCacheManager.getCachedFilePath(mediaUrl);
                 Log.d(TAG, "Playing from cache: " + cachedPath);
-                
-                MediaItem mediaItem = MediaItem.fromUri(Uri.parse("file://" + cachedPath));
+
+                MediaItem mediaItem = new MediaItem.Builder()
+                        .setUri(Uri.parse("file://" + cachedPath))
+                        .setMediaMetadata(metadata)
+                        .setMediaId(song.getId())
+                        .build();
+
                 player.setMediaItem(mediaItem);
                 player.prepare();
                 player.play();
-                
+
+                // Start foreground service for media notification
+                MusicService.startService(context);
+
                 // Ensure UI is updated immediately
                 mainHandler.post(() -> {
                     currentSongLiveData.setValue(finalSong);
@@ -324,18 +349,26 @@ public class MusicPlayerManager {
             } else {
                 // Not cached, start playing from URL and cache in background
                 Log.d(TAG, "Playing from network: " + mediaUrl);
-                
-                MediaItem mediaItem = MediaItem.fromUri(Uri.parse(mediaUrl));
+
+                MediaItem mediaItem = new MediaItem.Builder()
+                        .setUri(Uri.parse(mediaUrl))
+                        .setMediaMetadata(metadata)
+                        .setMediaId(song.getId())
+                        .build();
+
                 player.setMediaItem(mediaItem);
                 player.prepare();
                 player.play();
-                
+
+                // Start foreground service for media notification
+                MusicService.startService(context);
+
                 // Ensure UI is updated immediately
                 mainHandler.post(() -> {
                     currentSongLiveData.setValue(finalSong);
                     isPlayingLiveData.setValue(true);
                 });
-                
+
                 // Start caching in background for future use
                 audioCacheManager.cacheAudioFile(mediaUrl, new AudioCacheManager.CacheListener() {
                     @Override
@@ -360,13 +393,13 @@ public class MusicPlayerManager {
                 Log.d(TAG, "Already processing an action, ignoring togglePlayPause");
                 return;
             }
-            
+
             if (player.isPlaying()) {
                 player.pause();
             } else {
                 player.play();
             }
-            
+
             isProcessingAction.set(false);
         } catch (Exception e) {
             Log.e(TAG, "Error in togglePlayPause", e);
@@ -408,6 +441,9 @@ public class MusicPlayerManager {
             }
             player.stop();
             player.clearMediaItems();
+
+            // Stop the foreground service / dismiss notification
+            MusicService.stopService(context);
         } catch (Exception e) {
             Log.e(TAG, "Error in clearQueue", e);
         }
@@ -478,12 +514,26 @@ public class MusicPlayerManager {
     }
 
     // LiveData getters with renamed methods
-    public LiveData<Boolean> getPlayingLiveData() { return isPlayingLiveData; }
-    public LiveData<Song> getCurrentSongLiveData() { return currentSongLiveData; }
-    public LiveData<Long> getCurrentPosition() { return currentPosition; }
-    public LiveData<Boolean> isShuffleEnabled() { return isShuffleEnabled; }
-    public LiveData<Integer> getRepeatMode() { return repeatModeState; }
-    
+    public LiveData<Boolean> getPlayingLiveData() {
+        return isPlayingLiveData;
+    }
+
+    public LiveData<Song> getCurrentSongLiveData() {
+        return currentSongLiveData;
+    }
+
+    public LiveData<Long> getCurrentPosition() {
+        return currentPosition;
+    }
+
+    public LiveData<Boolean> isShuffleEnabled() {
+        return isShuffleEnabled;
+    }
+
+    public LiveData<Integer> getRepeatMode() {
+        return repeatModeState;
+    }
+
     public long getDuration() {
         try {
             return player != null ? player.getDuration() : 0;
@@ -500,12 +550,12 @@ public class MusicPlayerManager {
     public void forcePlayStateUpdate() {
         try {
             final boolean isPlaying = player != null && player.isPlaying();
-            
+
             // Update on main thread
             mainHandler.post(() -> {
                 // Update LiveData
                 isPlayingLiveData.setValue(isPlaying);
-                
+
                 // Notify callback if available
                 if (callback != null) {
                     try {
@@ -519,4 +569,4 @@ public class MusicPlayerManager {
             Log.e(TAG, "Error in forcePlayStateUpdate", e);
         }
     }
-} 
+}
