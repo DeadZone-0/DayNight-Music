@@ -29,6 +29,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 import com.example.midnightmusic.utils.DownloadManager;
 
+import com.example.midnightmusic.data.repository.RecommendationManager;
+
 /**
  * Repository class that abstracts data access from multiple sources.
  * Combines local database (Room) and remote API (Retrofit) access.
@@ -41,6 +43,7 @@ public class MusicRepository {
     private final PlaylistDao playlistDao;
     private final JioSaavnService apiService;
     private final Executor diskIO;
+    private RecommendationManager recommendationManager;
 
     private MusicRepository(Context context) {
         AppDatabase database = AppDatabase.getInstance(context);
@@ -331,5 +334,49 @@ public class MusicRepository {
 
     public interface DownloadCheckCallback {
         void onResult(boolean isDownloaded);
+    }
+
+    // ============ Recommendation Operations ============
+
+    /**
+     * Set the Last.fm API key for recommendations
+     */
+    public void setLastFmApiKey(String apiKey) {
+        this.recommendationManager = RecommendationManager.getInstance(apiKey);
+    }
+
+    /**
+     * Get similar tracks based on a track name and artist
+     */
+    public void getSimilarTracks(String trackName, String artistName, int limit,
+                                  RecommendationManager.RecommendationCallback callback) {
+        if (recommendationManager == null) {
+            callback.onError(new IllegalStateException("Last.fm API key not set. Call setLastFmApiKey() first."));
+            return;
+        }
+        recommendationManager.getSimilarTracks(trackName, artistName, limit, callback);
+    }
+
+    /**
+     * Get trending tracks
+     */
+    public void getTrendingTracks(int limit, RecommendationManager.RecommendationCallback callback) {
+        if (recommendationManager == null) {
+            callback.onError(new IllegalStateException("Last.fm API key not set."));
+            return;
+        }
+        recommendationManager.getTrendingTracks(limit, callback);
+    }
+
+    /**
+     * Get top tracks by artist
+     */
+    public void getArtistTopTracks(String artist, int limit,
+                                    RecommendationManager.RecommendationCallback callback) {
+        if (recommendationManager == null) {
+            callback.onError(new IllegalStateException("Last.fm API key not set."));
+            return;
+        }
+        recommendationManager.getArtistTopTracks(artist, limit, callback);
     }
 }

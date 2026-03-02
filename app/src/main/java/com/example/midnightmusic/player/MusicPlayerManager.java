@@ -34,6 +34,11 @@ public class MusicPlayerManager {
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AtomicBoolean isProcessingAction = new AtomicBoolean(false);
 
+    // Auto-queue recommendations (only for search-sourced songs)
+    private boolean autoQueueEnabled = false;
+    private boolean isFetchingRecommendations = false;
+    private static final String LASTFM_API_KEY = "2f2b3b120c7cafa10cca05ba075c7ef4";
+
     private final MutableLiveData<Boolean> isPlayingLiveData = new MutableLiveData<>(false);
     private final MutableLiveData<Song> currentSongLiveData = new MutableLiveData<>();
     private final MutableLiveData<Long> currentPosition = new MutableLiveData<>();
@@ -68,6 +73,30 @@ public class MusicPlayerManager {
                         });
                     }
                     isPlayingLiveData.postValue(isPlaying);
+
+                    // Handle song end: auto-advance based on repeat mode
+                    if (playbackState == Player.STATE_ENDED) {
+                        synchronized (queue) {
+                            if (repeatMode == Player.REPEAT_MODE_ONE) {
+                                // Replay the same song
+                                player.seekTo(0);
+                                player.play();
+                            } else if (currentIndex < queue.size() - 1) {
+                                // More songs in queue, advance
+                                currentIndex++;
+                                mainHandler.post(() -> playCurrentSong());
+                            } else if (repeatMode == Player.REPEAT_MODE_ALL && !queue.isEmpty()) {
+                                // End of queue + repeat all: wrap to start
+                                currentIndex = 0;
+                                mainHandler.post(() -> playCurrentSong());
+                            } else if (autoQueueEnabled && !isFetchingRecommendations && !queue.isEmpty()) {
+                                // REPEAT_MODE_OFF at end + auto-queue enabled: fetch recommendations
+                                Song currentSong = queue.get(currentIndex);
+                                fetchAutoQueueRecommendations(currentSong);
+                            }
+                            // else: REPEAT_MODE_OFF, no auto-queue — stop naturally
+                        }
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Error in onPlaybackStateChanged", e);
                 }
@@ -187,6 +216,11 @@ public class MusicPlayerManager {
                 currentIndex = 0;
             }
             playCurrentSong();
+
+            // Pre-fetch recommendations if auto-queue is enabled
+            if (autoQueueEnabled) {
+                fetchAutoQueueRecommendations(song);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error in playSong", e);
         }
@@ -203,6 +237,9 @@ public class MusicPlayerManager {
                 Log.e(TAG, "Invalid start index: " + startIndex);
                 startIndex = 0;
             }
+
+            // Disable auto-queue for playlist/queue sources
+            autoQueueEnabled = false;
 
             synchronized (queue) {
                 queue.clear();
@@ -263,10 +300,30 @@ public class MusicPlayerManager {
             }
 
             synchronized (queue) {
-                if (currentIndex < queue.size() - 1) {
+                if (queue.isEmpty()) {
+                    isProcessingAction.set(false);
+                    return;
+                }
+
+                if (repeatMode == Player.REPEAT_MODE_ONE) {
+                    // Replay current song
+                    playCurrentSong();
+                } else if (currentIndex < queue.size() - 1) {
+                    // Normal: advance to next
                     currentIndex++;
                     playCurrentSong();
+
+                    // Pre-fetch more recommendations when nearing end of queue
+                    if (autoQueueEnabled && !isFetchingRecommendations
+                            && queue.size() - currentIndex <= 2) {
+                        fetchAutoQueueRecommendations(queue.get(currentIndex));
+                    }
+                } else if (repeatMode == Player.REPEAT_MODE_ALL) {
+                    // At end of queue + repeat ALL: wrap to start
+                    currentIndex = 0;
+                    playCurrentSong();
                 }
+                // REPEAT_MODE_OFF at end: do nothing
             }
 
             isProcessingAction.set(false);
@@ -284,10 +341,24 @@ public class MusicPlayerManager {
             }
 
             synchronized (queue) {
-                if (currentIndex > 0) {
+                if (queue.isEmpty()) {
+                    isProcessingAction.set(false);
+                    return;
+                }
+
+                if (repeatMode == Player.REPEAT_MODE_ONE) {
+                    // Replay current song
+                    playCurrentSong();
+                } else if (currentIndex > 0) {
+                    // Normal: go to previous
                     currentIndex--;
                     playCurrentSong();
+                } else if (repeatMode == Player.REPEAT_MODE_ALL) {
+                    // At start of queue + repeat ALL: wrap to end
+                    currentIndex = queue.size() - 1;
+                    playCurrentSong();
                 }
+                // REPEAT_MODE_OFF at start: do nothing
             }
 
             isProcessingAction.set(false);
@@ -508,7 +579,9 @@ public class MusicPlayerManager {
                     repeatMode = Player.REPEAT_MODE_OFF;
                     break;
             }
-            player.setRepeatMode(repeatMode);
+            // Do NOT set player.setRepeatMode() — ExoPlayer with a single media item
+            // treats REPEAT_MODE_ALL the same as ONE (loops the same track).
+            // We handle all repeat logic ourselves in onPlaybackStateChanged STATE_ENDED.
             repeatModeState.postValue(repeatMode);
         } catch (Exception e) {
             Log.e(TAG, "Error in toggleRepeatMode", e);
@@ -593,5 +666,72 @@ public class MusicPlayerManager {
         } catch (Exception e) {
             Log.e(TAG, "Error in forcePlayStateUpdate", e);
         }
+    }
+
+    /**
+     * Enable or disable auto-queue recommendations.
+     * When enabled and the queue ends (repeat OFF), 
+     * similar tracks are auto-fetched and appended.
+     * Should be enabled for search-sourced songs, disabled for playlists.
+     */
+    public void setAutoQueueEnabled(boolean enabled) {
+        this.autoQueueEnabled = enabled;
+        Log.d(TAG, "Auto-queue " + (enabled ? "enabled" : "disabled"));
+    }
+
+    public boolean isAutoQueueEnabled() {
+        return autoQueueEnabled;
+    }
+
+    /**
+     * Fetch similar tracks from Last.fm → JioSaavn and add to queue.
+     * Called automatically when the queue reaches its end.
+     */
+    private void fetchAutoQueueRecommendations(Song baseSong) {
+        if (baseSong == null || baseSong.getSong() == null) return;
+
+        isFetchingRecommendations = true;
+        Log.d(TAG, "Auto-queue: fetching recommendations for " + baseSong.getSong());
+
+        com.example.midnightmusic.data.repository.RecommendationManager
+            .getInstance(LASTFM_API_KEY)
+            .getSimilarTracks(baseSong.getSong(),
+                baseSong.getSingers() != null ? baseSong.getSingers() : "",
+                10,
+                new com.example.midnightmusic.data.repository.RecommendationManager.RecommendationCallback() {
+                    @Override
+                    public void onSuccess(List<Song> recommendations) {
+                        isFetchingRecommendations = false;
+                        if (recommendations != null && !recommendations.isEmpty()) {
+                            Log.d(TAG, "Auto-queue: got " + recommendations.size() + " recommendations");
+                            synchronized (queue) {
+                                // Filter out songs already in queue
+                                java.util.Set<String> existingIds = new java.util.HashSet<>();
+                                for (Song s : queue) existingIds.add(s.getId());
+
+                                int added = 0;
+                                for (Song rec : recommendations) {
+                                    if (!existingIds.contains(rec.getId()) && rec.getMediaUrl() != null) {
+                                        queue.add(rec);
+                                        added++;
+                                    }
+                                }
+                                Log.d(TAG, "Auto-queue: added " + added + " songs to queue");
+
+                                // Auto-advance to the next song
+                                if (added > 0 && currentIndex < queue.size() - 1) {
+                                    currentIndex++;
+                                    mainHandler.post(() -> playCurrentSong());
+                                }
+                            }
+                        }
+                    }
+
+                    @Override
+                    public void onError(Exception e) {
+                        isFetchingRecommendations = false;
+                        Log.e(TAG, "Auto-queue: recommendation fetch failed", e);
+                    }
+                });
     }
 }

@@ -130,12 +130,16 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
         searchAdapter = new SearchAdapter(new SearchAdapter.SearchAdapterListener() {
             @Override
             public void onSongClick(Song song) {
-                MusicPlayerManager.getInstance(requireContext()).playSong(song);
+                MusicPlayerManager player = MusicPlayerManager.getInstance(requireContext());
+                player.setAutoQueueEnabled(true);
+                player.playSong(song);
             }
 
             @Override
             public void onPlayNow(Song song) {
-                MusicPlayerManager.getInstance(requireContext()).playSong(song);
+                MusicPlayerManager player = MusicPlayerManager.getInstance(requireContext());
+                player.setAutoQueueEnabled(true);
+                player.playSong(song);
             }
 
             @Override

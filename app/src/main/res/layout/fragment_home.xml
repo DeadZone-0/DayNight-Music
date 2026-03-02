@@ -138,31 +138,55 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <!-- Recently played section -->
+        <!-- Recently played section (compact) -->
         <TextView
             android:id="@+id/recently_played_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="32dp"
+            android:layout_marginTop="24dp"
             android:text="Recently played"
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:fontFamily="@font/poppins_bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/recently_played_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:clipToPadding="false"
+            android:nestedScrollingEnabled="false"
+            android:orientation="horizontal"
+            android:paddingHorizontal="16dp"
+            tools:itemCount="5"
+            tools:listitem="@layout/item_recent_compact" />
+
+        <!-- Recommended for you section -->
+        <TextView
+            android:id="@+id/recommended_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="28dp"
+            android:text="Recommended for you"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:fontFamily="@font/poppins_bold" />
 
         <TextView
-            android:id="@+id/recently_played_subtitle"
+            android:id="@+id/recommended_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
             android:layout_marginTop="2dp"
-            android:text="Listen again to your recent tracks"
+            android:text="Based on what you listen to"
             android:textColor="@color/text_secondary"
             android:textSize="14sp"
             android:fontFamily="@font/poppins" />
 
         <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/recently_played_recycler"
+            android:id="@+id/recommended_recycler"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
@@ -170,18 +194,17 @@
             android:nestedScrollingEnabled="false"
             android:orientation="horizontal"
             android:paddingHorizontal="12dp"
-            android:paddingBottom="8dp"
             tools:itemCount="5"
             tools:listitem="@layout/item_song_card" />
 
-        <!-- New releases section -->
+        <!-- Trending section -->
         <TextView
             android:id="@+id/new_releases_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
-            android:layout_marginTop="32dp"
-            android:text="New releases for you"
+            android:layout_marginTop="28dp"
+            android:text="Trending Now"
             android:textColor="@color/text_primary"
             android:textSize="22sp"
             android:fontFamily="@font/poppins_bold" />
@@ -192,7 +215,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="20dp"
             android:layout_marginTop="2dp"
-            android:text="Fresh music just for you"
+            android:text="What everyone is listening to"
             android:textColor="@color/text_secondary"
             android:textSize="14sp"
             android:fontFamily="@font/poppins" />
@@ -202,12 +225,11 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="12dp"
-            android:layout_marginBottom="24dp"
+            android:layout_marginBottom="100dp"
             android:clipToPadding="false"
             android:nestedScrollingEnabled="false"
             android:orientation="horizontal"
             android:paddingHorizontal="12dp"
-            android:paddingBottom="8dp"
             tools:itemCount="5"
             tools:listitem="@layout/item_song_card" />
 
