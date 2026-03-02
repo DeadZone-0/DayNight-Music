@@ -229,6 +229,47 @@ public class PlayerActivity extends AppCompatActivity implements QueueAdapter.Qu
             }
         });
         
+        // Download button
+        binding.btnDownload.setOnClickListener(v -> {
+            Song currentSong = playerManager.getCurrentSong();
+            if (currentSong == null) {
+                Toast.makeText(this, "No song is currently playing", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            if (currentSong.isDownloaded()) {
+                Toast.makeText(this, "Already downloaded", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            
+            Toast.makeText(this, "Downloading...", Toast.LENGTH_SHORT).show();
+            binding.btnDownload.setEnabled(false);
+            
+            com.example.midnightmusic.utils.DownloadManager.getInstance(this)
+                .downloadSong(currentSong, new com.example.midnightmusic.utils.DownloadManager.DownloadListener() {
+                    @Override
+                    public void onProgress(int percent) {
+                        // Could update a progress bar here
+                    }
+                    
+                    @Override
+                    public void onComplete(String filePath) {
+                        currentSong.setDownloaded(true);
+                        currentSong.setLocalPath(filePath);
+                        binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                        binding.btnDownload.setEnabled(true);
+                        Toast.makeText(PlayerActivity.this, "Downloaded!", Toast.LENGTH_SHORT).show();
+                    }
+                    
+                    @Override
+                    public void onError(Exception e) {
+                        binding.btnDownload.setEnabled(true);
+                        Toast.makeText(PlayerActivity.this, 
+                            "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                    }
+                });
+        });
+        
         binding.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
@@ -611,6 +652,12 @@ public class PlayerActivity extends AppCompatActivity implements QueueAdapter.Qu
             updateSongUI(song);
             // Make sure play state is updated when song changes
             updatePlayPauseButton(playerManager.isPlaying());
+            // Update download button icon
+            if (song != null && song.isDownloaded()) {
+                binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+            } else {
+                binding.btnDownload.setImageResource(R.drawable.ic_download_arrow);
+            }
         });
     }
 

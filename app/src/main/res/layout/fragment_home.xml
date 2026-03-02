@@ -20,56 +20,61 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@drawable/gradient_home_header"
-            android:paddingHorizontal="16dp"
-            android:paddingTop="24dp"
-            android:paddingBottom="16dp">
+            android:paddingHorizontal="20dp"
+            android:paddingTop="32dp"
+            android:paddingBottom="24dp">
 
             <TextView
                 android:id="@+id/greeting_text"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Good evening"
-                android:textAppearance="@style/TextAppearance.AppCompat.Large"
-                android:textColor="@color/colorOnBackground"
-                android:textSize="24sp"
-                android:textStyle="bold"
+                android:fontFamily="@font/poppins_bold"
+                android:textColor="@color/text_primary"
+                android:textSize="28sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
             <ImageButton
                 android:id="@+id/btn_notifications"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="10dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Notifications"
                 android:src="@drawable/ic_notifications"
                 app:layout_constraintEnd_toStartOf="@id/btn_history"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/colorOnBackground" />
+                app:layout_constraintTop_toTopOf="@id/greeting_text"
+                app:layout_constraintBottom_toBottomOf="@id/greeting_text"
+                app:tint="@color/text_primary" />
 
             <ImageButton
                 android:id="@+id/btn_history"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="16dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="10dp"
+                android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="History"
                 android:src="@drawable/ic_history"
                 app:layout_constraintEnd_toStartOf="@id/btn_settings"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/colorOnBackground" />
+                app:layout_constraintTop_toTopOf="@id/greeting_text"
+                app:layout_constraintBottom_toBottomOf="@id/greeting_text"
+                app:tint="@color/text_primary" />
 
             <ImageButton
                 android:id="@+id/btn_settings"
-                android:layout_width="32dp"
-                android:layout_height="32dp"
-                android:layout_marginStart="16dp"
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:padding="10dp"
+                android:layout_marginStart="4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="Settings"
                 android:src="@drawable/ic_settings"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                app:tint="@color/colorOnBackground" />
+                app:layout_constraintTop_toTopOf="@id/greeting_text"
+                app:layout_constraintBottom_toBottomOf="@id/greeting_text"
+                app:tint="@color/text_primary" />
 
             <TextView
                 android:id="@+id/user_greeting_subtitle"
@@ -77,7 +82,8 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="4dp"
                 android:text="Discover your perfect sound"
-                android:textColor="@color/colorSecondaryText"
+                android:textColor="@color/text_secondary"
+                android:fontFamily="@font/poppins_medium"
                 android:textSize="14sp"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@id/greeting_text" />
@@ -89,22 +95,23 @@
             android:id="@+id/recent_playlists_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="24dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="32dp"
             android:text="Your playlists"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:fontFamily="@font/poppins_bold" />
 
         <TextView
             android:id="@+id/recent_playlists_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
+            android:layout_marginHorizontal="20dp"
             android:layout_marginTop="2dp"
             android:text="Your most listened playlists"
-            android:textColor="@color/colorSecondaryText"
-            android:textSize="14sp" />
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins" />
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
@@ -136,22 +143,23 @@
             android:id="@+id/recently_played_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="28dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="32dp"
             android:text="Recently played"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:fontFamily="@font/poppins_bold" />
 
         <TextView
             android:id="@+id/recently_played_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
+            android:layout_marginHorizontal="20dp"
             android:layout_marginTop="2dp"
             android:text="Listen again to your recent tracks"
-            android:textColor="@color/colorSecondaryText"
-            android:textSize="14sp" />
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/recently_played_recycler"
@@ -161,7 +169,7 @@
             android:clipToPadding="false"
             android:nestedScrollingEnabled="false"
             android:orientation="horizontal"
-            android:paddingHorizontal="8dp"
+            android:paddingHorizontal="12dp"
             android:paddingBottom="8dp"
             tools:itemCount="5"
             tools:listitem="@layout/item_song_card" />
@@ -171,22 +179,23 @@
             android:id="@+id/new_releases_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="28dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="32dp"
             android:text="New releases for you"
-            android:textColor="@color/colorOnBackground"
-            android:textSize="20sp"
-            android:textStyle="bold" />
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:fontFamily="@font/poppins_bold" />
 
         <TextView
             android:id="@+id/new_releases_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
+            android:layout_marginHorizontal="20dp"
             android:layout_marginTop="2dp"
             android:text="Fresh music just for you"
-            android:textColor="@color/colorSecondaryText"
-            android:textSize="14sp" />
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins" />
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/new_releases_recycler"
@@ -197,10 +206,10 @@
             android:clipToPadding="false"
             android:nestedScrollingEnabled="false"
             android:orientation="horizontal"
-            android:paddingHorizontal="8dp"
+            android:paddingHorizontal="12dp"
             android:paddingBottom="8dp"
             tools:itemCount="5"
             tools:listitem="@layout/item_song_card" />
 
     </LinearLayout>
-</androidx.core.widget.NestedScrollView> 
+</androidx.core.widget.NestedScrollView>

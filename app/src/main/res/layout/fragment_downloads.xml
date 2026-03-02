@@ -32,9 +32,9 @@
         app:layout_constraintTop_toTopOf="parent">
 
         <ImageView
-            android:layout_width="120dp"
-            android:layout_height="120dp"
-            android:alpha="0.7"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:alpha="0.5"
             android:src="@drawable/ic_download"
             app:tint="@color/text_secondary" />
 
@@ -42,29 +42,34 @@
             android:id="@+id/empty_state_text"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="16dp"
+            android:layout_marginTop="20dp"
             android:text="No downloads yet"
-            android:textAppearance="?attr/textAppearanceHeadline2"
-            android:textColor="@color/text_primary" />
+            android:textColor="@color/text_primary"
+            android:textSize="20sp"
+            android:fontFamily="@font/poppins_bold" />
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:gravity="center"
-            android:paddingHorizontal="32dp"
+            android:paddingHorizontal="40dp"
             android:text="Download your favorite songs to listen offline"
-            android:textAppearance="?attr/textAppearanceBody1"
-            android:textColor="@color/text_secondary" />
+            android:textColor="@color/text_secondary"
+            android:textSize="14sp"
+            android:fontFamily="@font/poppins" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/browse_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="24dp"
+            android:layout_marginTop="28dp"
             android:text="Browse Songs"
+            android:fontFamily="@font/poppins_medium"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="24dp"
             app:icon="@drawable/ic_search" />
 
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.constraintlayout.widget.ConstraintLayout>

@@ -25,7 +25,7 @@
          app:layout_constraintTop_toTopOf="parent"
          android:layout_margin="16dp"
          app:layout_constraintStart_toStartOf="parent"
-         app:tint="@color/white"
+         app:tint="@color/text_primary"
          android:id="@+id/btnClose" />
 
     <ImageButton
@@ -36,7 +36,7 @@
          android:background="?attr/selectableItemBackgroundBorderless"
          app:layout_constraintTop_toTopOf="parent"
          android:layout_margin="16dp"
-         app:tint="@color/white"
+         app:tint="@color/text_primary"
          app:layout_constraintEnd_toEndOf="parent"
          android:id="@+id/btnOptions" />
 
@@ -58,9 +58,10 @@
          android:layout_height="wrap_content"
          android:layout_width="0dp"
          android:ellipsize="end"
-         android:textSize="24sp"
+         android:textSize="28sp"
          android:textColor="@color/white"
-         android:layout_marginTop="24dp"
+         android:fontFamily="@font/poppins_semibold"
+         android:layout_marginTop="32dp"
          android:transitionName="transition_song_title"
          app:layout_constraintTop_toBottomOf="@id/imgAlbumArt"
          android:gravity="center"
@@ -68,16 +69,16 @@
          app:layout_constraintStart_toStartOf="parent"
          app:layout_constraintEnd_toEndOf="parent"
          android:maxLines="1"
-         android:id="@+id/txtSongName"
-         android:textStyle="bold" />
+         android:id="@+id/txtSongName" />
 
     <TextView
          android:layout_height="wrap_content"
          android:layout_width="0dp"
          android:ellipsize="end"
-         android:textSize="16sp"
-         android:textColor="@color/gray_light"
-         android:layout_marginTop="8dp"
+         android:textSize="18sp"
+         android:textColor="#B3FFFFFF"
+         android:fontFamily="@font/poppins_medium"
+         android:layout_marginTop="4dp"
          android:transitionName="transition_artist_name"
          app:layout_constraintTop_toBottomOf="@id/txtSongName"
          android:gravity="center"
@@ -158,14 +159,16 @@
 
             <com.google.android.material.floatingactionbutton.FloatingActionButton
                 android:id="@+id/btnPlayPause"
-                android:layout_width="64dp"
-                android:layout_height="64dp"
+                android:layout_width="72dp"
+                android:layout_height="72dp"
                 android:layout_marginHorizontal="24dp"
                 android:contentDescription="@string/play_pause"
                 android:scaleType="center"
                 android:transitionName="transition_play_button"
-                app:fabCustomSize="64dp"
-                app:tint="@color/white" />
+                app:fabCustomSize="72dp"
+                app:backgroundTint="@color/primary"
+                app:maxImageSize="36dp"
+                app:tint="@color/on_primary" />
 
             <ImageButton
                 android:id="@+id/btnNext"
@@ -201,17 +204,27 @@
                 android:id="@+id/btnLike"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_marginEnd="32dp"
+                android:layout_marginEnd="24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/like"
                 android:src="@drawable/ic_favorite_border"
                 app:tint="@color/white" />
 
             <ImageButton
+                android:id="@+id/btnDownload"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginHorizontal="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Download"
+                android:src="@drawable/ic_download_arrow"
+                app:tint="@color/white" />
+
+            <ImageButton
                 android:id="@+id/btnAddToPlaylist"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
-                android:layout_marginStart="32dp"
+                android:layout_marginStart="24dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:contentDescription="@string/add_to_playlist"
                 android:src="@drawable/ic_playlist_add"
@@ -264,12 +277,12 @@
             android:id="@+id/queueTitle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginStart="20dp"
+            android:layout_marginStart="24dp"
             android:layout_marginTop="20dp"
             android:text="@string/now_playing"
-            android:textColor="@color/white"
-            android:textSize="20sp"
-            android:textStyle="bold"
+            android:textColor="@color/text_primary"
+            android:textSize="22sp"
+            android:fontFamily="@font/poppins_bold"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@id/dragHandle" />
 

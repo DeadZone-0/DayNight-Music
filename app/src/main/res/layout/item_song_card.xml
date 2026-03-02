@@ -6,8 +6,8 @@
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="4dp">
+    app:cardCornerRadius="24dp"
+    app:cardElevation="2dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -56,9 +56,9 @@
             android:maxLines="1"
             android:paddingHorizontal="12dp"
             android:paddingTop="12dp"
-            android:textColor="@color/colorOnSurface"
+            android:textColor="@color/text_primary"
             android:textSize="14sp"
-            android:textStyle="bold"
+            android:fontFamily="@font/poppins_bold"
             tools:text="Song Title" />
 
         <TextView
@@ -70,8 +70,9 @@
             android:paddingHorizontal="12dp"
             android:paddingTop="2dp"
             android:paddingBottom="12dp"
-            android:textColor="@color/colorSecondaryText"
+            android:textColor="@color/text_secondary"
             android:textSize="12sp"
+            android:fontFamily="@font/poppins"
             tools:text="Artist Name" />
     </LinearLayout>
 </androidx.cardview.widget.CardView> 

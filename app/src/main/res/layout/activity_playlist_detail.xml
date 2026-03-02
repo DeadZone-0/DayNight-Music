@@ -117,10 +117,10 @@
             android:layout_margin="16dp"
             android:contentDescription="Play all"
             android:src="@drawable/ic_play"
-            app:backgroundTint="@color/accent"
+            app:backgroundTint="@color/primary"
             app:layout_anchor="@id/appbar"
             app:layout_anchorGravity="end|bottom"
-            app:tint="@color/white" />
+            app:tint="@color/on_primary" />
 
     </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

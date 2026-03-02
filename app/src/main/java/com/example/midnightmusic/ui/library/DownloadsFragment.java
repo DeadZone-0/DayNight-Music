@@ -4,19 +4,30 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.midnightmusic.R;
+import com.example.midnightmusic.data.model.Song;
+import com.example.midnightmusic.data.repository.MusicRepository;
 import com.example.midnightmusic.databinding.FragmentDownloadsBinding;
+import com.example.midnightmusic.player.MusicPlayerManager;
+import com.example.midnightmusic.ui.adapters.DownloadedSongsAdapter;
 
-public class DownloadsFragment extends Fragment {
+import java.util.ArrayList;
+import java.util.List;
+
+public class DownloadsFragment extends Fragment implements DownloadedSongsAdapter.OnItemClickListener {
     private FragmentDownloadsBinding binding;
+    private DownloadedSongsAdapter adapter;
+    private MusicRepository repository;
+    private List<Song> downloadedSongs = new ArrayList<>();
 
     @Nullable
     @Override
@@ -30,17 +41,16 @@ public class DownloadsFragment extends Fragment {
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+        repository = MusicRepository.getInstance(requireContext());
         setupRecyclerView();
         setupEmptyState();
+        observeDownloads();
     }
 
     private void setupRecyclerView() {
-        RecyclerView recyclerView = binding.downloadsRecyclerView;
-        recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        // TODO: Set adapter when implementing downloads functionality
-        
-        // For now, show empty state
-        showEmptyState(true);
+        adapter = new DownloadedSongsAdapter(this);
+        binding.downloadsRecyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
+        binding.downloadsRecyclerView.setAdapter(adapter);
     }
 
     private void setupEmptyState() {
@@ -49,6 +59,37 @@ public class DownloadsFragment extends Fragment {
             Navigation.findNavController(requireView())
                     .navigate(R.id.navigation_search);
         });
+    }
+
+    private void observeDownloads() {
+        repository.getDownloadedSongs().observe(getViewLifecycleOwner(), songs -> {
+            downloadedSongs = songs != null ? songs : new ArrayList<>();
+            adapter.submitList(new ArrayList<>(downloadedSongs));
+            showEmptyState(downloadedSongs.isEmpty());
+        });
+    }
+
+    @Override
+    public void onSongClick(Song song, int position) {
+        // Play the downloaded song (and set all downloads as queue)
+        MusicPlayerManager playerManager = MusicPlayerManager.getInstance(requireContext());
+        playerManager.playQueue(downloadedSongs, position);
+    }
+
+    @Override
+    public void onDeleteClick(Song song, int position) {
+        new AlertDialog.Builder(requireContext())
+                .setTitle("Remove Download")
+                .setMessage("Remove \"" + song.getSong() + "\" from downloads?")
+                .setPositiveButton("Remove", (dialog, which) -> {
+                    repository.deleteDownload(requireContext(), song, () -> {
+                        requireActivity().runOnUiThread(() -> {
+                            Toast.makeText(requireContext(), "Download removed", Toast.LENGTH_SHORT).show();
+                        });
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
     }
 
     private void showEmptyState(boolean show) {
@@ -61,4 +102,4 @@ public class DownloadsFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
-} 
+}

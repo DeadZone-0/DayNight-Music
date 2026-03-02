@@ -322,8 +322,33 @@ public class MusicPlayerManager {
                     .setArtworkUri(Uri.parse(song.getImageUrl()))
                     .build();
 
+            // 1. Check if the song is permanently downloaded
+            if (song.isDownloaded() && song.getLocalPath() != null) {
+                java.io.File localFile = new java.io.File(song.getLocalPath());
+                if (localFile.exists()) {
+                    Log.d(TAG, "Playing from download: " + song.getLocalPath());
 
-            // Check if the song is already cached
+                    MediaItem mediaItem = new MediaItem.Builder()
+                            .setUri(Uri.fromFile(localFile))
+                            .setMediaMetadata(metadata)
+                            .setMediaId(song.getId())
+                            .build();
+
+                    player.setMediaItem(mediaItem);
+                    player.prepare();
+                    player.play();
+
+                    MusicService.startService(context);
+
+                    mainHandler.post(() -> {
+                        currentSongLiveData.setValue(finalSong);
+                        isPlayingLiveData.setValue(true);
+                    });
+                    return;
+                }
+            }
+
+            // 2. Check if the song is in the streaming cache
             if (audioCacheManager.isUrlCached(mediaUrl)) {
                 String cachedPath = audioCacheManager.getCachedFilePath(mediaUrl);
                 Log.d(TAG, "Playing from cache: " + cachedPath);

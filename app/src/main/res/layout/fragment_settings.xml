@@ -11,21 +11,21 @@
         android:id="@+id/toolbar"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:background="@color/background"
-        android:elevation="4dp"
+        android:background="@android:color/transparent"
+        android:elevation="0dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:navigationIcon="@drawable/ic_back"
         app:title="Settings"
-        app:titleTextColor="@color/white" />
+        app:titleTextColor="@color/text_primary" />
 
     <androidx.core.widget.NestedScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
         android:overScrollMode="never"
-        android:paddingHorizontal="16dp"
+        android:paddingHorizontal="20dp"
         android:paddingBottom="24dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
@@ -42,34 +42,35 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginBottom="12dp"
                 android:text="APPEARANCE"
                 android:textColor="@color/primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:fontFamily="@font/poppins_bold"
+                android:letterSpacing="0.1" />
 
             <com.google.android.material.card.MaterialCardView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingVertical="8dp">
+                    android:paddingVertical="16dp">
 
                     <ImageView
                         android:id="@+id/theme_icon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginStart="20dp"
                         android:src="@drawable/ic_theme"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/colorOnSurface" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:id="@+id/theme_title"
@@ -77,8 +78,9 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:text="Dark Theme"
-                        android:textColor="@color/colorOnSurface"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
+                        android:fontFamily="@font/poppins_medium"
                         app:layout_constraintBottom_toTopOf="@id/theme_subtitle"
                         app:layout_constraintEnd_toStartOf="@id/theme_switch"
                         app:layout_constraintStart_toEndOf="@id/theme_icon"
@@ -92,8 +94,9 @@
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="2dp"
                         android:text="Toggle between light and dark mode"
-                        android:textColor="@color/colorSecondaryText"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp"
+                        android:fontFamily="@font/poppins"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@id/theme_switch"
                         app:layout_constraintStart_toEndOf="@id/theme_icon"
@@ -103,7 +106,7 @@
                         android:id="@+id/theme_switch"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginEnd="20dp"
                         android:checked="true"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
@@ -118,12 +121,13 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="12dp"
                 android:text="DATA"
                 android:textColor="@color/primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:fontFamily="@font/poppins_bold"
+                android:letterSpacing="0.1" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/clear_cache_button"
@@ -133,34 +137,35 @@
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="20dp">
 
                     <ImageView
                         android:id="@+id/cache_icon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginStart="20dp"
                         android:src="@drawable/ic_delete"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/colorOnSurface" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:id="@+id/cache_title"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginEnd="20dp"
                         android:text="Clear Cache"
-                        android:textColor="@color/colorOnSurface"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
+                        android:fontFamily="@font/poppins_medium"
                         app:layout_constraintBottom_toTopOf="@id/cache_subtitle"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/cache_icon"
@@ -173,10 +178,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="2dp"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginEnd="20dp"
                         android:text="Remove all temporarily stored data"
-                        android:textColor="@color/colorSecondaryText"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp"
+                        android:fontFamily="@font/poppins"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/cache_icon"
@@ -189,12 +195,13 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:layout_marginBottom="8dp"
+                android:layout_marginTop="28dp"
+                android:layout_marginBottom="12dp"
                 android:text="ABOUT"
                 android:textColor="@color/primary"
-                android:textSize="14sp"
-                android:textStyle="bold" />
+                android:textSize="13sp"
+                android:fontFamily="@font/poppins_bold"
+                android:letterSpacing="0.1" />
 
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/app_info_button"
@@ -204,34 +211,35 @@
                 android:focusable="true"
                 android:foreground="?attr/selectableItemBackground"
                 app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="12dp"
-                app:cardElevation="2dp">
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:paddingVertical="16dp">
+                    android:paddingVertical="20dp">
 
                     <ImageView
                         android:id="@+id/info_icon"
                         android:layout_width="24dp"
                         android:layout_height="24dp"
-                        android:layout_marginStart="16dp"
+                        android:layout_marginStart="20dp"
                         android:src="@drawable/ic_info"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
                         app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/colorOnSurface" />
+                        app:tint="@color/text_primary" />
 
                     <TextView
                         android:id="@+id/info_title"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginEnd="20dp"
                         android:text="App Info"
-                        android:textColor="@color/colorOnSurface"
+                        android:textColor="@color/text_primary"
                         android:textSize="16sp"
+                        android:fontFamily="@font/poppins_medium"
                         app:layout_constraintBottom_toTopOf="@id/info_subtitle"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/info_icon"
@@ -244,10 +252,11 @@
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
                         android:layout_marginTop="2dp"
-                        android:layout_marginEnd="16dp"
+                        android:layout_marginEnd="20dp"
                         android:text="Version and app details"
-                        android:textColor="@color/colorSecondaryText"
+                        android:textColor="@color/text_secondary"
                         android:textSize="12sp"
+                        android:fontFamily="@font/poppins"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toEndOf="parent"
                         app:layout_constraintStart_toEndOf="@id/info_icon"
@@ -259,4 +268,4 @@
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.constraintlayout.widget.ConstraintLayout>

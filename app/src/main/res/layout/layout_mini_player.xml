@@ -10,12 +10,11 @@
      android:outlineSpotShadowColor="?attr/colorPrimary"
      android:focusable="true"
      android:foreground="?attr/selectableItemBackground"
-     android:layout_marginBottom="8dp"
      android:background="@drawable/bg_mini_player"
-     android:layout_marginHorizontal="8dp"
-     android:outlineAmbientShadowColor="?attr/colorPrimary"
-     android:outlineProvider="paddedBounds"
-     android:id="@+id/miniPlayerContainer">
+     android:layout_marginHorizontal="16dp"
+     android:layout_marginBottom="12dp"
+     android:id="@+id/miniPlayerContainer"
+     android:animateLayoutChanges="true">
 
     <com.google.android.material.imageview.ShapeableImageView
          android:layout_height="56dp"
@@ -25,7 +24,7 @@
          app:layout_constraintStart_toStartOf="parent"
          app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small"
          app:layout_constraintBottom_toBottomOf="parent"
-         android:layout_marginStart="8dp"
+         android:layout_marginStart="12dp"
          android:id="@+id/imgMiniArt" />
 
     <TextView
@@ -98,17 +97,18 @@
          app:layout_constraintBottom_toBottomOf="parent"
          android:id="@+id/btnMiniNext" />
 
-    <com.google.android.material.progressindicator.LinearProgressIndicator
-         android:layout_height="wrap_content"
-         android:layout_width="0dp"
-         app:layout_constraintTop_toTopOf="parent"
-         android:layout_marginHorizontal="0dp"
-         app:trackColor="?attr/colorSurfaceVariant"
-         app:layout_constraintStart_toStartOf="parent"
-         app:trackCornerRadius="12dp"
-         app:layout_constraintEnd_toEndOf="parent"
-         app:trackThickness="3dp"
-         android:id="@+id/progressMini"
-         app:indicatorColor="@color/accent" />
+     <com.google.android.material.progressindicator.LinearProgressIndicator
+          android:layout_height="wrap_content"
+          android:layout_width="0dp"
+          app:layout_constraintBottom_toBottomOf="parent"
+          android:layout_marginHorizontal="16dp"
+          android:layout_marginBottom="8dp"
+          app:trackColor="@color/surface_variant"
+          app:layout_constraintStart_toStartOf="parent"
+          app:trackCornerRadius="12dp"
+          app:layout_constraintEnd_toEndOf="parent"
+          app:trackThickness="2dp"
+          android:id="@+id/progressMini"
+          app:indicatorColor="@color/primary" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

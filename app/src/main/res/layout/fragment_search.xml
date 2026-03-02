@@ -9,14 +9,14 @@
         android:id="@+id/appbar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:background="@color/background"
+        android:background="@android:color/transparent"
         app:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
             android:layout_height="?attr/actionBarSize"
-            android:background="@color/background">
+            android:background="@android:color/transparent">
 
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/search_input_layout"
@@ -30,8 +30,8 @@
                 app:boxCornerRadiusBottomStart="24dp"
                 app:boxCornerRadiusTopEnd="24dp"
                 app:boxCornerRadiusTopStart="24dp"
-                app:boxStrokeColor="@color/accent"
-                app:hintTextColor="@color/accent"
+                app:boxStrokeColor="@color/primary"
+                app:hintTextColor="@color/primary"
                 app:startIconDrawable="@drawable/ic_search"
                 app:startIconTint="@color/text_secondary">
 
@@ -39,6 +39,7 @@
                     android:id="@+id/search_input"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
+                    android:fontFamily="@font/poppins"
                     android:imeOptions="actionSearch"
                     android:inputType="text"
                     android:maxLines="1"
@@ -66,11 +67,12 @@
                 android:id="@+id/recent_searches_title"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginStart="16dp"
+                android:layout_marginStart="20dp"
                 android:layout_marginTop="16dp"
                 android:text="Recent Searches"
-                android:textAppearance="?attr/textAppearanceHeadline6"
                 android:textColor="@color/text_primary"
+                android:textSize="20sp"
+                android:fontFamily="@font/poppins_bold"
                 android:visibility="gone" />
 
             <androidx.recyclerview.widget.RecyclerView
@@ -97,8 +99,8 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="32dp"
-                android:indeterminateTint="@color/accent"
+                android:layout_marginTop="48dp"
+                android:indeterminateTint="@color/primary"
                 android:visibility="gone" />
 
             <!-- Empty State -->
@@ -107,12 +109,14 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="48dp"
                 android:text="No results found"
                 android:textColor="@color/text_secondary"
+                android:textSize="16sp"
+                android:fontFamily="@font/poppins_medium"
                 android:visibility="gone" />
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
 
-</androidx.coordinatorlayout.widget.CoordinatorLayout> 
+</androidx.coordinatorlayout.widget.CoordinatorLayout>

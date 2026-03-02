@@ -1,2 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources></resources>
+<resources>
+    <!-- Brand Colors (Dark) -->
+    <color name="primary">#BB86FC</color>
+    <color name="primary_variant">#3700B3</color>
+    <color name="accent">#03DAC6</color>
+    <color name="accent_variant">#018786</color>
+
+    <!-- Background & Surface (Dark) -->
+    <color name="background">#0F0F0F</color>
+    <color name="surface">#1A1A1A</color>
+    <color name="surface_variant">#2B2B2B</color>
+    <color name="card_background">#242424</color>
+    <color name="overlay">#66000000</color>
+
+    <!-- Text Colors (Dark) -->
+    <color name="text_primary">#E1E1E1</color>
+    <color name="text_secondary">#AAAAAA</color>
+    <color name="text_hint">#707070</color>
+
+    <!-- Functional Overrides -->
+    <color name="error">#CF6679</color>
+    
+    <!-- Material 3 Specific -->
+    <color name="on_primary">#000000</color>
+    <color name="on_background">#E1E1E1</color>
+    <color name="on_surface">#E1E1E1</color>
+    <color name="on_error">#000000</color>
+
+    <!-- Glassmorphism Elements (Dark) -->
+    <color name="glass_background">#BB1A1A1A</color>
+    <color name="glass_border">#33FFFFFF</color>
+    <color name="ripple_light">#1AFFFFFF</color>
+    <color name="ripple_accent">#1A03DAC6</color>
+
+    <!-- Gradient Tokens -->
+    <color name="gradient_start">#7A2BE2</color>
+    <color name="gradient_end">#03DAC6</color>
+
+    <!-- Legacy / Compatibility Aliases (Dark) -->
+    <color name="colorPrimary">#BB86FC</color>
+    <color name="colorPrimaryDark">#3700B3</color>
+    <color name="colorAccent">#03DAC6</color>
+    <color name="colorBackground">#0F0F0F</color>
+    <color name="colorSurface">#1A1A1A</color>
+    <color name="colorBottomNav">#1A1A1A</color>
+    <color name="colorOnBackground">#E1E1E1</color>
+    <color name="colorOnSurface">#E1E1E1</color>
+    <color name="colorSecondaryText">#AAAAAA</color>
+    <color name="colorEnabled">#BB86FC</color>
+    <color name="colorDisabled">#555555</color>
+
+    <!-- Player specific -->
+    <color name="gray_light">#9E9E9E</color>
+    <color name="gray_dark">#757575</color>
+    <color name="accent_20">#33BB86FC</color>
+</resources>

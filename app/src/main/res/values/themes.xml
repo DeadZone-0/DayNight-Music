@@ -11,107 +11,70 @@
   <style name="Theme.MidnightMusic" parent="Theme.Material3.DayNight.NoActionBar">
     <!-- Primary brand color -->
     <item name="colorPrimary">@color/primary</item>
-    <item name="colorPrimaryVariant">@color/primary_variant</item>
-    <item name="colorOnPrimary">@color/white</item>
+    <item name="colorOnPrimary">@color/on_primary</item>
+    <item name="colorPrimaryContainer">@color/primary_variant</item>
+    
     <!-- Secondary brand color -->
     <item name="colorSecondary">@color/accent</item>
-    <item name="colorSecondaryVariant">@color/accent_variant</item>
-    <item name="colorOnSecondary">@color/black</item>
+    <item name="colorOnSecondary">@color/on_primary</item>
+    
     <!-- Background colors -->
     <item name="android:colorBackground">@color/background</item>
     <item name="colorSurface">@color/surface</item>
+    <item name="colorSurfaceVariant">@color/surface_variant</item>
     <item name="colorOnSurface">@color/text_primary</item>
     <item name="colorOnSurfaceVariant">@color/text_secondary</item>
+    
     <!-- Status bar color -->
     <item name="android:statusBarColor">@android:color/transparent</item>
     <item name="android:navigationBarColor">@android:color/transparent</item>
-    <!-- Text appearances -->
-    <item name="textAppearanceBodyLarge">@style/TextAppearance.MidnightMusic.BodyLarge</item>
-    <item name="textAppearanceBodyMedium">@style/TextAppearance.MidnightMusic.BodyMedium</item>
-    <item name="textAppearanceBodySmall">@style/TextAppearance.MidnightMusic.BodySmall</item>
-  </style>
-
-  <!-- Typography Styles -->
-  <style name="TextAppearance.MidnightMusic.Headline1" parent="TextAppearance.MaterialComponents.Headline1">
-    <item name="fontFamily">@font/poppins_bold</item>
-    <item name="android:textSize">32sp</item>
-    <item name="android:textColor">@color/text_primary</item>
-  </style>
-
-  <style name="TextAppearance.MidnightMusic.Headline2" parent="TextAppearance.MaterialComponents.Headline2">
-    <item name="fontFamily">@font/poppins_semibold</item>
-    <item name="android:textSize">24sp</item>
-    <item name="android:textColor">@color/text_primary</item>
-  </style>
-
-  <style name="TextAppearance.MidnightMusic.Subtitle1" parent="TextAppearance.MaterialComponents.Subtitle1">
-    <item name="fontFamily">@font/poppins_medium</item>
-    <item name="android:textSize">16sp</item>
-    <item name="android:textColor">@color/text_secondary</item>
-  </style>
-
-  <style name="TextAppearance.MidnightMusic.Body1" parent="TextAppearance.MaterialComponents.Body1">
+    <item name="android:windowLightStatusBar" tools:targetApi="m">true</item>
+    
+    <!-- Typography -->
     <item name="fontFamily">@font/poppins</item>
-    <item name="android:textSize">14sp</item>
-    <item name="android:textColor">@color/text_primary</item>
+
+    <!-- Component Styles -->
+    <item name="materialCardViewStyle">@style/Widget.MidnightMusic.CardView</item>
+    <item name="bottomNavigationStyle">@style/Widget.MidnightMusic.BottomNavigationView</item>
   </style>
 
-  <style name="TextAppearance.MidnightMusic.Caption" parent="TextAppearance.MaterialComponents.Caption">
-    <item name="fontFamily">@font/poppins</item>
-    <item name="android:textSize">12sp</item>
-    <item name="android:textColor">@color/text_secondary</item>
+  <!-- Component Styles Refinement -->
+  <style name="Widget.MidnightMusic.CardView" parent="Widget.Material3.CardView.Elevated">
+    <item name="cardBackgroundColor">@color/card_background</item>
+    <item name="cardCornerRadius">24dp</item>
+    <item name="cardElevation">2dp</item>
+    <item name="shapeAppearanceOverlay">@style/ShapeAppearance.MidnightMusic.Medium</item>
   </style>
 
-  <!-- Text Appearances -->
+  <style name="Widget.MidnightMusic.BottomNavigationView" parent="Widget.Material3.BottomNavigationView">
+    <item name="backgroundTint">@color/surface</item>
+    <item name="itemIconTint">@color/primary</item>
+    <item name="itemTextColor">@color/text_primary</item>
+    <item name="itemRippleColor">@color/ripple_accent</item>
+    <item name="elevation">0dp</item>
+    <item name="labelVisibilityMode">labeled</item>
+  </style>
+
+  <style name="ShapeAppearance.MidnightMusic.Medium" parent="ShapeAppearance.Material3.Corner.Medium">
+    <item name="cornerSize">24dp</item>
+  </style>
+
   <style name="TextAppearance.MidnightMusic.BodyLarge" parent="TextAppearance.Material3.BodyLarge">
     <item name="android:textColor">?attr/colorOnSurface</item>
     <item name="android:textSize">16sp</item>
+    <item name="fontFamily">@font/poppins</item>
   </style>
 
   <style name="TextAppearance.MidnightMusic.BodyMedium" parent="TextAppearance.Material3.BodyMedium">
     <item name="android:textColor">?attr/colorOnSurface</item>
     <item name="android:textSize">14sp</item>
+    <item name="fontFamily">@font/poppins</item>
   </style>
 
   <style name="TextAppearance.MidnightMusic.BodySmall" parent="TextAppearance.Material3.BodySmall">
     <item name="android:textColor">?attr/colorOnSurfaceVariant</item>
     <item name="android:textSize">12sp</item>
+    <item name="fontFamily">@font/poppins</item>
   </style>
 
-  <!-- Component Styles -->
-  <style name="Widget.MidnightMusic.CardView" parent="Widget.MaterialComponents.CardView">
-    <item name="cardBackgroundColor">@color/card_background</item>
-    <item name="cardCornerRadius">16dp</item>
-    <item name="cardElevation">4dp</item>
-    <item name="rippleColor">@color/ripple_accent</item>
-  </style>
-
-  <style name="Widget.MidnightMusic.BottomNavigationView" parent="Widget.MaterialComponents.BottomNavigationView">
-    <item name="backgroundTint">@color/background</item>
-    <item name="itemIconTint">@color/bottom_nav_item_color</item>
-    <item name="itemTextColor">@color/bottom_nav_item_color</item>
-    <item name="itemRippleColor">@color/ripple_accent</item>
-    <item name="elevation">8dp</item>
-  </style>
-
-  <style name="Widget.MidnightMusic.Button" parent="Widget.MaterialComponents.Button">
-    <item name="android:textColor">@color/text_primary</item>
-    <item name="backgroundTint">@color/accent</item>
-    <item name="cornerRadius">24dp</item>
-    <item name="android:paddingStart">24dp</item>
-    <item name="android:paddingEnd">24dp</item>
-    <item name="android:paddingTop">12dp</item>
-    <item name="android:paddingBottom">12dp</item>
-    <item name="rippleColor">@color/ripple_light</item>
-  </style>
-
-  <style name="Widget.MidnightMusic.TabLayout" parent="Widget.MaterialComponents.TabLayout">
-    <item name="tabBackground">@color/background</item>
-    <item name="tabIndicatorColor">@color/accent</item>
-    <item name="tabSelectedTextColor">@color/text_primary</item>
-    <item name="tabTextColor">@color/text_secondary</item>
-    <item name="tabRippleColor">@color/ripple_accent</item>
-    <item name="tabIndicatorHeight">3dp</item>
-    <item name="tabIndicatorAnimationDuration">250</item>
-  </style>
 </resources>

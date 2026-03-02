@@ -9,12 +9,12 @@
         android:id="@+id/library_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="24dp"
+        android:layout_marginStart="20dp"
+        android:layout_marginTop="32dp"
         android:text="Your Library"
-        android:textColor="@color/on_background"
-        android:textSize="32sp"
-        android:textStyle="bold"
+        android:textColor="@color/text_primary"
+        android:textSize="28sp"
+        android:fontFamily="@font/poppins_bold"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -22,14 +22,16 @@
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
-        android:background="@color/background"
+        android:layout_marginTop="20dp"
+        android:background="@android:color/transparent"
         app:layout_constraintTop_toBottomOf="@id/library_title"
         app:tabGravity="fill"
-        app:tabIndicatorColor="@color/accent"
+        app:tabIndicatorColor="@color/primary"
+        app:tabIndicatorHeight="3dp"
         app:tabMode="fixed"
-        app:tabSelectedTextColor="@color/on_background"
-        app:tabTextColor="@color/on_surface">
+        app:tabRippleColor="@color/ripple_accent"
+        app:tabSelectedTextColor="@color/text_primary"
+        app:tabTextColor="@color/text_secondary">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -50,4 +52,4 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tab_layout" />
 
-</androidx.constraintlayout.widget.ConstraintLayout> 
+</androidx.constraintlayout.widget.ConstraintLayout>

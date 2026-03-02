@@ -17,7 +17,7 @@ import com.example.midnightmusic.data.model.PlaylistSongCrossRef;
         Playlist.class, 
         PlaylistSongCrossRef.class
     }, 
-    version = 2, 
+    version = 3, 
     exportSchema = false
 )
 @TypeConverters({Converters.class})

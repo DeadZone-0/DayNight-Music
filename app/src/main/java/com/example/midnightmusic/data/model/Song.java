@@ -60,6 +60,10 @@ public class Song {
     // This tracks whether a song is liked or not
     private boolean isLiked;
     
+    // Download tracking
+    private boolean isDownloaded;
+    private String localPath;
+    
     // Timestamp for sorting purposes
     private long timestamp;
 
@@ -127,6 +131,12 @@ public class Song {
 
     public boolean isLiked() { return isLiked; }
     public void setLiked(boolean liked) { isLiked = liked; }
+
+    public boolean isDownloaded() { return isDownloaded; }
+    public void setDownloaded(boolean downloaded) { isDownloaded = downloaded; }
+
+    public String getLocalPath() { return localPath; }
+    public void setLocalPath(String localPath) { this.localPath = localPath; }
 
     public long getTimestamp() { return timestamp; }
     public void setTimestamp(long timestamp) { this.timestamp = timestamp; }

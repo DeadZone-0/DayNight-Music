@@ -27,6 +27,8 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
+import com.example.midnightmusic.utils.DownloadManager;
+
 /**
  * Repository class that abstracts data access from multiple sources.
  * Combines local database (Room) and remote API (Retrofit) access.
@@ -268,6 +270,45 @@ public class MusicRepository {
         });
     }
 
+    // ============ Download Operations ============
+
+    /**
+     * Get all downloaded songs from local database
+     */
+    public LiveData<List<Song>> getDownloadedSongs() {
+        return songDao.getDownloadedSongs();
+    }
+
+    /**
+     * Download a song and save to permanent storage
+     */
+    public void downloadSong(Context context, Song song, DownloadManager.DownloadListener listener) {
+        // First ensure the song is in the database
+        diskIO.execute(() -> {
+            song.setTimestamp(System.currentTimeMillis());
+            songDao.insert(song);
+        });
+        // Then start the download
+        DownloadManager.getInstance(context).downloadSong(song, listener);
+    }
+
+    /**
+     * Delete a downloaded song
+     */
+    public void deleteDownload(Context context, Song song, Runnable onComplete) {
+        DownloadManager.getInstance(context).deleteDownload(song, onComplete);
+    }
+
+    /**
+     * Check if a song is already downloaded
+     */
+    public void isSongDownloaded(String songId, DownloadCheckCallback callback) {
+        diskIO.execute(() -> {
+            boolean downloaded = songDao.isSongDownloaded(songId);
+            callback.onResult(downloaded);
+        });
+    }
+
     // ============ Callbacks ============
 
     public interface SearchCallback {
@@ -286,5 +327,9 @@ public class MusicRepository {
         void onSuccess(long playlistId);
 
         void onError(Exception e);
+    }
+
+    public interface DownloadCheckCallback {
+        void onResult(boolean isDownloaded);
     }
 }
