@@ -85,12 +85,19 @@ public class MusicPlayerManager {
                                 // More songs in queue, advance
                                 currentIndex++;
                                 mainHandler.post(() -> playCurrentSong());
+
+                                // Pre-fetch when we're at the second-to-last song position
+                                // e.g. queue=15, currentIndex=13 → 13 >= 13 → true
+                                if (autoQueueEnabled && !isFetchingRecommendations
+                                        && currentIndex >= queue.size() - 2) {
+                                    fetchAutoQueueRecommendations(queue.get(currentIndex));
+                                }
                             } else if (repeatMode == Player.REPEAT_MODE_ALL && !queue.isEmpty()) {
                                 // End of queue + repeat all: wrap to start
                                 currentIndex = 0;
                                 mainHandler.post(() -> playCurrentSong());
                             } else if (autoQueueEnabled && !isFetchingRecommendations && !queue.isEmpty()) {
-                                // REPEAT_MODE_OFF at end + auto-queue enabled: fetch recommendations
+                                // REPEAT_MODE_OFF at end + auto-queue: fetch recommendations
                                 Song currentSong = queue.get(currentIndex);
                                 fetchAutoQueueRecommendations(currentSong);
                             }
@@ -313,17 +320,20 @@ public class MusicPlayerManager {
                     currentIndex++;
                     playCurrentSong();
 
-                    // Pre-fetch more recommendations when nearing end of queue
+                    // Pre-fetch when we're at the second-to-last song position
                     if (autoQueueEnabled && !isFetchingRecommendations
-                            && queue.size() - currentIndex <= 2) {
+                            && currentIndex >= queue.size() - 2) {
                         fetchAutoQueueRecommendations(queue.get(currentIndex));
                     }
                 } else if (repeatMode == Player.REPEAT_MODE_ALL) {
                     // At end of queue + repeat ALL: wrap to start
                     currentIndex = 0;
                     playCurrentSong();
+                } else if (autoQueueEnabled && !isFetchingRecommendations && !queue.isEmpty()) {
+                    // At end of queue + auto-queue: fetch more songs
+                    fetchAutoQueueRecommendations(queue.get(currentIndex));
                 }
-                // REPEAT_MODE_OFF at end: do nothing
+                // REPEAT_MODE_OFF at end without auto-queue: do nothing
             }
 
             isProcessingAction.set(false);
@@ -670,7 +680,7 @@ public class MusicPlayerManager {
 
     /**
      * Enable or disable auto-queue recommendations.
-     * When enabled and the queue ends (repeat OFF), 
+     * When enabled and the queue ends (repeat OFF),
      * similar tracks are auto-fetched and appended.
      * Should be enabled for search-sourced songs, disabled for playlists.
      */
@@ -684,54 +694,71 @@ public class MusicPlayerManager {
     }
 
     /**
+     * Public API for the Similar Songs button in PlayerActivity.
+     * Immediately fetches recommendations for the given song and appends them to
+     * the queue.
+     */
+    public void fetchSimilarForQueue(Song song) {
+        fetchAutoQueueRecommendations(song);
+    }
+
+    /**
      * Fetch similar tracks from Last.fm → JioSaavn and add to queue.
      * Called automatically when the queue reaches its end.
      */
     private void fetchAutoQueueRecommendations(Song baseSong) {
-        if (baseSong == null || baseSong.getSong() == null) return;
+        if (baseSong == null || baseSong.getSong() == null)
+            return;
 
         isFetchingRecommendations = true;
         Log.d(TAG, "Auto-queue: fetching recommendations for " + baseSong.getSong());
 
         com.example.midnightmusic.data.repository.RecommendationManager
-            .getInstance(LASTFM_API_KEY)
-            .getSimilarTracks(baseSong.getSong(),
-                baseSong.getSingers() != null ? baseSong.getSingers() : "",
-                10,
-                new com.example.midnightmusic.data.repository.RecommendationManager.RecommendationCallback() {
-                    @Override
-                    public void onSuccess(List<Song> recommendations) {
-                        isFetchingRecommendations = false;
-                        if (recommendations != null && !recommendations.isEmpty()) {
-                            Log.d(TAG, "Auto-queue: got " + recommendations.size() + " recommendations");
-                            synchronized (queue) {
-                                // Filter out songs already in queue
-                                java.util.Set<String> existingIds = new java.util.HashSet<>();
-                                for (Song s : queue) existingIds.add(s.getId());
+                .getInstance(LASTFM_API_KEY)
+                .getSimilarTracks(baseSong.getSong(),
+                        baseSong.getSingers() != null ? baseSong.getSingers() : "",
+                        10,
+                        new com.example.midnightmusic.data.repository.RecommendationManager.RecommendationCallback() {
+                            @Override
+                            public void onSuccess(List<Song> recommendations) {
+                                isFetchingRecommendations = false;
+                                if (recommendations == null || recommendations.isEmpty())
+                                    return;
 
-                                int added = 0;
-                                for (Song rec : recommendations) {
-                                    if (!existingIds.contains(rec.getId()) && rec.getMediaUrl() != null) {
-                                        queue.add(rec);
-                                        added++;
+                                Log.d(TAG, "Auto-queue: got " + recommendations.size() + " recommendations");
+
+                                // Must run on main thread — ExoPlayer requires it
+                                mainHandler.post(() -> {
+                                    synchronized (queue) {
+                                        // Filter out songs already in queue
+                                        java.util.Set<String> existingIds = new java.util.HashSet<>();
+                                        for (Song s : queue)
+                                            existingIds.add(s.getId());
+
+                                        int added = 0;
+                                        for (Song rec : recommendations) {
+                                            if (!existingIds.contains(rec.getId()) && rec.getMediaUrl() != null) {
+                                                queue.add(rec);
+                                                added++;
+                                            }
+                                        }
+                                        Log.d(TAG, "Auto-queue: added " + added + " songs to queue");
+
+                                        // Only auto-advance if player was idle (ended/waiting)
+                                        if (added > 0 && player.getPlaybackState() == Player.STATE_ENDED
+                                                && currentIndex < queue.size() - 1) {
+                                            currentIndex++;
+                                            playCurrentSong();
+                                        }
                                     }
-                                }
-                                Log.d(TAG, "Auto-queue: added " + added + " songs to queue");
-
-                                // Auto-advance to the next song
-                                if (added > 0 && currentIndex < queue.size() - 1) {
-                                    currentIndex++;
-                                    mainHandler.post(() -> playCurrentSong());
-                                }
+                                });
                             }
-                        }
-                    }
 
-                    @Override
-                    public void onError(Exception e) {
-                        isFetchingRecommendations = false;
-                        Log.e(TAG, "Auto-queue: recommendation fetch failed", e);
-                    }
-                });
+                            @Override
+                            public void onError(Exception e) {
+                                isFetchingRecommendations = false;
+                                Log.e(TAG, "Auto-queue: recommendation fetch failed", e);
+                            }
+                        });
     }
 }

@@ -230,6 +230,16 @@
                 android:src="@drawable/ic_playlist_add"
                 app:tint="@color/white" />
 
+            <ImageButton
+                android:id="@+id/btnSimilarSongs"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginStart="24dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Add similar songs"
+                android:src="@drawable/ic_magic_mix"
+                app:tint="@color/white" />
+
         </LinearLayout>
 
     </androidx.constraintlayout.widget.ConstraintLayout>

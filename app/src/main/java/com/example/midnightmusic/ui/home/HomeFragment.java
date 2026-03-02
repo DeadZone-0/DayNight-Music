@@ -49,8 +49,8 @@ public class HomeFragment extends Fragment implements
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
-                           @Nullable ViewGroup container,
-                           @Nullable Bundle savedInstanceState) {
+            @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         binding = FragmentHomeBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -65,14 +65,13 @@ public class HomeFragment extends Fragment implements
     }
 
     private void setupHeader() {
-        viewModel.getGreeting().observe(getViewLifecycleOwner(), greeting ->
-            binding.greetingText.setText(greeting));
+        viewModel.getGreeting().observe(getViewLifecycleOwner(), greeting -> binding.greetingText.setText(greeting));
 
-        binding.btnNotifications.setOnClickListener(v ->
-            Toast.makeText(requireContext(), "Notifications", Toast.LENGTH_SHORT).show());
+        binding.btnNotifications
+                .setOnClickListener(v -> Toast.makeText(requireContext(), "Notifications", Toast.LENGTH_SHORT).show());
 
-        binding.btnHistory.setOnClickListener(v ->
-            Toast.makeText(requireContext(), "History", Toast.LENGTH_SHORT).show());
+        binding.btnHistory
+                .setOnClickListener(v -> Toast.makeText(requireContext(), "History", Toast.LENGTH_SHORT).show());
 
         binding.btnSettings.setOnClickListener(v -> {
             NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
@@ -89,21 +88,21 @@ public class HomeFragment extends Fragment implements
 
         // Recently played (compact horizontal)
         binding.recentlyPlayedRecycler.setLayoutManager(
-            new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+                new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.recentlyPlayedRecycler.setNestedScrollingEnabled(false);
         recentlyPlayedAdapter = new RecentCompactAdapter(new ArrayList<>(), this);
         binding.recentlyPlayedRecycler.setAdapter(recentlyPlayedAdapter);
 
         // Recommended for you (horizontal cards)
         binding.recommendedRecycler.setLayoutManager(
-            new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+                new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.recommendedRecycler.setNestedScrollingEnabled(false);
         recommendedAdapter = new SongCardAdapter(new ArrayList<>(), this);
         binding.recommendedRecycler.setAdapter(recommendedAdapter);
 
         // Trending (horizontal cards)
         binding.newReleasesRecycler.setLayoutManager(
-            new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+                new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.newReleasesRecycler.setNestedScrollingEnabled(false);
         trendingAdapter = new SongCardAdapter(new ArrayList<>(), this);
         binding.newReleasesRecycler.setAdapter(trendingAdapter);
@@ -114,7 +113,8 @@ public class HomeFragment extends Fragment implements
         viewModel.getPlaylists().observe(getViewLifecycleOwner(), playlists -> {
             if (playlists != null && !playlists.isEmpty()) {
                 List<PlaylistWithSongs> limited = playlists.size() > 4
-                        ? playlists.subList(0, 4) : playlists;
+                        ? playlists.subList(0, 4)
+                        : playlists;
                 recentPlaylistsAdapter.updateData(limited);
                 setVisible(binding.recentPlaylistsTitle, true);
                 setVisible(binding.recentPlaylistsSubtitle, true);
@@ -195,16 +195,19 @@ public class HomeFragment extends Fragment implements
         viewModel.saveSongToHistory(song);
         MusicPlayerManager playerManager = MusicPlayerManager.getInstance(requireContext());
 
-        // Don't enable auto-queue from homepage — just play with its section as queue
-        playerManager.setAutoQueueEnabled(false);
-
-        int index = findSongIndex(recentlyPlayedSongs, song);
-        if (index >= 0) {
-            playerManager.playQueue(recentlyPlayedSongs, index);
+        // Check which section this song belongs to
+        int recIndex = findSongIndex(recommendedSongs, song);
+        if (recIndex >= 0) {
+            // Recommended songs behave like search — auto-queue enabled
+            playerManager.playQueue(recommendedSongs, recIndex);
+            playerManager.setAutoQueueEnabled(true); // AFTER playQueue (which resets it)
         } else {
-            index = findSongIndex(recommendedSongs, song);
+            // Recently played, trending, playlists — no auto-queue
+            playerManager.setAutoQueueEnabled(false);
+
+            int index = findSongIndex(recentlyPlayedSongs, song);
             if (index >= 0) {
-                playerManager.playQueue(recommendedSongs, index);
+                playerManager.playQueue(recentlyPlayedSongs, index);
             } else {
                 index = findSongIndex(trendingSongs, song);
                 if (index >= 0) {
@@ -220,9 +223,11 @@ public class HomeFragment extends Fragment implements
     }
 
     private int findSongIndex(List<Song> list, Song song) {
-        if (list == null || song == null) return -1;
+        if (list == null || song == null)
+            return -1;
         for (int i = 0; i < list.size(); i++) {
-            if (list.get(i).getId().equals(song.getId())) return i;
+            if (list.get(i).getId().equals(song.getId()))
+                return i;
         }
         return -1;
     }
