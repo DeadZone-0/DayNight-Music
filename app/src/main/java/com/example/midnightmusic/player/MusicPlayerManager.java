@@ -252,6 +252,19 @@ public class MusicPlayerManager {
         }
     }
 
+    /**
+     * Jump to a specific index in the current queue without resetting auto-queue.
+     * Used when tapping a song in the queue UI.
+     */
+    public void playAtIndex(int index) {
+        synchronized (queue) {
+            if (index >= 0 && index < queue.size()) {
+                currentIndex = index;
+                playCurrentSong();
+            }
+        }
+    }
+
     public void addToQueue(Song song) {
         try {
             if (song == null) {
@@ -717,14 +730,16 @@ public class MusicPlayerManager {
                         new com.example.midnightmusic.data.repository.RecommendationManager.RecommendationCallback() {
                             @Override
                             public void onSuccess(List<Song> recommendations) {
-                                isFetchingRecommendations = false;
-                                if (recommendations == null || recommendations.isEmpty())
+                                if (recommendations == null || recommendations.isEmpty()) {
+                                    isFetchingRecommendations = false;
                                     return;
+                                }
 
                                 Log.d(TAG, "Auto-queue: got " + recommendations.size() + " recommendations");
 
                                 // Must run on main thread — ExoPlayer requires it
                                 mainHandler.post(() -> {
+                                    isFetchingRecommendations = false;
                                     synchronized (queue) {
                                         // Filter out songs already in queue
                                         java.util.Set<String> existingIds = new java.util.HashSet<>();

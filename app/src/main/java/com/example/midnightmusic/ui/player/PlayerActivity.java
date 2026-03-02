@@ -629,8 +629,8 @@ public class PlayerActivity extends AppCompatActivity
 
     @Override
     public void onQueueItemClick(Song song, int position) {
-        // Play the selected song from the queue
-        playerManager.playQueue(playerManager.getQueue(), position);
+        // Jump to the selected position without resetting auto-queue
+        playerManager.playAtIndex(position);
     }
 
     @Override
