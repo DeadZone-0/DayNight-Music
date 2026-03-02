@@ -39,11 +39,13 @@ Midnight Music is a beautiful dark-themed Android music streaming app with a mod
 ## To-Do
 
 - [x] Implement caching for faster loading
-- [ ] add offline download handling
+- [x] add offline download handling
 - [ ] Add user authentication (maybe not)
-- [ ] Add recently played section
+- [x] Add recently played section
 - [x] UI animation improvements
 - [x] Actually playing music
+- [x] Working homepage with trending
+- [x]  song recommendation and recommended queue
 
 ---
 
