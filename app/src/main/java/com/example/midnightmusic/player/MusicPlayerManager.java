@@ -36,7 +36,7 @@ public class MusicPlayerManager {
 
     // Auto-queue recommendations (only for search-sourced songs)
     private boolean autoQueueEnabled = false;
-    private boolean isFetchingRecommendations = false;
+    private volatile boolean isFetchingRecommendations = false;
     private static final String LASTFM_API_KEY = "2f2b3b120c7cafa10cca05ba075c7ef4";
 
     private final MutableLiveData<Boolean> isPlayingLiveData = new MutableLiveData<>(false);
@@ -387,6 +387,8 @@ public class MusicPlayerManager {
 
                 // Pre-fetch recommendations when we reach the second-to-last song
                 // This covers ALL play pathways: skipToNext, STATE_ENDED, queue tap, etc.
+                Log.d(TAG, "playCurrentSong: idx=" + currentIndex + ", size=" + queue.size()
+                        + ", autoQ=" + autoQueueEnabled + ", fetching=" + isFetchingRecommendations);
                 if (autoQueueEnabled && !isFetchingRecommendations
                         && currentIndex >= queue.size() - 2 && song != null) {
                     Log.d(TAG, "Pre-fetch triggered: currentIndex=" + currentIndex
@@ -714,6 +716,9 @@ public class MusicPlayerManager {
      * Fetch similar tracks from Last.fm → JioSaavn and add to queue.
      * Called automatically when the queue reaches its end.
      */
+    private int fetchRetryCount = 0;
+    private static final int MAX_FETCH_RETRIES = 3;
+
     private void fetchAutoQueueRecommendations(Song baseSong) {
         if (baseSong == null || baseSong.getSong() == null)
             return;
@@ -730,10 +735,12 @@ public class MusicPlayerManager {
                             @Override
                             public void onSuccess(List<Song> recommendations) {
                                 if (recommendations == null || recommendations.isEmpty()) {
-                                    isFetchingRecommendations = false;
+                                    // No results — try fallback
+                                    retryWithFallbackSong();
                                     return;
                                 }
 
+                                fetchRetryCount = 0; // Reset on success
                                 Log.d(TAG, "Auto-queue: got " + recommendations.size() + " recommendations");
 
                                 // Must run on main thread — ExoPlayer requires it
@@ -766,9 +773,39 @@ public class MusicPlayerManager {
 
                             @Override
                             public void onError(Exception e) {
-                                isFetchingRecommendations = false;
                                 Log.e(TAG, "Auto-queue: recommendation fetch failed", e);
+                                // Try fallback song instead of giving up
+                                retryWithFallbackSong();
                             }
                         });
+    }
+
+    /**
+     * When a recommendation fetch fails, try a different song from the queue.
+     * Picks songs progressively earlier in the queue as fallback seeds.
+     */
+    private void retryWithFallbackSong() {
+        fetchRetryCount++;
+        if (fetchRetryCount > MAX_FETCH_RETRIES) {
+            Log.d(TAG, "Auto-queue: exhausted all retries, giving up");
+            isFetchingRecommendations = false;
+            fetchRetryCount = 0;
+            return;
+        }
+
+        synchronized (queue) {
+            // Try a song from earlier in the queue
+            int fallbackIdx = Math.max(0, currentIndex - fetchRetryCount);
+            if (fallbackIdx >= 0 && fallbackIdx < queue.size()) {
+                Song fallback = queue.get(fallbackIdx);
+                Log.d(TAG, "Auto-queue: retrying with fallback song '" + fallback.getSong()
+                        + "' (attempt " + fetchRetryCount + ")");
+                isFetchingRecommendations = false; // Reset so fetch can proceed
+                fetchAutoQueueRecommendations(fallback);
+            } else {
+                isFetchingRecommendations = false;
+                fetchRetryCount = 0;
+            }
+        }
     }
 }
