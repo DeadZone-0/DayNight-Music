@@ -85,13 +85,6 @@ public class MusicPlayerManager {
                                 // More songs in queue, advance
                                 currentIndex++;
                                 mainHandler.post(() -> playCurrentSong());
-
-                                // Pre-fetch when we're at the second-to-last song position
-                                // e.g. queue=15, currentIndex=13 → 13 >= 13 → true
-                                if (autoQueueEnabled && !isFetchingRecommendations
-                                        && currentIndex >= queue.size() - 2) {
-                                    fetchAutoQueueRecommendations(queue.get(currentIndex));
-                                }
                             } else if (repeatMode == Player.REPEAT_MODE_ALL && !queue.isEmpty()) {
                                 // End of queue + repeat all: wrap to start
                                 currentIndex = 0;
@@ -319,12 +312,6 @@ public class MusicPlayerManager {
                     // Normal: advance to next
                     currentIndex++;
                     playCurrentSong();
-
-                    // Pre-fetch when we're at the second-to-last song position
-                    if (autoQueueEnabled && !isFetchingRecommendations
-                            && currentIndex >= queue.size() - 2) {
-                        fetchAutoQueueRecommendations(queue.get(currentIndex));
-                    }
                 } else if (repeatMode == Player.REPEAT_MODE_ALL) {
                     // At end of queue + repeat ALL: wrap to start
                     currentIndex = 0;
@@ -384,6 +371,15 @@ public class MusicPlayerManager {
             synchronized (queue) {
                 if (currentIndex >= 0 && currentIndex < queue.size()) {
                     song = queue.get(currentIndex);
+                }
+
+                // Pre-fetch recommendations when we reach the second-to-last song
+                // This covers ALL play pathways: skipToNext, STATE_ENDED, queue tap, etc.
+                if (autoQueueEnabled && !isFetchingRecommendations
+                        && currentIndex >= queue.size() - 2 && song != null) {
+                    Log.d(TAG, "Pre-fetch triggered: currentIndex=" + currentIndex
+                            + ", queueSize=" + queue.size());
+                    fetchAutoQueueRecommendations(song);
                 }
             }
 
