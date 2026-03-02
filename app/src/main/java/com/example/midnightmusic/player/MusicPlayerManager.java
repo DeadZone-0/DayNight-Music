@@ -210,17 +210,16 @@ public class MusicPlayerManager {
                 return;
             }
 
+            // Reset stale fetch flag — any in-flight fetch from old song is irrelevant
+            isFetchingRecommendations = false;
+
             synchronized (queue) {
                 queue.clear();
                 queue.add(song);
                 currentIndex = 0;
             }
             playCurrentSong();
-
-            // Pre-fetch recommendations if auto-queue is enabled
-            if (autoQueueEnabled) {
-                fetchAutoQueueRecommendations(song);
-            }
+            // Pre-fetch is now handled centrally inside playCurrentSong()
         } catch (Exception e) {
             Log.e(TAG, "Error in playSong", e);
         }

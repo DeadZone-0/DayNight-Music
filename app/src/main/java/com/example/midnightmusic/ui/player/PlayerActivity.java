@@ -638,6 +638,15 @@ public class PlayerActivity extends AppCompatActivity
         super.onResume();
         // Refresh the queue when returning to this screen
         updateQueueDisplay();
+
+        // Sync wand button tint with auto-queue state
+        if (playerManager.isAutoQueueEnabled()) {
+            binding.btnSimilarSongs.setColorFilter(
+                    getResources().getColor(R.color.colorAccent, getTheme()));
+        } else {
+            binding.btnSimilarSongs.setColorFilter(
+                    getResources().getColor(R.color.white, getTheme()));
+        }
     }
 
     @Override
