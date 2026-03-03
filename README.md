@@ -32,7 +32,8 @@ Midnight Music is a beautiful dark-themed Android music streaming app with a mod
 ## Tech Stack
 
 - **Language**: Java
-- **API**: [Unofficial JioSaavn API]()
+- **API**: [Unofficial JioSaavn API](https://github.com/cyberboysumanjay/JioSaavnAPI)
+- **Recommendation API **: [LAST FM API](https://www.last.fm/api)
 
 ---
 
