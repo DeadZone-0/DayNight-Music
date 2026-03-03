@@ -1,4 +1,4 @@
-# Midnight Music
+# Daynight Music
 
 
 [![GitHub Stars](https://img.shields.io/github/stars/DeadZone-0/DayNight-Music?style=social)](https://github.com/DeadZone-0/DayNight-Music/stargazers)
@@ -50,5 +50,3 @@ Midnight Music is a beautiful dark-themed Android music streaming app with a mod
 
 ---
 
-# DayNight-Music
-# DayNight-Music
