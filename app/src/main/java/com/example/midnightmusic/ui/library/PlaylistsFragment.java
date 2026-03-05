@@ -20,11 +20,15 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.midnightmusic.R;
 import com.example.midnightmusic.data.db.AppDatabase;
 import com.example.midnightmusic.data.model.Playlist;
+import com.example.midnightmusic.data.model.Song;
 import com.example.midnightmusic.data.model.PlaylistWithSongs;
 import com.example.midnightmusic.databinding.FragmentPlaylistsBinding;
 import com.example.midnightmusic.ui.adapters.PlaylistAdapter;
 import com.example.midnightmusic.ui.playlist.PlaylistDetailActivity;
 import com.example.midnightmusic.ui.library.PlaylistViewModel;
+import com.example.midnightmusic.data.repository.PlaylistImportManager;
+import android.widget.ProgressBar;
+import android.widget.TextView;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -159,6 +163,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
 
     private void setupCreatePlaylistButton() {
         binding.fabCreatePlaylist.setOnClickListener(v -> showCreatePlaylistDialog());
+        binding.fabImportPlaylist.setOnClickListener(v -> showImportPlaylistDialog());
     }
 
     private void showCreatePlaylistDialog() {
@@ -192,7 +197,106 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
         dialog.show();
     }
 
-    // Reusing the same dialog layout for rename for consistency
+    private void showImportPlaylistDialog() {
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_import_playlist, null);
+        EditText editLink = dialogView.findViewById(R.id.edit_playlist_link);
+        View btnImport = dialogView.findViewById(R.id.btn_import);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel);
+        ProgressBar progressBar = dialogView.findViewById(R.id.import_progress);
+        TextView statusText = dialogView.findViewById(R.id.import_status_text);
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.PlaylistDialogStyle)
+                .setView(dialogView)
+                .setCancelable(false)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnImport.setOnClickListener(v -> {
+            String link = editLink.getText().toString().trim();
+            if (link.isEmpty())
+                return;
+
+            // Update UI to loading state
+            btnImport.setEnabled(false);
+            btnCancel.setEnabled(false);
+            editLink.setEnabled(false);
+            progressBar.setVisibility(View.VISIBLE);
+            statusText.setVisibility(View.VISIBLE);
+            statusText.setText("Parsing playlist...");
+
+            PlaylistImportManager.getInstance(requireContext())
+                    .importPlaylist(link, new PlaylistImportManager.ImportCallback() {
+                        @Override
+                        public void onProgress(int current, int total, String currentSongName) {
+                            progressBar.setMax(total);
+                            progressBar.setProgress(current);
+                            statusText.setText(String.format("Resolving %d/%d:\n%s", current, total, currentSongName));
+                        }
+
+                        @Override
+                        public void onSuccess(List<Song> songs) {
+                            dialog.dismiss();
+                            promptSaveImportedPlaylist(songs);
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            // Reset UI on error
+                            btnImport.setEnabled(true);
+                            btnCancel.setEnabled(true);
+                            editLink.setEnabled(true);
+                            progressBar.setVisibility(View.GONE);
+                            statusText.setVisibility(View.VISIBLE);
+                            statusText.setText("Error: " + e.getMessage());
+                            statusText.setTextColor(getResources().getColor(android.R.color.holo_red_dark,
+                                    requireContext().getTheme()));
+                        }
+                    });
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
+    private void promptSaveImportedPlaylist(List<Song> importedSongs) {
+        View dialogView = LayoutInflater.from(getContext())
+                .inflate(R.layout.dialog_create_playlist, null);
+        EditText editText = dialogView.findViewById(R.id.edit_playlist_name);
+        View btnCreate = dialogView.findViewById(R.id.btn_create);
+        View btnCancel = dialogView.findViewById(R.id.btn_cancel);
+
+        editText.setHint("Imported Playlist Name");
+
+        AlertDialog dialog = new AlertDialog.Builder(requireContext(), R.style.PlaylistDialogStyle)
+                .setView(dialogView)
+                .create();
+
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+        }
+
+        btnCreate.setOnClickListener(v -> {
+            String name = editText.getText().toString().trim();
+            if (!name.isEmpty()) {
+                dialog.dismiss();
+                // Use the new batch method - creates playlist, inserts all songs, toasts once
+                viewModel.createPlaylistAndImport(name, importedSongs, () -> {
+                    new android.os.Handler(android.os.Looper.getMainLooper())
+                            .post(() -> Toast.makeText(requireContext(),
+                                    "Imported " + importedSongs.size() + " songs to " + name,
+                                    Toast.LENGTH_SHORT).show());
+                });
+            }
+        });
+
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
+    }
+
     private void showRenamePlaylistDialog(PlaylistWithSongs playlistWithSongs) {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_create_playlist, null);

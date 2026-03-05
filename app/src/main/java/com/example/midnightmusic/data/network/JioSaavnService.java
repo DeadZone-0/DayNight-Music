@@ -11,30 +11,25 @@ public interface JioSaavnService {
 
     @GET("result/")
     Call<List<SongResponse>> searchSongs(
-        @Query("query") String query,
-        @Query("lyrics") boolean lyrics
-    );
+            @Query("query") String query,
+            @Query("lyrics") boolean lyrics);
 
     @GET("song/")
     Call<SongResponse> getSongDetails(
-        @Query("query") String songLink,
-        @Query("lyrics") boolean lyrics
-    );
+            @Query("query") String songLink,
+            @Query("lyrics") boolean lyrics);
 
     @GET("playlist/")
-    Call<List<SongResponse>> getPlaylist(
-        @Query("query") String playlistLink,
-        @Query("lyrics") boolean lyrics
-    );
+    Call<PlaylistResponse> getPlaylist(
+            @Query("query") String playlistLink,
+            @Query("lyrics") boolean lyrics);
 
     @GET("album/")
     Call<List<SongResponse>> getAlbum(
-        @Query("query") String albumLink,
-        @Query("lyrics") boolean lyrics
-    );
+            @Query("query") String albumLink,
+            @Query("lyrics") boolean lyrics);
 
     @GET("lyrics/")
     Call<SongResponse> getLyrics(
-        @Query("query") String songLink
-    );
-} 
+            @Query("query") String songLink);
+}

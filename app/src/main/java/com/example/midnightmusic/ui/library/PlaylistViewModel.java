@@ -59,6 +59,24 @@ public class PlaylistViewModel extends AndroidViewModel {
         repository.addSongToPlaylist(playlistId, song, null);
     }
 
+    /**
+     * Create a playlist and batch-import songs into it.
+     * Uses createPlaylist callback to get the ID, then batch-inserts all songs.
+     */
+    public void createPlaylistAndImport(String name, List<Song> songs, Runnable onComplete) {
+        repository.createPlaylist(name, new MusicRepository.PlaylistCallback() {
+            @Override
+            public void onSuccess(long playlistId) {
+                repository.importSongsToPlaylist(playlistId, songs, onComplete);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                // If playlist already exists, ignore
+            }
+        });
+    }
+
     public void removeSongFromPlaylist(long playlistId, Song song) {
         repository.removeSongFromPlaylist(playlistId, song.getId(), null);
     }

@@ -223,6 +223,28 @@ public class MusicRepository {
     }
 
     /**
+     * Batch import songs to a playlist in a single transaction.
+     * Songs are NOT added to recents (timestamp is set to 0).
+     */
+    public void importSongsToPlaylist(long playlistId, List<Song> songs, Runnable onComplete) {
+        diskIO.execute(() -> {
+            try {
+                for (Song song : songs) {
+                    // Set timestamp to 0 so imported songs don't appear in recents
+                    song.setTimestamp(0);
+                    songDao.insert(song);
+                    PlaylistSongCrossRef crossRef = new PlaylistSongCrossRef(playlistId, song.getId());
+                    playlistDao.insert(crossRef);
+                }
+                if (onComplete != null)
+                    onComplete.run();
+            } catch (Exception e) {
+                Log.e(TAG, "Error batch importing songs to playlist", e);
+            }
+        });
+    }
+
+    /**
      * Remove a song from a playlist
      */
     public void removeSongFromPlaylist(long playlistId, String songId, Runnable onComplete) {
@@ -349,7 +371,7 @@ public class MusicRepository {
      * Get similar tracks based on a track name and artist
      */
     public void getSimilarTracks(String trackName, String artistName, int limit,
-                                  RecommendationManager.RecommendationCallback callback) {
+            RecommendationManager.RecommendationCallback callback) {
         if (recommendationManager == null) {
             callback.onError(new IllegalStateException("Last.fm API key not set. Call setLastFmApiKey() first."));
             return;
@@ -372,7 +394,7 @@ public class MusicRepository {
      * Get top tracks by artist
      */
     public void getArtistTopTracks(String artist, int limit,
-                                    RecommendationManager.RecommendationCallback callback) {
+            RecommendationManager.RecommendationCallback callback) {
         if (recommendationManager == null) {
             callback.onError(new IllegalStateException("Last.fm API key not set."));
             return;

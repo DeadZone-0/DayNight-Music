@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:minWidth="320dp"
+    android:padding="28dp"
+    android:orientation="vertical"
+    android:background="@drawable/bg_rounded_dialog">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Import Playlist"
+        android:textColor="@color/text_primary"
+        android:textSize="22sp"
+        android:fontFamily="@font/poppins_bold"
+        android:layout_marginBottom="8dp" />
+        
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Paste a JioSaavn or public Spotify playlist link below to import."
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:fontFamily="@font/poppins"
+        android:layout_marginBottom="24dp" />
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        app:boxStrokeColor="@color/primary"
+        app:boxBackgroundColor="@color/card_background"
+        app:hintTextColor="@color/primary"
+        app:boxCornerRadiusTopStart="16dp"
+        app:boxCornerRadiusTopEnd="16dp"
+        app:boxCornerRadiusBottomStart="16dp"
+        app:boxCornerRadiusBottomEnd="16dp"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_playlist_link"
+            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:hint="Playlist Link"
+            android:importantForAutofill="no"
+            android:maxLines="2"
+            android:textColor="@color/text_primary"
+            android:textColorHint="@color/text_hint"
+            android:fontFamily="@font/poppins"
+            android:inputType="textUri"
+            android:paddingVertical="16dp" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <ProgressBar
+        android:id="@+id/import_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:visibility="gone"
+        style="?android:attr/progressBarStyleHorizontal" />
+        
+    <TextView
+        android:id="@+id/import_status_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Importing..."
+        android:visibility="gone"
+        android:textColor="@color/text_secondary"
+        android:textSize="12sp"
+        android:gravity="center"
+        android:fontFamily="@font/poppins"
+        android:layout_marginTop="8dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="end"
+        android:layout_marginTop="20dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_cancel"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="@string/cancel"
+            android:textColor="@color/text_secondary"
+            android:fontFamily="@font/poppins_medium"
+            android:layout_marginEnd="12dp"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            app:rippleColor="@color/ripple_light" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_import"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:text="Import"
+            android:textColor="@color/on_primary"
+            android:fontFamily="@font/poppins_medium"
+            app:backgroundTint="@color/primary"
+            app:cornerRadius="24dp"
+            app:rippleColor="@color/ripple_light" />
+    </LinearLayout>
+
+</LinearLayout>
