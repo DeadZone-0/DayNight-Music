@@ -51,3 +51,5 @@ Midnight Music is a beautiful dark-themed Android music streaming app with a mod
 
 ---
 
+![Alt](https://repobeats.axiom.co/api/embed/38fc07fc5a8a35fab5dddf2ac3b9d932b3878abe.svg "Repobeats analytics image")
+
