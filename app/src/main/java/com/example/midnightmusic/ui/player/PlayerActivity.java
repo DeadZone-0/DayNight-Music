@@ -60,6 +60,7 @@ public class PlayerActivity extends AppCompatActivity
     private boolean isQueueVisible = false;
     private final Executor executor = Executors.newSingleThreadExecutor();
     private static final String TAG = "PlayerActivity";
+    private Player.Listener playerListener;
     private AlertDialog currentPlaylistDialog = null;
 
     @Override
@@ -433,20 +434,14 @@ public class PlayerActivity extends AppCompatActivity
             }
         });
 
-        // Add a listener to handle playback completion and state changes
-        playerManager.getPlayer().addListener(new Player.Listener() {
+        // Add a listener for UI updates only — auto-next is handled centrally
+        // by MusicPlayerManager's own STATE_ENDED handler.
+        playerListener = new Player.Listener() {
             @Override
             public void onPlaybackStateChanged(int playbackState) {
-                // Update UI on the main thread
+                // Update UI on the main thread (no skipToNext — handled by MusicPlayerManager)
                 runOnUiThread(() -> {
-                    // Update play/pause button based on current playing state
                     updatePlayPauseButton(playerManager.isPlaying());
-
-                    // Handle playback completion
-                    if (playbackState == Player.STATE_ENDED) {
-                        // Automatically play next song when current one ends
-                        playerManager.skipToNext();
-                    }
                 });
             }
 
@@ -462,11 +457,11 @@ public class PlayerActivity extends AppCompatActivity
             public void onMediaItemTransition(MediaItem mediaItem, int reason) {
                 // Update UI on the main thread
                 runOnUiThread(() -> {
-                    // Make sure play/pause button is updated when song changes
                     updatePlayPauseButton(playerManager.isPlaying());
                 });
             }
-        });
+        };
+        playerManager.getPlayer().addListener(playerListener);
     }
 
     private void updatePlayPauseButton(boolean isPlaying) {
@@ -653,6 +648,11 @@ public class PlayerActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
+        // Remove the player listener to prevent listener accumulation
+        if (playerListener != null) {
+            playerManager.getPlayer().removeListener(playerListener);
+            playerListener = null;
+        }
         // Remove ourselves as the callback to avoid leaks
         playerManager.setCallback(null);
         // Dismiss dialog if showing
