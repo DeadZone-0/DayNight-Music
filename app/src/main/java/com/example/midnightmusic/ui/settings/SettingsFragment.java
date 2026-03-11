@@ -93,7 +93,7 @@ public class SettingsFragment extends Fragment {
                     .setTitle("App Info")
                     .setMessage("Midnight Music\nVersion: " + versionName + 
                             "\n\nA  music streaming app  with Spotify like ui." +
-                            "\n\n made by DeadZone-68")
+                            "\n\n made by DeadZone-0")
                     .setPositiveButton("OK", null)
                     .show();
         });
