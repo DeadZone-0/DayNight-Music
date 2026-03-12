@@ -40,7 +40,7 @@ Daynight Music is a beautiful dark-themed Android music streaming app with a mod
     </tr>
     <tr>
       <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-06-45-161_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-02-354_com.example.midnightmusic-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-02-354_com.example.midnightmusic-edit.jpg.png" width="200"/></td>
       <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-14-292_com.example.midnightmusic-edit.jpg" width="200"/></td>
     </tr>
     <tr>
