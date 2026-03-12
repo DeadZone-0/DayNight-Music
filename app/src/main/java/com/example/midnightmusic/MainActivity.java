@@ -4,6 +4,10 @@ import android.Manifest;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
@@ -20,8 +24,11 @@ import androidx.core.content.ContextCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
+import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.example.midnightmusic.data.model.Song;
 import com.example.midnightmusic.databinding.ActivityMainBinding;
 import com.example.midnightmusic.player.MusicPlayerManager;
@@ -227,11 +234,56 @@ public class MainActivity extends AppCompatActivity {
                     .placeholder(R.drawable.placeholder_song)
                     .into(binding.miniPlayer.imgMiniArt);
 
+            // Extract dominant color from album art for mini player tinting
+            Glide.with(this)
+                    .asBitmap()
+                    .load(song.getImageUrl())
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap bitmap, Transition<? super Bitmap> transition) {
+                            try {
+                                Palette.from(bitmap).generate(palette -> {
+                                    if (palette != null && binding != null && binding.miniPlayer != null) {
+                                        int dominantColor = palette.getDominantColor(
+                                                ContextCompat.getColor(MainActivity.this, R.color.white));
+                                        int mutedColor = palette.getMutedColor(dominantColor);
+
+                                        // Tint progress bar with dominant color
+                                        binding.miniPlayer.progressMini.setIndicatorColor(dominantColor);
+
+                                        // Create a subtle dark tinted background
+                                        int bgColor = blendColors(Color.parseColor("#1E1E1E"), mutedColor, 0.15f);
+                                        GradientDrawable bg = new GradientDrawable();
+                                        bg.setShape(GradientDrawable.RECTANGLE);
+                                        bg.setCornerRadius(dpToPx(16));
+                                        bg.setColor(bgColor);
+                                        bg.setStroke(1, Color.parseColor("#2A2A2A"));
+                                        binding.miniPlayer.miniPlayerContainer.setBackground(bg);
+                                    }
+                                });
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error extracting palette for mini player", e);
+                            }
+                        }
+                    });
+
             // Update play/pause button state
             updatePlayPauseButton(playerManager.isPlaying());
         } catch (Exception e) {
             Log.e(TAG, "Error updating mini player", e);
         }
+    }
+
+    private int blendColors(int color1, int color2, float ratio) {
+        float inverseRatio = 1f - ratio;
+        int r = (int) (Color.red(color1) * inverseRatio + Color.red(color2) * ratio);
+        int g = (int) (Color.green(color1) * inverseRatio + Color.green(color2) * ratio);
+        int b = (int) (Color.blue(color1) * inverseRatio + Color.blue(color2) * ratio);
+        return Color.rgb(r, g, b);
+    }
+
+    private float dpToPx(int dp) {
+        return dp * getResources().getDisplayMetrics().density;
     }
 
     private void updatePlayPauseButton(boolean isPlaying) {
@@ -244,7 +296,7 @@ public class MainActivity extends AppCompatActivity {
 
             if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniPlayPause != null) {
                 binding.miniPlayer.btnMiniPlayPause.setImageResource(
-                        isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                        isPlaying ? R.drawable.ic_pause_rounded : R.drawable.ic_play_rounded);
             }
         } catch (Exception e) {
             Log.e(TAG, "Error updating play/pause button", e);

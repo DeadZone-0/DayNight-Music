@@ -37,7 +37,7 @@ import com.example.midnightmusic.player.MusicPlayerManager;
  */
 public class MusicService extends Service {
     private static final String TAG = "MusicService";
-    private static final String CHANNEL_ID = "midnight_music_playback";
+    private static final String CHANNEL_ID = "daynight_music_playback";
     private static final int NOTIFICATION_ID = 1;
     private static final int POSITION_UPDATE_INTERVAL_MS = 1000;
 
@@ -144,7 +144,7 @@ public class MusicService extends Service {
     }
 
     private void setupMediaSession() {
-        mediaSession = new MediaSessionCompat(this, "MidnightMusic");
+        mediaSession = new MediaSessionCompat(this, "DaynightMusic");
         mediaSession.setCallback(new MediaSessionCompat.Callback() {
             @Override
             public void onPlay() {
@@ -265,7 +265,7 @@ public class MusicService extends Service {
     }
 
     private Notification buildNotification(Song song, boolean isPlaying, Bitmap albumArt) {
-        String title = song != null ? song.getSong() : "Midnight Music";
+        String title = song != null ? song.getSong() : "Daynight Music";
         String artist = song != null ? song.getSingers() : "";
 
         // PendingIntent to open the app when notification body is tapped

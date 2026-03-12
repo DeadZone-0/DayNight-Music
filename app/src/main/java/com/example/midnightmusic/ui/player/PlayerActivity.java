@@ -1,5 +1,6 @@
 package com.example.midnightmusic.ui.player;
 
+import android.animation.ObjectAnimator;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.os.Handler;
@@ -7,6 +8,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
+import android.view.animation.LinearInterpolator;
 import android.widget.SeekBar;
 import android.widget.PopupMenu;
 import android.view.MenuItem;
@@ -19,8 +21,6 @@ import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.lifecycle.LiveData;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.bitmap.RoundedCorners;
-import com.bumptech.glide.request.RequestOptions;
 import com.example.midnightmusic.R;
 import com.example.midnightmusic.data.model.Song;
 import com.example.midnightmusic.data.model.Playlist;
@@ -62,6 +62,7 @@ public class PlayerActivity extends AppCompatActivity
     private static final String TAG = "PlayerActivity";
     private Player.Listener playerListener;
     private AlertDialog currentPlaylistDialog = null;
+    private ObjectAnimator vinylAnimator;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -319,6 +320,9 @@ public class PlayerActivity extends AppCompatActivity
         // Set initial play/pause button state
         updatePlayPauseButton(playerManager.isPlaying());
 
+        // Enable marquee for long song titles
+        binding.txtSongName.setSelected(true);
+
         // Set initial shuffle and repeat button states
         updateShuffleButton(playerManager.isShuffleEnabled().getValue() != null &&
                 playerManager.isShuffleEnabled().getValue());
@@ -466,20 +470,26 @@ public class PlayerActivity extends AppCompatActivity
 
     private void updatePlayPauseButton(boolean isPlaying) {
         try {
+            // Sync vinyl disc animation with play state
+            updateVinylAnimation(isPlaying);
+
             // Apply animation for smoother transition
             binding.btnPlayPause.animate()
-                    .alpha(0.5f)
-                    .setDuration(100)
+                    .scaleX(0.85f)
+                    .scaleY(0.85f)
+                    .setDuration(80)
                     .withEndAction(() -> {
                         try {
-                            // Change the icon
+                            // Change the icon — use rounded icons
                             binding.btnPlayPause.setImageResource(
-                                    isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                                    isPlaying ? R.drawable.ic_pause_rounded : R.drawable.ic_play_rounded);
 
-                            // Fade back in
+                            // Scale back up with overshoot
                             binding.btnPlayPause.animate()
-                                    .alpha(1f)
-                                    .setDuration(100)
+                                    .scaleX(1f)
+                                    .scaleY(1f)
+                                    .setDuration(150)
+                                    .setInterpolator(new android.view.animation.OvershootInterpolator(2f))
                                     .start();
                         } catch (Exception e) {
                             Log.e(TAG, "Error updating play/pause button animation", e);
@@ -490,12 +500,12 @@ public class PlayerActivity extends AppCompatActivity
             Log.e(TAG, "Error in updatePlayPauseButton", e);
             // Fallback without animation
             binding.btnPlayPause.setImageResource(
-                    isPlaying ? R.drawable.ic_pause : R.drawable.ic_play);
+                    isPlaying ? R.drawable.ic_pause_rounded : R.drawable.ic_play_rounded);
         }
     }
 
     private void updateShuffleButton(boolean isShuffleEnabled) {
-        binding.btnShuffle.setImageResource(R.drawable.ic_shuffle);
+        binding.btnShuffle.setImageResource(R.drawable.ic_shuffle_rounded);
         binding.btnShuffle.setImageTintList(
                 android.content.res.ColorStateList.valueOf(
                         ContextCompat.getColor(this,
@@ -508,19 +518,19 @@ public class PlayerActivity extends AppCompatActivity
 
         switch (repeatMode) {
             case Player.REPEAT_MODE_ONE:
-                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_one);
+                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_one_rounded);
                 binding.btnRepeat.setImageTintList(
                         android.content.res.ColorStateList.valueOf(
                                 ContextCompat.getColor(this, R.color.accent)));
                 break;
             case Player.REPEAT_MODE_ALL:
-                binding.btnRepeat.setImageResource(R.drawable.ic_repeat);
+                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_rounded);
                 binding.btnRepeat.setImageTintList(
                         android.content.res.ColorStateList.valueOf(
                                 ContextCompat.getColor(this, R.color.accent)));
                 break;
             default: // REPEAT_MODE_OFF
-                binding.btnRepeat.setImageResource(R.drawable.ic_repeat);
+                binding.btnRepeat.setImageResource(R.drawable.ic_repeat_rounded);
                 binding.btnRepeat.setImageTintList(
                         android.content.res.ColorStateList.valueOf(
                                 ContextCompat.getColor(this, R.color.gray_light)));
@@ -550,11 +560,10 @@ public class PlayerActivity extends AppCompatActivity
         // Update queue (current song may have changed)
         updateQueueDisplay();
 
-        // Load album art
+        // Load album art (no RoundedCorners needed — ShapeableImageView handles it)
         Glide.with(this)
                 .asBitmap()
                 .load(song.getImageUrl())
-                .apply(RequestOptions.bitmapTransform(new RoundedCorners(16)))
                 .into(binding.imgAlbumArt);
 
         // Load blurred background
@@ -563,7 +572,7 @@ public class PlayerActivity extends AppCompatActivity
                 .transform(new BlurTransformation(25, 3))
                 .into(binding.backgroundImage);
 
-        // Extract dominant color for UI accents
+        // Extract dominant color for seekbar accent tint
         Glide.with(this)
                 .asBitmap()
                 .load(song.getImageUrl())
@@ -574,7 +583,8 @@ public class PlayerActivity extends AppCompatActivity
                         Palette.from(bitmap).generate(palette -> {
                             if (palette != null) {
                                 int dominantColor = palette.getDominantColor(
-                                        ContextCompat.getColor(PlayerActivity.this, R.color.accent));
+                                        ContextCompat.getColor(PlayerActivity.this, R.color.white));
+                                // Tint the seekbar progress layer
                                 binding.seekBar
                                         .setProgressTintList(android.content.res.ColorStateList.valueOf(dominantColor));
                                 binding.seekBar
@@ -584,10 +594,47 @@ public class PlayerActivity extends AppCompatActivity
                     }
                 });
 
+        // Start vinyl disc continuous rotation
+        startVinylRotation();
+
         // Update duration immediately if available
         long duration = playerManager.getDuration();
         if (duration > 0) {
             updateDuration(duration);
+        }
+    }
+
+    private void startVinylRotation() {
+        if (binding.imgVinylDisc == null) return;
+
+        // Cancel any existing animation
+        if (vinylAnimator != null) {
+            vinylAnimator.cancel();
+        }
+
+        vinylAnimator = ObjectAnimator.ofFloat(binding.imgVinylDisc, "rotation", 0f, 360f);
+        vinylAnimator.setDuration(8000);
+        vinylAnimator.setRepeatCount(ValueAnimator.INFINITE);
+        vinylAnimator.setInterpolator(new LinearInterpolator());
+
+        if (playerManager.isPlaying()) {
+            vinylAnimator.start();
+        }
+    }
+
+    private void updateVinylAnimation(boolean isPlaying) {
+        if (vinylAnimator == null) return;
+
+        if (isPlaying) {
+            if (vinylAnimator.isPaused()) {
+                vinylAnimator.resume();
+            } else if (!vinylAnimator.isRunning()) {
+                vinylAnimator.start();
+            }
+        } else {
+            if (vinylAnimator.isRunning()) {
+                vinylAnimator.pause();
+            }
         }
     }
 
@@ -648,6 +695,11 @@ public class PlayerActivity extends AppCompatActivity
     protected void onDestroy() {
         super.onDestroy();
         handler.removeCallbacksAndMessages(null);
+        // Stop vinyl animation
+        if (vinylAnimator != null) {
+            vinylAnimator.cancel();
+            vinylAnimator = null;
+        }
         // Remove the player listener to prevent listener accumulation
         if (playerListener != null) {
             playerManager.getPlayer().removeListener(playerListener);

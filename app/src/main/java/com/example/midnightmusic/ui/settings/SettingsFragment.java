@@ -26,7 +26,7 @@ import java.io.File;
 public class SettingsFragment extends Fragment {
     private FragmentSettingsBinding binding;
     private SharedPreferences sharedPreferences;
-    private static final String PREFS_NAME = "MidnightMusicPrefs";
+    private static final String PREFS_NAME = "DaynightMusicPrefs";
     private static final String DARK_MODE_KEY = "darkMode";
 
     @Nullable
@@ -91,7 +91,7 @@ public class SettingsFragment extends Fragment {
             String versionName = getAppVersion();
             new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
                     .setTitle("App Info")
-                    .setMessage("Midnight Music\nVersion: " + versionName + 
+                    .setMessage("Daynight Music\nVersion: " + versionName + 
                             "\n\nA  music streaming app  with Spotify like ui." +
                             "\n\n made by DeadZone-0")
                     .setPositiveButton("OK", null)

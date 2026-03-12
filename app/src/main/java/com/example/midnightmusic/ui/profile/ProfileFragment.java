@@ -43,7 +43,7 @@ public class ProfileFragment extends Fragment {
         // About button
         binding.aboutButton.setOnClickListener(v -> {
             Toast.makeText(requireContext(),
-                    "About Midnight Music",
+                    "About Daynight Music",
                     Toast.LENGTH_SHORT).show();
         });
 

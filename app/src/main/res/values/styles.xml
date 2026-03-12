@@ -8,6 +8,14 @@
         <item name="cornerFamily">rounded</item>
         <item name="cornerSize">16dp</item>
     </style>
+    <style name="ShapeAppearance.Album.Player" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">20dp</item>
+    </style>
+    <style name="ShapeAppearance.MiniPlayer.Art" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">10dp</item>
+    </style>
 
     <style name="Theme.MidnightMusic.NoActionBar" parent="Theme.MidnightMusic">
         <item name="windowActionBar">false</item>

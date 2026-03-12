@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Outer disc -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#1A1A1A" />
+            <size
+                android:width="280dp"
+                android:height="280dp" />
+        </shape>
+    </item>
+    <!-- Ring grooves - outer -->
+    <item
+        android:left="20dp"
+        android:top="20dp"
+        android:right="20dp"
+        android:bottom="20dp">
+        <shape android:shape="oval">
+            <solid android:color="#222222" />
+            <stroke
+                android:width="0.5dp"
+                android:color="#2A2A2A" />
+        </shape>
+    </item>
+    <!-- Ring grooves - mid outer -->
+    <item
+        android:left="40dp"
+        android:top="40dp"
+        android:right="40dp"
+        android:bottom="40dp">
+        <shape android:shape="oval">
+            <solid android:color="#1E1E1E" />
+            <stroke
+                android:width="0.5dp"
+                android:color="#282828" />
+        </shape>
+    </item>
+    <!-- Ring grooves - mid -->
+    <item
+        android:left="60dp"
+        android:top="60dp"
+        android:right="60dp"
+        android:bottom="60dp">
+        <shape android:shape="oval">
+            <solid android:color="#1C1C1C" />
+            <stroke
+                android:width="0.5dp"
+                android:color="#262626" />
+        </shape>
+    </item>
+    <!-- Ring grooves - mid inner -->
+    <item
+        android:left="80dp"
+        android:top="80dp"
+        android:right="80dp"
+        android:bottom="80dp">
+        <shape android:shape="oval">
+            <solid android:color="#1A1A1A" />
+            <stroke
+                android:width="0.5dp"
+                android:color="#242424" />
+        </shape>
+    </item>
+    <!-- Label area -->
+    <item
+        android:left="100dp"
+        android:top="100dp"
+        android:right="100dp"
+        android:bottom="100dp">
+        <shape android:shape="oval">
+            <solid android:color="#333333" />
+        </shape>
+    </item>
+    <!-- Center hole -->
+    <item
+        android:left="130dp"
+        android:top="130dp"
+        android:right="130dp"
+        android:bottom="130dp">
+        <shape android:shape="oval">
+            <solid android:color="#111111" />
+        </shape>
+    </item>
+</layer-list>

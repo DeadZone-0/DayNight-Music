@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Midnight Music</string>
+    <string name="app_name">Daynight Music</string>
 
     <!-- Player Controls -->
     <string name="play_pause">Play/Pause</string>

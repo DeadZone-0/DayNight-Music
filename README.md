@@ -6,7 +6,7 @@
 [![Issues](https://img.shields.io/github/issues/DeadZone-0/DayNight-Music)](https://github.com/DeadZone-0/DayNight-Music/issues)
 [![License](https://img.shields.io/github/license/DeadZone-0/DayNight-Music)](LICENSE)
 
-Midnight Music is a beautiful dark-themed Android music streaming app with a modern UI inspired by **Spotify**, developed during a vacation project. It uses an **unofficial JioSaavn API** to stream and display music content.
+Daynight Music is a beautiful dark-themed Android music streaming app with a modern UI inspired by **Spotify**, developed during a vacation project. It uses an **unofficial JioSaavn API** to stream and display music content.
 
 > **Note**: This project is for educational purposes only.
 

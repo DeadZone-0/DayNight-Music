@@ -3,30 +3,33 @@
      xmlns:android="http://schemas.android.com/apk/res/android"
      xmlns:app="http://schemas.android.com/apk/res-auto"
      xmlns:tools="http://schemas.android.com/tools"
-     android:layout_height="72dp"
+     android:layout_height="64dp"
      android:layout_width="match_parent"
      android:clickable="true"
      android:elevation="8dp"
-     android:outlineSpotShadowColor="?attr/colorPrimary"
      android:focusable="true"
      android:foreground="?attr/selectableItemBackground"
      android:background="@drawable/bg_mini_player"
-     android:layout_marginHorizontal="16dp"
-     android:layout_marginBottom="12dp"
+     android:layout_marginHorizontal="12dp"
+     android:layout_marginBottom="8dp"
+     android:clipChildren="false"
+     android:clipToPadding="false"
      android:id="@+id/miniPlayerContainer"
      android:animateLayoutChanges="true">
 
+    <!-- Album art - properly clipped inside rounded container -->
     <com.google.android.material.imageview.ShapeableImageView
-         android:layout_height="56dp"
-         android:layout_width="56dp"
+         android:layout_height="48dp"
+         android:layout_width="48dp"
          android:scaleType="centerCrop"
          app:layout_constraintTop_toTopOf="parent"
          app:layout_constraintStart_toStartOf="parent"
-         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small"
+         app:shapeAppearanceOverlay="@style/ShapeAppearance.MiniPlayer.Art"
          app:layout_constraintBottom_toBottomOf="parent"
-         android:layout_marginStart="12dp"
+         android:layout_marginStart="8dp"
          android:id="@+id/imgMiniArt" />
 
+    <!-- Song title -->
     <TextView
          android:layout_height="wrap_content"
          android:layout_width="0dp"
@@ -38,11 +41,14 @@
          app:layout_constraintBottom_toTopOf="@id/txtMiniArtist"
          tools:text="Song Title"
          app:layout_constraintVertical_chainStyle="packed"
-         android:textAppearance="@style/TextAppearance.MidnightMusic.BodyMedium"
+         android:textSize="14sp"
+         android:textColor="@color/white"
+         android:fontFamily="@font/poppins_semibold"
          app:layout_constraintTop_toTopOf="parent"
          android:maxLines="1"
          android:id="@+id/txtMiniTitle" />
 
+    <!-- Artist name -->
     <TextView
          android:layout_height="wrap_content"
          android:layout_width="0dp"
@@ -54,61 +60,72 @@
          android:layout_marginStart="12dp"
          tools:text="Artist Name"
          app:layout_constraintTop_toBottomOf="@id/txtMiniTitle"
-         android:textAppearance="@style/TextAppearance.MidnightMusic.BodySmall"
+         android:textSize="12sp"
+         android:textColor="#99FFFFFF"
+         android:fontFamily="@font/poppins_medium"
          android:maxLines="1"
          android:id="@+id/txtMiniArtist" />
 
+    <!-- Previous button -->
     <ImageButton
-         android:layout_height="40dp"
-         android:layout_width="40dp"
-         android:layout_marginEnd="4dp"
-         android:contentDescription="@string/play_pause"
-         android:src="@drawable/ic_skip_previous"
+         android:layout_height="36dp"
+         android:layout_width="36dp"
+         android:layout_marginEnd="2dp"
+         android:contentDescription="@string/previous"
+         android:src="@drawable/ic_skip_prev_rounded"
          android:background="?attr/selectableItemBackgroundBorderless"
+         android:scaleType="centerInside"
+         android:padding="6dp"
          app:layout_constraintTop_toTopOf="parent"
-         app:tint="?attr/colorOnSurface"
+         app:tint="@color/white"
          app:layout_constraintEnd_toStartOf="@id/btnMiniPlayPause"
          app:layout_constraintBottom_toBottomOf="parent"
          android:id="@+id/btnMiniPrevious" />
 
+    <!-- Play/Pause button -->
     <ImageButton
-         android:layout_height="48dp"
-         android:layout_width="48dp"
-         android:layout_marginEnd="4dp"
+         android:layout_height="42dp"
+         android:layout_width="42dp"
+         android:layout_marginEnd="2dp"
          android:contentDescription="@string/play_pause"
          android:background="?attr/selectableItemBackgroundBorderless"
-         tools:src="@drawable/ic_play"
+         android:scaleType="centerInside"
+         android:padding="6dp"
+         tools:src="@drawable/ic_play_rounded"
          app:layout_constraintTop_toTopOf="parent"
-         app:tint="?attr/colorOnSurface"
+         app:tint="@color/white"
          app:layout_constraintEnd_toStartOf="@id/btnMiniNext"
          app:layout_constraintBottom_toBottomOf="parent"
          android:id="@+id/btnMiniPlayPause" />
 
+    <!-- Next button -->
     <ImageButton
-         android:layout_height="40dp"
-         android:layout_width="40dp"
+         android:layout_height="36dp"
+         android:layout_width="36dp"
          android:layout_marginEnd="8dp"
-         android:contentDescription="@string/play_pause"
-         android:src="@drawable/ic_skip_next"
+         android:contentDescription="@string/next"
+         android:src="@drawable/ic_skip_next_rounded"
          android:background="?attr/selectableItemBackgroundBorderless"
+         android:scaleType="centerInside"
+         android:padding="6dp"
          app:layout_constraintTop_toTopOf="parent"
-         app:tint="?attr/colorOnSurface"
+         app:tint="@color/white"
          app:layout_constraintEnd_toEndOf="parent"
          app:layout_constraintBottom_toBottomOf="parent"
          android:id="@+id/btnMiniNext" />
 
-     <com.google.android.material.progressindicator.LinearProgressIndicator
-          android:layout_height="wrap_content"
-          android:layout_width="0dp"
-          app:layout_constraintBottom_toBottomOf="parent"
-          android:layout_marginHorizontal="16dp"
-          android:layout_marginBottom="8dp"
-          app:trackColor="@color/surface_variant"
-          app:layout_constraintStart_toStartOf="parent"
-          app:trackCornerRadius="12dp"
-          app:layout_constraintEnd_toEndOf="parent"
-          app:trackThickness="2dp"
-          android:id="@+id/progressMini"
-          app:indicatorColor="@color/primary" />
+    <!-- Progress bar - pinned to absolute bottom, outside the clipping area -->
+    <com.google.android.material.progressindicator.LinearProgressIndicator
+         android:layout_height="wrap_content"
+         android:layout_width="0dp"
+         app:layout_constraintBottom_toBottomOf="parent"
+         android:layout_marginHorizontal="0dp"
+         app:trackColor="#1AFFFFFF"
+         app:layout_constraintStart_toStartOf="parent"
+         app:trackCornerRadius="0dp"
+         app:layout_constraintEnd_toEndOf="parent"
+         app:trackThickness="3dp"
+         android:id="@+id/progressMini"
+         app:indicatorColor="@color/white" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -254,7 +254,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             
             if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniPlayPause != null) {
                 binding.miniPlayer.btnMiniPlayPause.setImageResource(
-                    isPlaying ? R.drawable.ic_pause : R.drawable.ic_play
+                    isPlaying ? R.drawable.ic_pause_rounded : R.drawable.ic_play_rounded
                 );
             }
         } catch (Exception e) {
