@@ -1,0 +1,13 @@
+# DayNight Music - Environment Setup
+# Copy this file to local.properties and fill in your API keys.
+# local.properties is gitignored and will NOT be committed.
+
+# Supabase (https://supabase.com/dashboard)
+supabase.url=YOUR_SUPABASE_PROJECT_URL
+supabase.anon.key=YOUR_SUPABASE_ANON_KEY
+
+# Last.fm (https://www.last.fm/api/account/create)
+lastfm.api.key=YOUR_LASTFM_API_KEY
+
+# Google OAuth (https://console.cloud.google.com → APIs & Services → Credentials)
+google.web.client.id=YOUR_GOOGLE_WEB_CLIENT_ID

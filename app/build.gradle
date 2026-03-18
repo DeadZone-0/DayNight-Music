@@ -2,12 +2,21 @@ plugins {
     id 'com.android.application'
 }
 
+// Load secrets from local.properties (gitignored)
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
 android {
-    namespace 'com.example.midnightmusic'
+    namespace 'com.midnight.music'
     compileSdk 34
 
     defaultConfig {
-        applicationId "com.example.midnightmusic"
+        applicationId "com.midnight.music"
         minSdk 24
         targetSdk 34
         versionCode 1
@@ -24,6 +33,12 @@ android {
                 ]
             }
         }
+
+        // Inject secrets from local.properties into BuildConfig and resources
+        buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('supabase.url', '')}\""
+        buildConfigField "String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty('supabase.anon.key', '')}\""
+        buildConfigField "String", "LASTFM_API_KEY", "\"${localProperties.getProperty('lastfm.api.key', '')}\""
+        resValue "string", "google_web_client_id", localProperties.getProperty('google.web.client.id', '')
     }
 
     buildTypes {
@@ -41,6 +56,7 @@ android {
 
     buildFeatures {
         viewBinding true
+        buildConfig true
     }
 }
 
@@ -87,6 +103,11 @@ dependencies {
     
     // Palette for dynamic colors
     implementation 'androidx.palette:palette:1.0.0'
+
+    // Supabase Auth & Sync
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
+    implementation "androidx.work:work-runtime:2.9.0"
+    implementation "com.google.android.gms:play-services-auth:21.0.0"
 
     // Testing
     testImplementation 'junit:junit:4.13.2'

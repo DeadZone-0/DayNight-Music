@@ -46,4 +46,17 @@
     <string name="your_playlists">Your Playlists</string>
     <string name="no_playlists_yet">No playlists yet</string>
     <string name="create_first_playlist">Create your first playlist to get started</string>
+
+    <!-- Auth UI -->
+    <string name="auth_login">Login</string>
+    <string name="auth_register">Register</string>
+    <string name="auth_create_account">Create Account</string>
+    <string name="auth_google_sign_in">Continue with Google</string>
+    <string name="auth_skip">Skip for now</string>
+    <string name="auth_sign_in_subtitle">Sign in to sync your playlists</string>
+    <string name="auth_nickname_title">Choose your nickname</string>
+    <string name="auth_nickname_subtitle">This is how you\'ll appear in DayNight Music</string>
+    <string name="auth_logout">Log out</string>
+    <string name="auth_sync_now">Sync Now</string>
+
 </resources>

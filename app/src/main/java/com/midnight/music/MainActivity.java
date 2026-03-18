@@ -1,0 +1,324 @@
+package com.midnight.music;
+
+import android.Manifest;
+import android.app.ActivityOptions;
+import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.content.res.ColorStateList;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
+import android.os.Build;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
+import android.util.Pair;
+import android.view.View;
+import android.view.animation.AnimationUtils;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+import androidx.navigation.NavController;
+import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.ui.NavigationUI;
+import androidx.palette.graphics.Palette;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
+import com.midnight.music.data.auth.SessionManager;
+import com.midnight.music.data.model.Song;
+import com.midnight.music.data.repository.CloudSyncWorker;
+import com.midnight.music.databinding.ActivityMainBinding;
+import com.midnight.music.player.MusicPlayerManager;
+import com.midnight.music.ui.player.PlayerActivity;
+
+public class MainActivity extends AppCompatActivity {
+    private static final String TAG = "MainActivity";
+    private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
+    private ActivityMainBinding binding;
+    private MusicPlayerManager playerManager;
+    private NavController navController;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        binding = ActivityMainBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+
+        setupNavigation();
+        setupMiniPlayer();
+        requestNotificationPermission();
+        scheduleCloudSync();
+    }
+
+    /**
+     * Request POST_NOTIFICATIONS permission on Android 13+ (API 33).
+     * Without this, the media notification will not appear.
+     */
+    private void requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                    != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this,
+                        new String[]{Manifest.permission.POST_NOTIFICATIONS},
+                        NOTIFICATION_PERMISSION_REQUEST_CODE);
+            }
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions,
+                                           @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == NOTIFICATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d(TAG, "Notification permission granted");
+            } else {
+                Log.w(TAG, "Notification permission denied â€” media controls won't show in notifications");
+            }
+        }
+    }
+
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Force update play state to ensure UI is consistent
+        if (playerManager != null) {
+            playerManager.forcePlayStateUpdate();
+
+            // Also update the mini player if there's a current song
+            Song currentSong = playerManager.getCurrentSong();
+            if (currentSong != null) {
+                updateMiniPlayer(currentSong);
+            }
+        }
+    }
+
+    private void setupNavigation() {
+        NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
+                .findFragmentById(R.id.nav_host_fragment);
+        navController = navHostFragment.getNavController();
+        NavigationUI.setupWithNavController(binding.bottomNav, navController);
+    }
+
+    private void setupMiniPlayer() {
+        playerManager = MusicPlayerManager.getInstance(this);
+
+        // Handle click on mini player to open full player with slide up animation
+        binding.miniPlayer.miniPlayerContainer.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PlayerActivity.class);
+
+            // Create transition pairs for shared elements
+            Pair<View, String> albumArt = Pair.create(
+                    binding.miniPlayer.imgMiniArt,
+                    "transition_album_art");
+            Pair<View, String> songTitle = Pair.create(
+                    binding.miniPlayer.txtMiniTitle,
+                    "transition_song_title");
+            Pair<View, String> artistName = Pair.create(
+                    binding.miniPlayer.txtMiniArtist,
+                    "transition_artist_name");
+            Pair<View, String> playButton = Pair.create(
+                    binding.miniPlayer.btnMiniPlayPause,
+                    "transition_play_button");
+
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(
+                    this, albumArt, songTitle, artistName, playButton);
+
+            startActivity(intent, options.toBundle());
+            overridePendingTransition(R.anim.slide_up, R.anim.stay);
+        });
+
+        // Set initial play/pause button state
+        updatePlayPauseButton(playerManager.isPlaying());
+
+        // Handle play/pause button with error handling
+        binding.miniPlayer.btnMiniPlayPause.setOnClickListener(v -> {
+            try {
+                // Update UI immediately for better responsiveness
+                boolean isCurrentlyPlaying = playerManager.isPlaying();
+                updatePlayPauseButton(!isCurrentlyPlaying);
+
+                // Then perform the actual toggle
+                playerManager.togglePlayPause();
+
+                // Apply click animation
+                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+            } catch (Exception e) {
+                Log.e(TAG, "Error toggling play/pause state", e);
+                // Revert to correct state if there was an error
+                updatePlayPauseButton(playerManager.isPlaying());
+            }
+        });
+
+        // Handle skip previous button with error handling
+        binding.miniPlayer.btnMiniPrevious.setOnClickListener(v -> {
+            try {
+                playerManager.skipToPrevious();
+                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+            } catch (Exception e) {
+                Log.e(TAG, "Error skipping to previous track", e);
+            }
+        });
+
+        // Handle skip next button with error handling
+        binding.miniPlayer.btnMiniNext.setOnClickListener(v -> {
+            try {
+                playerManager.skipToNext();
+                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+            } catch (Exception e) {
+                Log.e(TAG, "Error skipping to next track", e);
+            }
+        });
+
+        // Observe current song
+        playerManager.getCurrentSongLiveData().observe(this, this::updateMiniPlayer);
+
+        // Observe playback state
+        playerManager.getPlayingLiveData().observe(this, this::updatePlayPauseButton);
+
+        // Observe progress with error handling
+        playerManager.getCurrentPosition().observe(this, position -> {
+            try {
+                if (position != null && playerManager.getDuration() > 0) {
+                    int progress = (int) ((position * 100) / playerManager.getDuration());
+                    if (binding != null && binding.miniPlayer != null && binding.miniPlayer.progressMini != null) {
+                        binding.miniPlayer.progressMini.setProgress(progress);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error updating progress", e);
+            }
+        });
+
+        // Show/hide mini player based on current song
+        playerManager.getCurrentSongLiveData().observe(this, song -> {
+            try {
+                if (binding != null && binding.miniPlayer != null) {
+                    if (song != null && binding.miniPlayer.getRoot().getVisibility() != View.VISIBLE) {
+                        binding.miniPlayer.getRoot().setVisibility(View.VISIBLE);
+                        binding.miniPlayer.getRoot().startAnimation(
+                                AnimationUtils.loadAnimation(this, R.anim.slide_up));
+                    } else if (song == null) {
+                        binding.miniPlayer.getRoot().setVisibility(View.GONE);
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error updating miniplayer visibility", e);
+            }
+        });
+
+        // Add direct listener to player for immediate updates
+        playerManager.getPlayer().addListener(new androidx.media3.common.Player.Listener() {
+            @Override
+            public void onIsPlayingChanged(boolean isPlaying) {
+                // Update on main thread
+                mainHandler.post(() -> updatePlayPauseButton(isPlaying));
+            }
+        });
+    }
+
+    private void updateMiniPlayer(Song song) {
+        try {
+            if (song == null || binding == null || binding.miniPlayer == null)
+                return;
+
+            binding.miniPlayer.txtMiniTitle.setText(song.getSong());
+            binding.miniPlayer.txtMiniArtist.setText(song.getSingers());
+
+            Glide.with(this)
+                    .load(song.getImageUrl())
+                    .placeholder(R.drawable.placeholder_song)
+                    .into(binding.miniPlayer.imgMiniArt);
+
+            // Extract dominant color from album art for mini player tinting
+            Glide.with(this)
+                    .asBitmap()
+                    .load(song.getImageUrl())
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap bitmap, Transition<? super Bitmap> transition) {
+                            try {
+                                Palette.from(bitmap).generate(palette -> {
+                                    if (palette != null && binding != null && binding.miniPlayer != null) {
+                                        int dominantColor = palette.getDominantColor(
+                                                ContextCompat.getColor(MainActivity.this, R.color.white));
+                                        int mutedColor = palette.getMutedColor(dominantColor);
+
+                                        // Tint progress bar with dominant color
+                                        binding.miniPlayer.progressMini.setIndicatorColor(dominantColor);
+
+                                        // Create a subtle dark tinted background
+                                        int bgColor = blendColors(Color.parseColor("#1E1E1E"), mutedColor, 0.15f);
+                                        GradientDrawable bg = new GradientDrawable();
+                                        bg.setShape(GradientDrawable.RECTANGLE);
+                                        bg.setCornerRadius(dpToPx(16));
+                                        bg.setColor(bgColor);
+                                        bg.setStroke(1, Color.parseColor("#2A2A2A"));
+                                        binding.miniPlayer.miniPlayerContainer.setBackground(bg);
+                                    }
+                                });
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error extracting palette for mini player", e);
+                            }
+                        }
+                    });
+
+            // Update play/pause button state
+            updatePlayPauseButton(playerManager.isPlaying());
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating mini player", e);
+        }
+    }
+
+    private int blendColors(int color1, int color2, float ratio) {
+        float inverseRatio = 1f - ratio;
+        int r = (int) (Color.red(color1) * inverseRatio + Color.red(color2) * ratio);
+        int g = (int) (Color.green(color1) * inverseRatio + Color.green(color2) * ratio);
+        int b = (int) (Color.blue(color1) * inverseRatio + Color.blue(color2) * ratio);
+        return Color.rgb(r, g, b);
+    }
+
+    private float dpToPx(int dp) {
+        return dp * getResources().getDisplayMetrics().density;
+    }
+
+    private void updatePlayPauseButton(boolean isPlaying) {
+        try {
+            // Always run on main thread
+            if (Looper.myLooper() != Looper.getMainLooper()) {
+                mainHandler.post(() -> updatePlayPauseButton(isPlaying));
+                return;
+            }
+
+            if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniPlayPause != null) {
+                binding.miniPlayer.btnMiniPlayPause.setImageResource(
+                        isPlaying ? R.drawable.ic_pause_rounded : R.drawable.ic_play_rounded);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating play/pause button", e);
+        }
+    }
+
+    /**
+     * Schedule periodic cloud sync if the user is logged in.
+     */
+    private void scheduleCloudSync() {
+        if (SessionManager.getInstance(this).isLoggedIn()) {
+            CloudSyncWorker.schedulePeriodicSync(this);
+        }
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        mainHandler.removeCallbacksAndMessages(null);
+        binding = null;
+    }
+}

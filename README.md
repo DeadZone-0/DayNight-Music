@@ -1,4 +1,4 @@
-# Daynight Music
+﻿# Daynight Music
 
 
 [![GitHub Stars](https://img.shields.io/github/stars/DeadZone-0/DayNight-Music?style=social)](https://github.com/DeadZone-0/DayNight-Music/stargazers)
@@ -34,24 +34,24 @@ Daynight Music is a beautiful dark-themed Android music streaming app with a mod
 <div align="center">
   <table style="border: none;">
     <tr>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-05-19-656_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-05-39-361_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-06-18-452_com.example.midnightmusic-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-05-19-656_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-05-39-361_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-06-18-452_com.midnight.music-edit.jpg" width="200"/></td>
     </tr>
     <tr>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-06-45-161_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-02-354_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-14-292_com.example.midnightmusic-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-06-45-161_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-02-354_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-14-292_com.midnight.music-edit.jpg" width="200"/></td>
     </tr>
     <tr>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-42-614_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-08-13-148_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-08-56-089_com.example.midnightmusic-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-07-42-614_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-08-13-148_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-08-56-089_com.midnight.music-edit.jpg" width="200"/></td>
     </tr>
     <tr>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-09-22-357_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-09-48-138_com.example.midnightmusic-edit.jpg" width="200"/></td>
-      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-09-56-844_com.example.midnightmusic-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-09-22-357_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-09-48-138_com.midnight.music-edit.jpg" width="200"/></td>
+      <td align="center"><img src="Screenshots/Screenshot_2026-03-11-10-09-56-844_com.midnight.music-edit.jpg" width="200"/></td>
     </tr>
   </table>
 </div>

@@ -77,4 +77,11 @@
     <item name="fontFamily">@font/poppins</item>
   </style>
 
+  <!-- Dialog theme for nickname prompt -->
+  <style name="Theme.MidnightMusic.Dialog" parent="ThemeOverlay.Material3.MaterialAlertDialog">
+    <item name="colorPrimary">@color/primary</item>
+    <item name="colorSurface">@color/surface</item>
+    <item name="materialAlertDialogTitleTextStyle">@style/TextAppearance.MidnightMusic.BodyLarge</item>
+  </style>
+
 </resources>
