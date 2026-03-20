@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Expose the Downloads directory where DownloadManager saves the APK -->
+    <external-path name="external_downloads" path="Download/" />
+    
+    <!-- Fallback/Legacy external storage root just to be safe -->
+    <external-path name="external_files" path="." />
+</paths>

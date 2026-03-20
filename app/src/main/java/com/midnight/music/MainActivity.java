@@ -54,6 +54,10 @@ public class MainActivity extends AppCompatActivity {
         setupMiniPlayer();
         requestNotificationPermission();
         scheduleCloudSync();
+        
+        // Check for updates seamlessly on startup
+        com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(this);
+        updateManager.checkForUpdates(false);
     }
 
     /**

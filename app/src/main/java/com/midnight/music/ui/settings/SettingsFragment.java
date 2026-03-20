@@ -45,6 +45,7 @@ public class SettingsFragment extends Fragment {
         setupThemeToggle();
         setupClearCacheButton();
         setupAppInfoButton();
+        setupCheckUpdatesButton();
     }
 
     private void setupToolbar() {
@@ -97,6 +98,15 @@ public class SettingsFragment extends Fragment {
                     .setPositiveButton("OK", null)
                     .show();
         });
+    }
+
+    private void setupCheckUpdatesButton() {
+        if (binding.checkUpdatesButton != null) {
+            binding.checkUpdatesButton.setOnClickListener(v -> {
+                com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(requireActivity());
+                updateManager.checkForUpdates(true);
+            });
+        }
     }
 
     private String getAppVersion() {
