@@ -77,18 +77,11 @@ Daynight Music is a beautiful dark-themed Android music streaming app with a mod
 - [x] UI animation improvements
 - [x] Actually playing music
 - [x] Working homepage with trending
-<<<<<<< HEAD
 - [x] song recommendation and recommended queue
 - [x] playlist import from other sources
 - [x] sleep timer
 - [x] auto update feature from GitHub releases
-=======
-- [x]  song recommendation and recommended queue
-- [x]  playlist import from other sources
-- [x]  sleep timer
->>>>>>> 48828e6eea59f6003aaf6fa05034e0043b7438a8
 
 ---
 
 ![Alt](https://repobeats.axiom.co/api/embed/38fc07fc5a8a35fab5dddf2ac3b9d932b3878abe.svg "Repobeats analytics image")
-
