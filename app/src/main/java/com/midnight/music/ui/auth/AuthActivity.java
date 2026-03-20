@@ -112,7 +112,12 @@ public class AuthActivity extends AppCompatActivity {
                 
                 // If we get here, check for errors or PKCE code in query params
                 String errorDesc = data.getQueryParameter("error_description");
-                if (errorDesc != null) {
+                String errorCode = data.getQueryParameter("error_code");
+                
+                if ("otp_expired".equals(errorCode)) {
+                    // This happens when an email scanner pre-consumes the link, verifying it in the background
+                    Toast.makeText(this, "Account confirmed! Please log in.", Toast.LENGTH_LONG).show();
+                } else if (errorDesc != null) {
                     Toast.makeText(this, "Link Error: " + errorDesc.replace("+", " "), Toast.LENGTH_LONG).show();
                 } else {
                     // Show exactly what Supabase sent back so we can debug it
