@@ -8,6 +8,21 @@
     android:paddingHorizontal="16dp"
     android:paddingVertical="12dp">
 
+    <TextView
+        android:id="@+id/track_number"
+        android:layout_width="24dp"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="12dp"
+        android:gravity="center"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp"
+        android:visibility="gone"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        tools:text="1"
+        tools:visibility="visible" />
+
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/song_image"
         android:layout_width="56dp"
@@ -15,7 +30,7 @@
         android:scaleType="centerCrop"
         android:background="@android:color/transparent"
         android:src="@drawable/placeholder_song"
-        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintStart_toEndOf="@id/track_number"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />

@@ -119,12 +119,12 @@ public class DownloadManager {
                 if (tempFile.renameTo(outputFile)) {
                     String localPath = outputFile.getAbsolutePath();
 
-                    // Update database
+                    // Update database — use UPDATE instead of INSERT to avoid
+                    // REPLACE strategy cascade-deleting playlist cross-references
                     AppDatabase db = AppDatabase.getInstance(context);
                     song.setDownloaded(true);
                     song.setLocalPath(localPath);
-                    song.setTimestamp(System.currentTimeMillis());
-                    db.songDao().insert(song);
+                    db.songDao().updateDownloadStatus(song.getId(), true, localPath);
 
                     if (listener != null) {
                         mainHandler.post(() -> listener.onComplete(localPath));

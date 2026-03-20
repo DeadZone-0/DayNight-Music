@@ -30,6 +30,13 @@ public class SearchAdapter extends ListAdapter<Song, SearchAdapter.SongViewHolde
         void onToggleLike(Song song);
     }
 
+    private boolean showTrackNumbers = false;
+
+    public void setShowTrackNumbers(boolean showTrackNumbers) {
+        this.showTrackNumbers = showTrackNumbers;
+        notifyDataSetChanged();
+    }
+
     public SearchAdapter(SearchAdapterListener listener) {
         super(new SongDiffCallback());
         this.listener = listener;
@@ -45,10 +52,11 @@ public class SearchAdapter extends ListAdapter<Song, SearchAdapter.SongViewHolde
 
     @Override
     public void onBindViewHolder(@NonNull SongViewHolder holder, int position) {
-        holder.bind(getItem(position));
+        holder.bind(getItem(position), position);
     }
 
     class SongViewHolder extends RecyclerView.ViewHolder {
+        private final TextView trackNumber;
         private final ShapeableImageView songImage;
         private final TextView songName;
         private final TextView songInfo;
@@ -56,6 +64,7 @@ public class SearchAdapter extends ListAdapter<Song, SearchAdapter.SongViewHolde
 
         SongViewHolder(@NonNull View itemView) {
             super(itemView);
+            trackNumber = itemView.findViewById(R.id.track_number);
             songImage = itemView.findViewById(R.id.song_image);
             songName = itemView.findViewById(R.id.song_name);
             songInfo = itemView.findViewById(R.id.song_info);
@@ -71,9 +80,16 @@ public class SearchAdapter extends ListAdapter<Song, SearchAdapter.SongViewHolde
             moreOptions.setOnClickListener(this::showPopupMenu);
         }
 
-        void bind(Song song) {
+        void bind(Song song, int position) {
+            if (showTrackNumbers) {
+                trackNumber.setVisibility(View.VISIBLE);
+                trackNumber.setText(String.valueOf(position + 1));
+            } else {
+                trackNumber.setVisibility(View.GONE);
+            }
+            
             songName.setText(song.getSong());
-            songInfo.setText(String.format("%s â€¢ %s â€¢ %s",
+            songInfo.setText(String.format("%s • %s • %s",
                     song.getSingers(),
                     song.getAlbum(),
                     formatDuration(song.getDuration())));

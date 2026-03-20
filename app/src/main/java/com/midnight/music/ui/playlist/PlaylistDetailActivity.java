@@ -65,6 +65,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         setupViewModel();
         setupMiniPlayer();
         setupPlayAllButton();
+        setupActionButtons();
     }
 
     private void setupToolbar() {
@@ -77,6 +78,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
 
     private void setupRecyclerView() {
         adapter = new SearchAdapter(this);
+        adapter.setShowTrackNumbers(true); // Midnight Pulse: Show track numbers
         binding.songList.setAdapter(adapter);
         binding.songList.setLayoutManager(new LinearLayoutManager(this));
     }
@@ -225,6 +227,159 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         });
     }
 
+    private void setupActionButtons() {
+        // ──── Shuffle Button ────
+        if (binding.btnShuffle != null) {
+            binding.btnShuffle.setOnClickListener(v -> {
+                if (currentPlaylist != null && currentPlaylist.songs != null && !currentPlaylist.songs.isEmpty()) {
+                    List<Song> shuffled = new ArrayList<>(currentPlaylist.songs);
+                    java.util.Collections.shuffle(shuffled);
+                    playerManager.playQueue(shuffled, 0);
+                    Toast.makeText(this, "Shuffling " + currentPlaylist.playlist.getName(), Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "No songs to shuffle", Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        // ──── Download All Button ────
+        if (binding.btnDownload != null) {
+            binding.btnDownload.setOnClickListener(v -> {
+                if (currentPlaylist == null || currentPlaylist.songs == null || currentPlaylist.songs.isEmpty()) {
+                    Toast.makeText(this, "No songs to download", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                com.midnight.music.utils.DownloadManager dlManager =
+                        com.midnight.music.utils.DownloadManager.getInstance(this);
+
+                // Count how many songs still need downloading
+                int alreadyDownloaded = 0;
+                List<Song> toDownload = new ArrayList<>();
+                for (Song song : currentPlaylist.songs) {
+                    if (song.isDownloaded()) {
+                        alreadyDownloaded++;
+                    } else {
+                        toDownload.add(song);
+                    }
+                }
+
+                if (toDownload.isEmpty()) {
+                    Toast.makeText(this, "All songs already downloaded!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                Toast.makeText(this, "Downloading " + toDownload.size() + " songs...", Toast.LENGTH_SHORT).show();
+                binding.btnDownload.setEnabled(false);
+
+                final int[] completed = {0};
+                final int total = toDownload.size();
+
+                for (Song song : toDownload) {
+                    dlManager.downloadSong(song, new com.midnight.music.utils.DownloadManager.DownloadListener() {
+                        @Override
+                        public void onProgress(int percent) { /* Ignored for batch */ }
+
+                        @Override
+                        public void onComplete(String filePath) {
+                            completed[0]++;
+                            if (completed[0] >= total) {
+                                mainHandler.post(() -> {
+                                    binding.btnDownload.setEnabled(true);
+                                    Toast.makeText(PlaylistDetailActivity.this,
+                                            "All songs downloaded!", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            completed[0]++;
+                            Log.e(TAG, "Failed to download: " + song.getSong(), e);
+                            if (completed[0] >= total) {
+                                mainHandler.post(() -> {
+                                    binding.btnDownload.setEnabled(true);
+                                    Toast.makeText(PlaylistDetailActivity.this,
+                                            "Downloads finished (some may have failed)", Toast.LENGTH_SHORT).show();
+                                });
+                            }
+                        }
+                    });
+                }
+            });
+        }
+
+        // ──── More Options (Popup) ────
+        if (binding.btnMore != null) {
+            binding.btnMore.setOnClickListener(v -> {
+                android.widget.PopupMenu popup = new android.widget.PopupMenu(this, v);
+                popup.inflate(R.menu.menu_playlist_options);
+                popup.setOnMenuItemClickListener(item -> {
+                    int id = item.getItemId();
+                    if (id == R.id.action_rename_playlist) {
+                        showRenameDialog();
+                        return true;
+                    } else if (id == R.id.action_delete_playlist) {
+                        showDeleteConfirmation();
+                        return true;
+                    }
+                    return false;
+                });
+                popup.show();
+            });
+        }
+    }
+
+    private void showRenameDialog() {
+        if (currentPlaylist == null) return;
+
+        android.widget.EditText input = new android.widget.EditText(this);
+        input.setText(currentPlaylist.playlist.getName());
+        input.setSelectAllOnFocus(true);
+        input.setPadding(48, 32, 48, 16);
+
+        new AlertDialog.Builder(this)
+                .setTitle("Rename Playlist")
+                .setView(input)
+                .setPositiveButton("Save", (dialog, which) -> {
+                    String newName = input.getText().toString().trim();
+                    if (newName.isEmpty()) {
+                        Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+                    Executors.newSingleThreadExecutor().execute(() -> {
+                        AppDatabase.getInstance(this).playlistDao()
+                                .updatePlaylistName(playlistId, newName);
+                        mainHandler.post(() -> {
+                            binding.collapsingToolbar.setTitle(newName);
+                            Toast.makeText(this, "Playlist renamed", Toast.LENGTH_SHORT).show();
+                        });
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    private void showDeleteConfirmation() {
+        if (currentPlaylist == null) return;
+
+        new AlertDialog.Builder(this)
+                .setTitle("Delete Playlist")
+                .setMessage("Are you sure you want to delete \"" + currentPlaylist.playlist.getName() + "\"?")
+                .setPositiveButton("Delete", (dialog, which) -> {
+                    Executors.newSingleThreadExecutor().execute(() -> {
+                        AppDatabase.getInstance(this).playlistDao()
+                                .delete(currentPlaylist.playlist);
+                        mainHandler.post(() -> {
+                            Toast.makeText(this, "Playlist deleted", Toast.LENGTH_SHORT).show();
+                            finish();
+                        });
+                    });
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
     private void updateMiniPlayer(Song song) {
         try {
             if (song == null || binding == null || binding.miniPlayer == null) return;
@@ -267,6 +422,12 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
 
         // Store current playlist for later use
         this.currentPlaylist = playlist;
+
+        // Hide More Options (rename/delete) for the special "Liked Songs" playlist
+        boolean isLikedSongs = getString(R.string.liked_songs).equals(playlist.playlist.getName());
+        if (binding.btnMore != null) {
+            binding.btnMore.setVisibility(isLikedSongs ? View.GONE : View.VISIBLE);
+        }
 
         binding.collapsingToolbar.setTitle(playlist.playlist.getName());
         binding.songCount.setText(playlist.getFormattedSongCount());

@@ -3,8 +3,8 @@
     <!-- Brand Colors (Dark) -->
     <color name="primary">#BB86FC</color>
     <color name="primary_variant">#3700B3</color>
-    <color name="accent">#03DAC6</color>
-    <color name="accent_variant">#018786</color>
+    <color name="accent">#9C4DFF</color>
+    <color name="accent_variant">#B27BFF</color>
 
     <!-- Background & Surface (Dark) -->
     <color name="background">#0F0F0F</color>
@@ -31,16 +31,16 @@
     <color name="glass_background">#BB1A1A1A</color>
     <color name="glass_border">#33FFFFFF</color>
     <color name="ripple_light">#1AFFFFFF</color>
-    <color name="ripple_accent">#1A03DAC6</color>
+    <color name="ripple_accent">#1A9C4DFF</color>
 
     <!-- Gradient Tokens -->
     <color name="gradient_start">#7A2BE2</color>
-    <color name="gradient_end">#03DAC6</color>
+    <color name="gradient_end">#9C4DFF</color>
 
     <!-- Legacy / Compatibility Aliases (Dark) -->
     <color name="colorPrimary">#BB86FC</color>
     <color name="colorPrimaryDark">#3700B3</color>
-    <color name="colorAccent">#03DAC6</color>
+    <color name="colorAccent">#9C4DFF</color>
     <color name="colorBackground">#0F0F0F</color>
     <color name="colorSurface">#1A1A1A</color>
     <color name="colorBottomNav">#1A1A1A</color>
