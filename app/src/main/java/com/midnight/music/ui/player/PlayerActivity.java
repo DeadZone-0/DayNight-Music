@@ -231,7 +231,7 @@ public class PlayerActivity extends AppCompatActivity
                     });
         });
 
-        // Similar Songs button â€” toggle auto-queue recommendations
+        // Similar Songs button — toggle auto-queue recommendations
         binding.btnSimilarSongs.setOnClickListener(v -> {
             Song currentSong = playerManager.getCurrentSong();
             if (currentSong == null) {
@@ -245,7 +245,7 @@ public class PlayerActivity extends AppCompatActivity
                 playerManager.setAutoQueueEnabled(true);
                 binding.btnSimilarSongs.setColorFilter(
                         getResources().getColor(R.color.colorAccent, getTheme()));
-                Toast.makeText(this, "Adding similar songs to queueâ€¦", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Adding similar songs to queue…", Toast.LENGTH_SHORT).show();
 
                 // Trigger an immediate fetch
                 playerManager.fetchSimilarForQueue(currentSong);
@@ -257,6 +257,11 @@ public class PlayerActivity extends AppCompatActivity
                 Toast.makeText(this, "Similar songs disabled", Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Sleep Timer Button
+        if (binding.btnSleepTimer != null) {
+            binding.btnSleepTimer.setOnClickListener(v -> showSleepTimerDialog());
+        }
 
         binding.seekBar.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -384,6 +389,9 @@ public class PlayerActivity extends AppCompatActivity
 
         // Observe playback state
         playerManager.getPlayingLiveData().observe(this, this::updatePlayPauseButton);
+
+        // Observe sleep timer state
+        observeSleepTimerState();
 
         // Observe shuffle state
         playerManager.isShuffleEnabled().observe(this, this::updateShuffleButton);
@@ -597,6 +605,88 @@ public class PlayerActivity extends AppCompatActivity
                 vinylAnimator.pause();
             }
         }
+    }
+
+    private void observeSleepTimerState() {
+        com.midnight.music.utils.SleepTimerManager timer = com.midnight.music.utils.SleepTimerManager.getInstance();
+        timer.getRemainingTimeLiveData().observe(this, remainingMillis -> {
+            if (binding.btnSleepTimer == null) return;
+
+            if (timer.isActive()) {
+                // Tint to neon purple when active
+                binding.btnSleepTimer.setColorFilter(
+                        getResources().getColor(R.color.accent, getTheme()));
+                
+                // You could optionally show a tiny toast, but updating a text view is better. 
+                // For now, the illuminated icon is the primary visual indicator.
+            } else {
+                // White/Grey when inactive
+                binding.btnSleepTimer.setColorFilter(
+                        getResources().getColor(R.color.gray_light, getTheme()));
+            }
+        });
+    }
+
+    private void showSleepTimerDialog() {
+        com.google.android.material.bottomsheet.BottomSheetDialog dialog = 
+                new com.google.android.material.bottomsheet.BottomSheetDialog(this);
+        
+        com.midnight.music.utils.SleepTimerManager timer = com.midnight.music.utils.SleepTimerManager.getInstance();
+        
+        // Simple programmatic layout for the bottom sheet
+        android.widget.LinearLayout layout = new android.widget.LinearLayout(this);
+        layout.setOrientation(android.widget.LinearLayout.VERTICAL);
+        layout.setPadding(48, 48, 48, 64);
+        layout.setBackgroundResource(R.drawable.bg_rounded_top_corners);
+
+        android.widget.TextView title = new android.widget.TextView(this);
+        title.setText("Sleep Timer");
+        title.setTextSize(20);
+        title.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(this, R.font.poppins_bold));
+        title.setTextColor(ContextCompat.getColor(this, android.R.color.white));
+        layout.addView(title);
+
+        if (timer.isActive()) {
+            android.widget.TextView status = new android.widget.TextView(this);
+            String desc = timer.isEndOfTrackMode() ? "Pausing at end of track" 
+                    : "Pausing in " + com.midnight.music.utils.SleepTimerManager.formatRemaining(timer.getRemainingMillis());
+            status.setText("Currently active: " + desc);
+            status.setTextColor(ContextCompat.getColor(this, R.color.accent));
+            status.setPadding(0, 8, 0, 16);
+            layout.addView(status);
+        }
+
+        String[] options = {"Turn Off", "15 minutes", "30 minutes", "45 minutes", "1 hour", "End of Track"};
+        int[] minutes = {0, 15, 30, 45, 60, -1};
+
+        for (int i = 0; i < options.length; i++) {
+            android.widget.TextView item = new android.widget.TextView(this);
+            item.setText(options[i]);
+            item.setTextSize(16);
+            item.setTypeface(androidx.core.content.res.ResourcesCompat.getFont(this, R.font.poppins_medium));
+            item.setTextColor(ContextCompat.getColor(this, android.R.color.white));
+            item.setPadding(0, 32, 0, 32);
+            item.setBackgroundResource(android.R.drawable.list_selector_background);
+            
+            final int min = minutes[i];
+            item.setOnClickListener(v -> {
+                if (min == 0) {
+                    timer.cancel();
+                    Toast.makeText(this, "Sleep timer turned off", Toast.LENGTH_SHORT).show();
+                } else if (min == -1) {
+                    timer.startEndOfTrack();
+                    Toast.makeText(this, "Playback will pause after this song ends", Toast.LENGTH_SHORT).show();
+                } else {
+                    timer.startTimer(min, playerManager);
+                    Toast.makeText(this, "Sleep timer set for " + min + " minutes", Toast.LENGTH_SHORT).show();
+                }
+                dialog.dismiss();
+            });
+            layout.addView(item);
+        }
+
+        dialog.setContentView(layout);
+        dialog.show();
     }
 
     private void updateDuration(long duration) {

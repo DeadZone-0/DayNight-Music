@@ -76,6 +76,14 @@ public class MusicPlayerManager {
 
                     // Handle song end: auto-advance based on repeat mode
                     if (playbackState == Player.STATE_ENDED) {
+                        // Sleep Timer: if "end of track" mode is active, pause here
+                        com.midnight.music.utils.SleepTimerManager sleepTimer =
+                                com.midnight.music.utils.SleepTimerManager.getInstance();
+                        if (sleepTimer.shouldPauseAtEndOfTrack()) {
+                            // Sleep timer intercepted — don't advance
+                            return;
+                        }
+
                         synchronized (queue) {
                             if (repeatMode == Player.REPEAT_MODE_ONE) {
                                 // Replay the same song
@@ -94,7 +102,7 @@ public class MusicPlayerManager {
                                 Song currentSong = queue.get(currentIndex);
                                 fetchAutoQueueRecommendations(currentSong);
                             }
-                            // else: REPEAT_MODE_OFF, no auto-queue â€” stop naturally
+                            // else: REPEAT_MODE_OFF, no auto-queue — stop naturally
                         }
                     }
                 } catch (Exception e) {
