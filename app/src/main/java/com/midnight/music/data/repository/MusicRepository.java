@@ -175,7 +175,16 @@ public class MusicRepository {
         diskIO.execute(() -> {
             try {
                 song.setTimestamp(System.currentTimeMillis());
-                songDao.insert(song);
+                // Preserve existing flags before REPLACE overwrites them
+                Song existing = songDao.getSongByIdSync(song.getId());
+                if (existing != null) {
+                    song.setLiked(existing.isLiked());
+                    song.setDownloaded(existing.isDownloaded());
+                    song.setLocalPath(existing.getLocalPath());
+                    songDao.update(song);
+                } else {
+                    songDao.insert(song);
+                }
             } catch (Exception e) {
                 Log.e(TAG, "Error saving song", e);
             }
@@ -396,7 +405,16 @@ public class MusicRepository {
         // First ensure the song is in the database
         diskIO.execute(() -> {
             song.setTimestamp(System.currentTimeMillis());
-            songDao.insert(song);
+            // Preserve existing flags before REPLACE overwrites them
+            Song existing = songDao.getSongByIdSync(song.getId());
+            if (existing != null) {
+                song.setLiked(existing.isLiked());
+                song.setDownloaded(existing.isDownloaded());
+                song.setLocalPath(existing.getLocalPath());
+                songDao.update(song);
+            } else {
+                songDao.insert(song);
+            }
         });
         // Then start the download
         DownloadManager.getInstance(context).downloadSong(song, listener);

@@ -412,20 +412,9 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
             return;
         }
         
-        AppDatabase db = AppDatabase.getInstance(requireContext());
-        Executor executor = Executors.newSingleThreadExecutor();
-        
-        executor.execute(() -> {
-            try {
-                // Remove from playlist with additional null check
-                String songId = song.getId();
-                if (songId != null && !songId.isEmpty()) {
-                    db.playlistDao().removeSongFromPlaylist(playlistId, songId);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        // Use MusicRepository which correctly resets isLiked when removing from Liked Songs
+        com.midnight.music.data.repository.MusicRepository.getInstance(requireContext())
+                .removeSongFromPlaylist(playlistId, song.getId(), null);
     }
 
     private void addSongToPlaylist(long playlistId, Song song) {
@@ -434,38 +423,13 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
             return;
         }
         
-        AppDatabase db = AppDatabase.getInstance(requireContext());
-        Executor executor = Executors.newSingleThreadExecutor();
-        
-        executor.execute(() -> {
-            try {
-                // Make sure song exists in database with a valid ID
-                db.songDao().insert(song);
-                
-                // Add to playlist with additional null check
-                String songId = song.getId();
-                if (songId != null && !songId.isEmpty()) {
-                    PlaylistSongCrossRef crossRef = new PlaylistSongCrossRef(playlistId, songId);
-                    db.playlistDao().insert(crossRef);
-                    
-                    // Show toast on UI thread
-                    new Handler(Looper.getMainLooper()).post(() -> 
+        // Use MusicRepository which preserves isLiked/isDownloaded flags
+        com.midnight.music.data.repository.MusicRepository.getInstance(requireContext())
+                .addSongToPlaylist(playlistId, song, () -> {
+                    new Handler(Looper.getMainLooper()).post(() ->
                         Toast.makeText(requireContext(), R.string.song_added_to_playlist, Toast.LENGTH_SHORT).show()
                     );
-                } else {
-                    new Handler(Looper.getMainLooper()).post(() -> 
-                        Toast.makeText(requireContext(), "Error: Song ID is missing", Toast.LENGTH_SHORT).show()
-                    );
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                new Handler(Looper.getMainLooper()).post(() -> 
-                    Toast.makeText(requireContext(), 
-                        "Error adding to playlist: " + e.getMessage(), 
-                        Toast.LENGTH_SHORT).show()
-                );
-            }
-        });
+                });
     }
 
     @Override

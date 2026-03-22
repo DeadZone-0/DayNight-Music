@@ -592,20 +592,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             return;
         }
         
-        AppDatabase db = AppDatabase.getInstance(this);
-        Executor executor = Executors.newSingleThreadExecutor();
-        
-        executor.execute(() -> {
-            try {
-                // Remove from playlist with additional null check
-                String songId = song.getId();
-                if (songId != null && !songId.isEmpty()) {
-                    db.playlistDao().removeSongFromPlaylist(playlistId, songId);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
+        // Use MusicRepository which correctly resets isLiked when removing from Liked Songs
+        com.midnight.music.data.repository.MusicRepository.getInstance(this)
+                .removeSongFromPlaylist(playlistId, song.getId(), null);
     }
 
     private void addSongToPlaylist(long playlistId, Song song) {
@@ -614,29 +603,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             return;
         }
         
-        AppDatabase db = AppDatabase.getInstance(this);
-        Executor executor = Executors.newSingleThreadExecutor();
-        
-        executor.execute(() -> {
-            try {
-                // Make sure song exists in database with a valid ID
-                db.songDao().insert(song);
-                
-                // Add to playlist with additional null check
-                String songId = song.getId();
-                if (songId != null && !songId.isEmpty()) {
-                    PlaylistSongCrossRef crossRef = new PlaylistSongCrossRef(playlistId, songId);
-                    db.playlistDao().insert(crossRef);
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                new Handler(Looper.getMainLooper()).post(() -> 
-                    Toast.makeText(this, 
-                        "Error adding to playlist: " + e.getMessage(), 
-                        Toast.LENGTH_SHORT).show()
-                );
-            }
-        });
+        // Use MusicRepository which preserves isLiked/isDownloaded flags
+        com.midnight.music.data.repository.MusicRepository.getInstance(this)
+                .addSongToPlaylist(playlistId, song, null);
     }
 
     @Override

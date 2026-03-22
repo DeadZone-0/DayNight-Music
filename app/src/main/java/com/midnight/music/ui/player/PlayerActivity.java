@@ -48,13 +48,24 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+import com.midnight.music.data.network.LrcLibService;
+import com.midnight.music.data.network.LrcResponse;
+import com.midnight.music.utils.LrcParser;
+
 public class PlayerActivity extends AppCompatActivity
         implements QueueAdapter.QueueItemClickListener, MusicPlayerManager.PlayerCallback {
     private ActivityPlayerBinding binding;
     private MusicPlayerManager playerManager;
     private Handler handler;
     private boolean isUserSeeking = false;
-    private static final int UPDATE_INTERVAL = 1000; // 1 second
+    private static final int UPDATE_INTERVAL = 200; // 200ms for smooth lyrics sync
+    private static final long LYRICS_OFFSET_MS = 500; // show lyrics 500ms earlier
     private QueueAdapter queueAdapter;
     private Animation slideUpAnimation;
     private Animation slideDownAnimation;
@@ -64,6 +75,13 @@ public class PlayerActivity extends AppCompatActivity
     private Player.Listener playerListener;
     private AlertDialog currentPlaylistDialog = null;
     private ObjectAnimator vinylAnimator;
+
+    // Lyrics fields
+    private LyricsAdapter lyricsAdapter;
+    private boolean isLyricsVisible = false;
+    private List<LrcParser.LyricLine> currentLyrics;
+    private LrcLibService lrcLibService;
+    private String lastFetchedSongId = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -90,6 +108,7 @@ public class PlayerActivity extends AppCompatActivity
 
         setupUI();
         setupQueue();
+        setupLyrics();
         observePlayerState();
         startProgressUpdate();
 
@@ -217,15 +236,19 @@ public class PlayerActivity extends AppCompatActivity
                         public void onComplete(String filePath) {
                             currentSong.setDownloaded(true);
                             currentSong.setLocalPath(filePath);
-                            binding.btnDownload.setImageResource(R.drawable.ic_download_done);
-                            binding.btnDownload.setEnabled(true);
-                            Toast.makeText(PlayerActivity.this, "Downloaded!", Toast.LENGTH_SHORT).show();
+                            if (binding != null) {
+                                binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                                binding.btnDownload.setEnabled(true);
+                            }
+                            Toast.makeText(getApplicationContext(), "Downloaded!", Toast.LENGTH_SHORT).show();
                         }
 
                         @Override
                         public void onError(Exception e) {
-                            binding.btnDownload.setEnabled(true);
-                            Toast.makeText(PlayerActivity.this,
+                            if (binding != null) {
+                                binding.btnDownload.setEnabled(true);
+                            }
+                            Toast.makeText(getApplicationContext(),
                                     "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
                         }
                     });
@@ -314,6 +337,9 @@ public class PlayerActivity extends AppCompatActivity
 
         // Setup drag handle for closing
         binding.dragHandle.setOnClickListener(v -> hideQueue());
+
+        // Lyrics button
+        binding.btnLyrics.setOnClickListener(v -> toggleLyrics());
     }
 
     private void setupQueue() {
@@ -523,8 +549,25 @@ public class PlayerActivity extends AppCompatActivity
         binding.txtSongName.setText(song.getSong());
         binding.txtArtistName.setText(song.getSingers());
 
-        // Update like button
-        updateLikeButton(song.isLiked());
+        // Check actual like/download status from the database,
+        // since the in-memory Song from the API/queue may have stale flags
+        executor.execute(() -> {
+            Song dbSong = com.midnight.music.data.db.AppDatabase
+                    .getInstance(PlayerActivity.this).songDao().getSongByIdSync(song.getId());
+            if (dbSong != null) {
+                song.setLiked(dbSong.isLiked());
+                song.setDownloaded(dbSong.isDownloaded());
+                song.setLocalPath(dbSong.getLocalPath());
+            }
+            runOnUiThread(() -> {
+                updateLikeButton(song.isLiked());
+                if (song.isDownloaded()) {
+                    binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                } else {
+                    binding.btnDownload.setImageResource(R.drawable.ic_download_arrow);
+                }
+            });
+        });
 
         // Update queue (current song may have changed)
         updateQueueDisplay();
@@ -571,6 +614,9 @@ public class PlayerActivity extends AppCompatActivity
         if (duration > 0) {
             updateDuration(duration);
         }
+
+        // Fetch lyrics for the new song
+        fetchLyrics(song);
     }
 
     private void startVinylRotation() {
@@ -710,6 +756,12 @@ public class PlayerActivity extends AppCompatActivity
                     }
                 }
                 handler.postDelayed(this, UPDATE_INTERVAL);
+
+                // Sync lyrics if visible
+                if (isLyricsVisible && currentLyrics != null && !currentLyrics.isEmpty()) {
+                    long pos = playerManager.getPlayer().getCurrentPosition() + LYRICS_OFFSET_MS;
+                    syncLyrics(pos);
+                }
             }
         });
     }
@@ -767,7 +819,9 @@ public class PlayerActivity extends AppCompatActivity
 
     @Override
     public void onBackPressed() {
-        if (isQueueVisible) {
+        if (isLyricsVisible) {
+            hideLyrics();
+        } else if (isQueueVisible) {
             hideQueue();
         } else {
             super.onBackPressed();
@@ -788,12 +842,6 @@ public class PlayerActivity extends AppCompatActivity
             updateSongUI(song);
             // Make sure play state is updated when song changes
             updatePlayPauseButton(playerManager.isPlaying());
-            // Update download button icon
-            if (song != null && song.isDownloaded()) {
-                binding.btnDownload.setImageResource(R.drawable.ic_download_done);
-            } else {
-                binding.btnDownload.setImageResource(R.drawable.ic_download_arrow);
-            }
         });
     }
 
@@ -905,5 +953,185 @@ public class PlayerActivity extends AppCompatActivity
         });
     }
 
+    // ═══════════════════════════════════════
+    // LYRICS METHODS
+    // ═══════════════════════════════════════
+
+    private void setupLyrics() {
+        // Build LRCLib Retrofit client
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(LrcLibService.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        lrcLibService = retrofit.create(LrcLibService.class);
+
+        // Setup RecyclerView adapter
+        lyricsAdapter = new LyricsAdapter();
+        binding.lyricsRecyclerView.setAdapter(lyricsAdapter);
+        binding.lyricsRecyclerView.setLayoutManager(
+                new LinearLayoutManager(this));
+
+        // Close lyrics button
+        binding.btnCloseLyrics.setOnClickListener(v -> hideLyrics());
+    }
+
+    private void toggleLyrics() {
+        if (isLyricsVisible) {
+            hideLyrics();
+        } else {
+            showLyrics();
+        }
+    }
+
+    private void showLyrics() {
+        if (isLyricsVisible) return;
+
+        // If no lyrics loaded yet, fetch for current song
+        Song currentSong = playerManager.getCurrentSong();
+        if (currentLyrics == null && currentSong != null) {
+            fetchLyrics(currentSong);
+        }
+
+        binding.lyricsContainer.setVisibility(View.VISIBLE);
+        binding.lyricsContainer.setAlpha(0f);
+        binding.lyricsContainer.animate()
+                .alpha(1f)
+                .setDuration(300)
+                .start();
+
+        // Highlight lyrics button
+        binding.btnLyrics.setColorFilter(
+                getResources().getColor(R.color.accent, getTheme()));
+
+        isLyricsVisible = true;
+    }
+
+    private void hideLyrics() {
+        if (!isLyricsVisible) return;
+
+        binding.lyricsContainer.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> binding.lyricsContainer.setVisibility(View.GONE))
+                .start();
+
+        // Reset lyrics button tint
+        binding.btnLyrics.setColorFilter(
+                android.content.res.ColorStateList.valueOf(0xB3FFFFFF).getDefaultColor());
+
+        isLyricsVisible = false;
+    }
+
+    private void fetchLyrics(Song song) {
+        if (song == null) return;
+
+        // Don't re-fetch if we already have lyrics for this song
+        if (song.getId().equals(lastFetchedSongId) && currentLyrics != null) return;
+        lastFetchedSongId = song.getId();
+
+        // Reset state
+        currentLyrics = null;
+        lyricsAdapter.setLyrics(null);
+
+        // Show loading status
+        if (binding.txtLyricsStatus != null) {
+            binding.txtLyricsStatus.setText("Loading lyrics…");
+            binding.txtLyricsStatus.setVisibility(View.VISIBLE);
+            binding.lyricsRecyclerView.setVisibility(View.GONE);
+        }
+
+        String trackName = song.getSong();
+        String artistName = song.getSingers();
+
+        if (trackName == null || trackName.isEmpty()) return;
+
+        // Clean up track name (remove things in parentheses/brackets for better search)
+        String cleanTrack = trackName.replaceAll("\\s*[\\(\\[].*?[\\)\\]]", "").trim();
+        String cleanArtist = artistName != null ? artistName.split(",")[0].trim() : "";
+
+        Call<List<LrcResponse>> call = lrcLibService.searchLyrics(cleanTrack, cleanArtist);
+        call.enqueue(new Callback<List<LrcResponse>>() {
+            @Override
+            public void onResponse(Call<List<LrcResponse>> call, Response<List<LrcResponse>> response) {
+                runOnUiThread(() -> {
+                    if (binding == null) return; // Activity destroyed
+
+                    if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                        // Find the first result with synced lyrics
+                        LrcResponse bestMatch = null;
+                        for (LrcResponse lrc : response.body()) {
+                            if (lrc.hasSyncedLyrics()) {
+                                bestMatch = lrc;
+                                break;
+                            }
+                        }
+
+                        if (bestMatch != null && bestMatch.getSyncedLyrics() != null) {
+                            currentLyrics = LrcParser.parse(bestMatch.getSyncedLyrics());
+                            lyricsAdapter.setLyrics(currentLyrics);
+                            binding.txtLyricsStatus.setVisibility(View.GONE);
+                            binding.lyricsRecyclerView.setVisibility(View.VISIBLE);
+                        } else if (!response.body().isEmpty() && response.body().get(0).getPlainLyrics() != null) {
+                            // Fallback to plain lyrics (no sync)
+                            showPlainLyrics(response.body().get(0).getPlainLyrics());
+                        } else {
+                            showNoLyrics();
+                        }
+                    } else {
+                        showNoLyrics();
+                    }
+                });
+            }
+
+            @Override
+            public void onFailure(Call<List<LrcResponse>> call, Throwable t) {
+                runOnUiThread(() -> {
+                    if (binding == null) return;
+                    Log.e(TAG, "Failed to fetch lyrics", t);
+                    showNoLyrics();
+                });
+            }
+        });
+    }
+
+    private void showPlainLyrics(String plainLyrics) {
+        // Display plain lyrics as non-synced lines
+        List<LrcParser.LyricLine> lines = new java.util.ArrayList<>();
+        for (String line : plainLyrics.split("\n")) {
+            String trimmed = line.trim();
+            if (!trimmed.isEmpty()) {
+                lines.add(new LrcParser.LyricLine(0, trimmed));
+            }
+        }
+        currentLyrics = null; // No sync available
+        lyricsAdapter.setLyrics(lines);
+        binding.txtLyricsStatus.setVisibility(View.GONE);
+        binding.lyricsRecyclerView.setVisibility(View.VISIBLE);
+    }
+
+    private void showNoLyrics() {
+        if (binding == null) return;
+        binding.txtLyricsStatus.setText("No lyrics available for this song");
+        binding.txtLyricsStatus.setVisibility(View.VISIBLE);
+        binding.lyricsRecyclerView.setVisibility(View.GONE);
+    }
+
+    private void syncLyrics(long positionMs) {
+        if (currentLyrics == null || currentLyrics.isEmpty()) return;
+
+        int newIndex = LrcParser.findActiveLine(currentLyrics, positionMs);
+        int oldIndex = lyricsAdapter.getActiveIndex();
+
+        if (newIndex != oldIndex && newIndex >= 0) {
+            lyricsAdapter.setActiveIndex(newIndex);
+
+            // Smooth scroll to keep the active line in the upper third
+            LinearLayoutManager lm = (LinearLayoutManager) binding.lyricsRecyclerView.getLayoutManager();
+            if (lm != null) {
+                int offset = binding.lyricsRecyclerView.getHeight() / 3;
+                lm.scrollToPositionWithOffset(Math.max(0, newIndex - 1), offset);
+            }
+        }
+    }
 
 }
