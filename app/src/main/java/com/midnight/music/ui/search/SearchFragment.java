@@ -210,7 +210,7 @@ public class SearchFragment extends Fragment {
             @Override
             public void onFailure(@NonNull Call<List<SongResponse>> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                showError("Network error: " + t.getMessage());
+                showError("Network error");
             }
         });
     }
