@@ -25,8 +25,6 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.midnight.music.R;
 import com.midnight.music.databinding.FragmentSearchBinding;
-import com.midnight.music.models.Genre;
-import com.midnight.music.ui.adapters.GenreAdapter;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.network.JioSaavnService;
 import com.google.android.material.textfield.TextInputEditText;
@@ -49,14 +47,11 @@ import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
-public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClickListener {
+public class SearchFragment extends Fragment {
     private FragmentSearchBinding binding;
     private SearchAdapter searchAdapter;
-    private GenreAdapter genreAdapter;
     private JioSaavnService api;
     private RecyclerView.LayoutManager searchLayoutManager;
-    private RecyclerView.LayoutManager genreLayoutManager;
-    private boolean isShowingGenres = true;
 
     // This will track the currently displayed playlist dialog
     private AlertDialog currentPlaylistDialog = null;
@@ -85,23 +80,21 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
         setupLayoutManagers();
         setupSearchInput();
         setupRecyclerView();
-        setupGenresGrid();
-        showGenresView();
+        showInitialState();
     }
 
     private void setupLayoutManagers() {
         searchLayoutManager = new LinearLayoutManager(requireContext());
-        genreLayoutManager = new GridLayoutManager(requireContext(), 2);
     }
 
     private void setupSearchInput() {
-        TextInputEditText searchInput = binding.searchInput;
+        android.widget.EditText searchInput = binding.searchInput;
         searchInput.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_SEARCH ||
                 (event != null && event.getKeyCode() == KeyEvent.KEYCODE_ENTER)) {
                 String query = searchInput.getText().toString().trim();
                 if (query.isEmpty()) {
-                    showGenresView();
+                    showInitialState();
                 } else {
                     performSearch(query);
                 }
@@ -120,7 +113,7 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
             @Override
             public void afterTextChanged(Editable s) {
                 if (s.toString().trim().isEmpty()) {
-                    showGenresView();
+                    showInitialState();
                 }
             }
         });
@@ -186,7 +179,7 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
 
     private void performSearch(String query) {
         if (query == null || query.trim().isEmpty()) {
-            showGenresView();
+            showInitialState();
             return;
         }
 
@@ -225,15 +218,12 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
     private void showLoadingState() {
         binding.progressBar.setVisibility(View.VISIBLE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
-        binding.emptyState.setVisibility(View.GONE);
+        binding.emptyStateContainer.setVisibility(View.GONE);
     }
 
     private void showSearchResults(List<Song> songs) {
-        if (isShowingGenres) {
-            isShowingGenres = false;
-            binding.searchResultsRecycler.setLayoutManager(searchLayoutManager);
-            binding.searchResultsRecycler.setAdapter(searchAdapter);
-        }
+        binding.searchResultsRecycler.setLayoutManager(searchLayoutManager);
+        binding.searchResultsRecycler.setAdapter(searchAdapter);
         
         // Check if songs are liked in database before displaying
         AppDatabase db = AppDatabase.getInstance(requireContext());
@@ -241,7 +231,7 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
         
         // First show the results with default state (not liked)
         binding.progressBar.setVisibility(View.GONE);
-        binding.emptyState.setVisibility(View.GONE);
+        binding.emptyStateContainer.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.VISIBLE);
         searchAdapter.submitList(new ArrayList<>(songs));  // Use a copy
         
@@ -275,56 +265,27 @@ public class SearchFragment extends Fragment implements GenreAdapter.OnGenreClic
     private void showEmptyState() {
         binding.progressBar.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
-        binding.emptyState.setVisibility(View.VISIBLE);
+        binding.emptyStateContainer.setVisibility(View.VISIBLE);
         binding.emptyState.setText("No results found");
+        binding.emptyStateSubtitle.setText("Try searching for something else.");
+        binding.emptyStateIcon.setImageResource(R.drawable.ic_search); // Subtle search icon
     }
 
     private void showError(String message) {
         binding.progressBar.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
-        binding.emptyState.setVisibility(View.VISIBLE);
-        binding.emptyState.setText(message);
+        binding.emptyStateContainer.setVisibility(View.VISIBLE);
+        binding.emptyState.setText("Error");
+        binding.emptyStateSubtitle.setText(message);
     }
 
-    private void showGenresView() {
-        if (!isShowingGenres) {
-            isShowingGenres = true;
-            binding.searchResultsRecycler.setLayoutManager(genreLayoutManager);
-            binding.searchResultsRecycler.setAdapter(genreAdapter);
-        }
-        
+    private void showInitialState() {
         binding.progressBar.setVisibility(View.GONE);
-        binding.emptyState.setVisibility(View.GONE);
-        binding.searchResultsRecycler.setVisibility(View.VISIBLE);
-    }
-
-    private void setupGenresGrid() {
-        List<Genre> genres = getGenres();
-        genreAdapter = new GenreAdapter(genres, this);
-    }
-
-    private List<Genre> getGenres() {
-        List<Genre> genres = new ArrayList<>();
-        
-        genres.add(new Genre("1", "Pop", null, Color.parseColor("#FF1DB954")));
-        genres.add(new Genre("2", "Rock", null, Color.parseColor("#FF1E3264")));
-        genres.add(new Genre("3", "Hip-Hop", null, Color.parseColor("#FF7358FF")));
-        genres.add(new Genre("4", "Jazz", null, Color.parseColor("#FFE8115B")));
-        genres.add(new Genre("5", "Electronic", null, Color.parseColor("#FF148A08")));
-        genres.add(new Genre("6", "Classical", null, Color.parseColor("#FF8400E7")));
-        genres.add(new Genre("7", "R&B", null, Color.parseColor("#FFE91429")));
-        genres.add(new Genre("8", "Metal", null, Color.parseColor("#FF777777")));
-        genres.add(new Genre("9", "Folk", null, Color.parseColor("#FF537AA1")));
-        genres.add(new Genre("10", "Latin", null, Color.parseColor("#FFBC5900")));
-        genres.add(new Genre("11", "Indie", null, Color.parseColor("#FF006450")));
-        genres.add(new Genre("12", "Podcasts", null, Color.parseColor("#FF8C1932")));
-        
-        return genres;
-    }
-
-    @Override
-    public void onGenreClick(Genre genre) {
-        performSearch(genre.getName());
+        binding.searchResultsRecycler.setVisibility(View.GONE);
+        binding.emptyStateContainer.setVisibility(View.VISIBLE);
+        binding.emptyState.setText("Find your next favorite song");
+        binding.emptyStateSubtitle.setText("Search for songs, artists, or full albums to explore new music.");
+        binding.emptyStateIcon.setImageResource(R.drawable.ic_search);
     }
 
     private void showPlaylistsDialog(Song song) {

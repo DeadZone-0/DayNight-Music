@@ -10,113 +10,125 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="@android:color/transparent"
+        android:paddingTop="24dp"
         app:elevation="0dp">
 
         <androidx.appcompat.widget.Toolbar
             android:id="@+id/toolbar"
             android:layout_width="match_parent"
-            android:layout_height="?attr/actionBarSize"
-            android:background="@android:color/transparent">
+            android:layout_height="wrap_content"
+            android:background="@android:color/transparent"
+            app:contentInsetStart="0dp"
+            app:contentInsetEnd="0dp">
 
-            <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/search_input_layout"
-                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+            <!-- Sleek Search Bar Card -->
+            <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="16dp"
-                android:hint="Search songs..."
-                app:boxBackgroundColor="@color/surface"
-                app:boxCornerRadiusBottomEnd="24dp"
-                app:boxCornerRadiusBottomStart="24dp"
-                app:boxCornerRadiusTopEnd="24dp"
-                app:boxCornerRadiusTopStart="24dp"
-                app:boxStrokeColor="@color/primary"
-                app:hintTextColor="@color/primary"
-                app:startIconDrawable="@drawable/ic_search"
-                app:startIconTint="@color/text_secondary">
+                android:layout_height="52dp"
+                android:layout_marginHorizontal="20dp"
+                android:layout_marginVertical="8dp"
+                app:cardBackgroundColor="@color/surface"
+                app:cardCornerRadius="26dp"
+                app:cardElevation="0dp">
 
-                <com.google.android.material.textfield.TextInputEditText
-                    android:id="@+id/search_input"
+                <LinearLayout
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:fontFamily="@font/poppins"
-                    android:imeOptions="actionSearch"
-                    android:inputType="text"
-                    android:maxLines="1"
-                    android:paddingTop="12dp"
-                    android:paddingBottom="12dp"
-                    android:textColor="@color/text_primary"
-                    android:textColorHint="@color/text_secondary" />
+                    android:layout_height="match_parent"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:paddingHorizontal="16dp">
 
-            </com.google.android.material.textfield.TextInputLayout>
+                    <ImageView
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_search"
+                        app:tint="@color/text_secondary" />
+
+                    <EditText
+                        android:id="@+id/search_input"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="1"
+                        android:layout_marginStart="12dp"
+                        android:background="@null"
+                        android:fontFamily="@font/poppins"
+                        android:hint="Search songs, artists, or albums"
+                        android:imeOptions="actionSearch"
+                        android:inputType="text"
+                        android:maxLines="1"
+                        android:textColor="@color/text_primary"
+                        android:textColorHint="@color/text_secondary"
+                        android:textSize="15sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
         </androidx.appcompat.widget.Toolbar>
     </com.google.android.material.appbar.AppBarLayout>
 
-    <androidx.core.widget.NestedScrollView
+    <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <LinearLayout
+        <!-- Search Results -->
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/search_results_recycler"
             android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingHorizontal="8dp"
+            android:paddingTop="8dp"
+            android:paddingBottom="100dp"
+            android:visibility="gone" />
+
+        <!-- Loading State -->
+        <ProgressBar
+            android:id="@+id/progress_bar"
+            android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:orientation="vertical">
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/primary"
+            android:visibility="gone" />
 
-            <!-- Recent Searches -->
-            <TextView
-                android:id="@+id/recent_searches_title"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginStart="20dp"
-                android:layout_marginTop="16dp"
-                android:text="Recent Searches"
-                android:textColor="@color/text_primary"
-                android:textSize="20sp"
-                android:fontFamily="@font/poppins_bold"
-                android:visibility="gone" />
+        <!-- Empty / Initial State Container -->
+        <LinearLayout
+            android:id="@+id/empty_state_container"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:padding="32dp">
 
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/recent_searches_recycler"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp"
-                android:visibility="gone" />
+            <!-- Aesthetic Placeholder Icon -->
+            <ImageView
+                android:id="@+id/empty_state_icon"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:src="@drawable/ic_search"
+                app:tint="@color/text_secondary"
+                android:alpha="0.2"
+                android:layout_marginBottom="24dp" />
 
-            <!-- Search Results -->
-            <androidx.recyclerview.widget.RecyclerView
-                android:id="@+id/search_results_recycler"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:clipToPadding="false"
-                android:paddingHorizontal="16dp"
-                android:paddingVertical="8dp" />
-
-            <!-- Loading State -->
-            <ProgressBar
-                android:id="@+id/progress_bar"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="48dp"
-                android:indeterminateTint="@color/primary"
-                android:visibility="gone" />
-
-            <!-- Empty State -->
             <TextView
                 android:id="@+id/empty_state"
-                android:layout_width="wrap_content"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="center"
-                android:layout_marginTop="48dp"
-                android:text="No results found"
+                android:gravity="center"
+                android:text="Find your next favorite song"
+                android:textColor="@color/text_primary"
+                android:textSize="18sp"
+                android:fontFamily="@font/poppins_bold" />
+                
+            <TextView
+                android:id="@+id/empty_state_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:gravity="center"
+                android:text="Search for songs, artists, or full albums to explore new music."
                 android:textColor="@color/text_secondary"
-                android:textSize="16sp"
-                android:fontFamily="@font/poppins_medium"
-                android:visibility="gone" />
+                android:textSize="14sp"
+                android:fontFamily="@font/poppins" />
 
         </LinearLayout>
-    </androidx.core.widget.NestedScrollView>
-
+    </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
