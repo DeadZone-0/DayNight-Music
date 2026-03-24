@@ -5,4 +5,7 @@
     
     <!-- Fallback/Legacy external storage root just to be safe -->
     <external-path name="external_files" path="." />
+    
+    <!-- Expose app-specific external files directory for reliable APK updates -->
+    <external-files-path name="app_external_files" path="." />
 </paths>

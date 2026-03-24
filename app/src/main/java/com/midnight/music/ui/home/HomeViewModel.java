@@ -128,6 +128,8 @@ public class HomeViewModel extends AndroidViewModel {
             List<Song> final15 = allResults.size() > 15 ? allResults.subList(0, 15) : allResults;
             Log.d(TAG, "Merged " + final15.size() + " recommendations from multiple seeds");
             recommendations.postValue(new ArrayList<>(final15));
+        } else {
+            recommendations.postValue(new ArrayList<>());
         }
     }
 
@@ -146,6 +148,7 @@ public class HomeViewModel extends AndroidViewModel {
                     @Override
                     public void onError(Exception e) {
                         Log.e(TAG, "Trending tracks failed", e);
+                        trending.postValue(null);
                     }
                 });
     }

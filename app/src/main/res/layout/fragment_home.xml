@@ -197,6 +197,18 @@
             tools:itemCount="5"
             tools:listitem="@layout/item_song_card" />
 
+        <TextView
+            android:id="@+id/recommended_empty_text"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginHorizontal="20dp"
+            android:layout_marginTop="12dp"
+            android:gravity="center"
+            android:text="Keep listening to get recommendations"
+            android:textColor="@color/text_secondary"
+            android:fontFamily="@font/poppins_medium"
+            android:visibility="gone" />
+
         <!-- Trending section -->
         <TextView
             android:id="@+id/new_releases_title"
@@ -232,6 +244,31 @@
             android:paddingHorizontal="12dp"
             tools:itemCount="5"
             tools:listitem="@layout/item_song_card" />
+            
+        <LinearLayout
+            android:id="@+id/trending_error_state"
+            android:layout_width="match_parent"
+            android:layout_height="100dp"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="100dp"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+
+            <ImageView
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:src="@drawable/ic_search"
+                app:tint="@color/text_secondary" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="No internet connection"
+                android:fontFamily="@font/poppins_medium"
+                android:textColor="@color/text_secondary" />
+        </LinearLayout>
 
     </LinearLayout>
 </androidx.core.widget.NestedScrollView>

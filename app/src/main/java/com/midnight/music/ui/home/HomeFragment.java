@@ -150,10 +150,12 @@ public class HomeFragment extends Fragment implements
                 setVisible(binding.recommendedTitle, true);
                 setVisible(binding.recommendedSubtitle, true);
                 setVisible(binding.recommendedRecycler, true);
+                setVisible(binding.recommendedEmptyText, false);
             } else {
-                setVisible(binding.recommendedTitle, false);
+                setVisible(binding.recommendedTitle, true);
                 setVisible(binding.recommendedSubtitle, false);
                 setVisible(binding.recommendedRecycler, false);
+                setVisible(binding.recommendedEmptyText, true);
             }
         });
 
@@ -165,6 +167,12 @@ public class HomeFragment extends Fragment implements
                 setVisible(binding.newReleasesTitle, true);
                 setVisible(binding.newReleasesSubtitle, true);
                 setVisible(binding.newReleasesRecycler, true);
+                setVisible(binding.trendingErrorState, false);
+            } else if (songs == null) {
+                setVisible(binding.newReleasesTitle, true);
+                setVisible(binding.newReleasesSubtitle, false);
+                setVisible(binding.newReleasesRecycler, false);
+                setVisible(binding.trendingErrorState, true);
             }
         });
     }

@@ -218,11 +218,9 @@ public class PlayerActivity extends AppCompatActivity
             }
 
             if (currentSong.isDownloaded()) {
-                Toast.makeText(this, "Already downloaded", Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            Toast.makeText(this, "Downloading...", Toast.LENGTH_SHORT).show();
             binding.btnDownload.setEnabled(false);
 
             com.midnight.music.utils.DownloadManager.getInstance(this)
@@ -240,7 +238,6 @@ public class PlayerActivity extends AppCompatActivity
                                 binding.btnDownload.setImageResource(R.drawable.ic_download_done);
                                 binding.btnDownload.setEnabled(true);
                             }
-                            Toast.makeText(getApplicationContext(), "Downloaded!", Toast.LENGTH_SHORT).show();
                         }
 
                         @Override

@@ -219,8 +219,6 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             if (currentPlaylist != null && currentPlaylist.songs != null && !currentPlaylist.songs.isEmpty()) {
                 // Play all songs from the playlist from the beginning
                 playerManager.playQueue(currentPlaylist.songs, 0);
-                Toast.makeText(this, "Playing all songs from " + currentPlaylist.playlist.getName(), 
-                               Toast.LENGTH_SHORT).show();
             } else {
                 Toast.makeText(this, "No songs in playlist", Toast.LENGTH_SHORT).show();
             }
@@ -235,7 +233,6 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                     List<Song> shuffled = new ArrayList<>(currentPlaylist.songs);
                     java.util.Collections.shuffle(shuffled);
                     playerManager.playQueue(shuffled, 0);
-                    Toast.makeText(this, "Shuffling " + currentPlaylist.playlist.getName(), Toast.LENGTH_SHORT).show();
                 } else {
                     Toast.makeText(this, "No songs to shuffle", Toast.LENGTH_SHORT).show();
                 }
@@ -265,11 +262,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                 }
 
                 if (toDownload.isEmpty()) {
-                    Toast.makeText(this, "All songs already downloaded!", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                Toast.makeText(this, "Downloading " + toDownload.size() + " songs...", Toast.LENGTH_SHORT).show();
                 binding.btnDownload.setEnabled(false);
 
                 final int[] completed = {0};
@@ -499,7 +494,6 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
 
         // Play all songs in the playlist, starting from the selected song
         MusicPlayerManager.getInstance(this).playQueue(currentPlaylist.songs, startIndex);
-        Toast.makeText(this, "Playing from " + currentPlaylist.playlist.getName(), Toast.LENGTH_SHORT).show();
     }
 
     @Override
@@ -577,7 +571,6 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                         }
                     }
                     dialog.dismiss();
-                    Toast.makeText(this, "Playlists updated", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
             
@@ -611,7 +604,6 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
     @Override
     public void onQueueNext(Song song) {
         MusicPlayerManager.getInstance(this).addToQueue(song);
-        Toast.makeText(this, "Added to queue", Toast.LENGTH_SHORT).show();
     }
 
     @Override

@@ -147,10 +147,20 @@ public class UpdateManager {
 
         // 1. Create DownloadManager Request
         String fileName = "DayNightMusic-" + versionName + ".apk";
+        
+        // Remove old file to prevent renaming (e.g., DayNightMusic-1.0-1.apk)
+        File downloadDir = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (downloadDir != null) {
+            File existingFile = new File(downloadDir, fileName);
+            if (existingFile.exists()) {
+                existingFile.delete();
+            }
+        }
+
         DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url));
         request.setTitle("DayNight Music Update");
         request.setDescription("Downloading version " + versionName);
-        request.setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, fileName);
+        request.setDestinationInExternalFilesDir(activity, Environment.DIRECTORY_DOWNLOADS, fileName);
         request.setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
 
         // 2. Enqueue the download
@@ -185,29 +195,16 @@ public class UpdateManager {
     }
 
     private void installApk(long downloadId, String fileName) {
-        DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
-        if (manager == null) return;
+        File downloadDir = activity.getExternalFilesDir(Environment.DIRECTORY_DOWNLOADS);
+        if (downloadDir == null) return;
         
-        Uri downloadedUri = manager.getUriForDownloadedFile(downloadId);
-        if (downloadedUri == null) {
-            // Fallback: build file path manually in Downloads
-            File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-            File file = new File(downloadDir, fileName);
-            if (file.exists()) {
-                downloadedUri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
-            } else {
-                activity.runOnUiThread(() -> Toast.makeText(activity, "Error locating downloaded update.", Toast.LENGTH_LONG).show());
-                return;
-            }
-        } else if (downloadedUri.toString().startsWith("content://downloads/")) {
-            // If the URI is from DownloadManager's content provider, we convert it to our FileProvider for safety
-            // because package installer sometimes fails with raw download provider URIs
-             File downloadDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS);
-             File file = new File(downloadDir, fileName);
-             if (file.exists()) {
-                 downloadedUri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
-             }
+        File file = new File(downloadDir, fileName);
+        if (!file.exists()) {
+            activity.runOnUiThread(() -> Toast.makeText(activity, "Error locating downloaded update.", Toast.LENGTH_LONG).show());
+            return;
         }
+
+        Uri downloadedUri = FileProvider.getUriForFile(activity, BuildConfig.APPLICATION_ID + ".fileprovider", file);
 
         Intent install = new Intent(Intent.ACTION_VIEW);
         install.setDataAndType(downloadedUri, "application/vnd.android.package-archive");

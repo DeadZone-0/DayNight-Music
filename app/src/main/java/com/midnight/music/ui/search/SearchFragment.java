@@ -144,7 +144,6 @@ public class SearchFragment extends Fragment {
             @Override
             public void onQueueNext(Song song) {
                 MusicPlayerManager.getInstance(requireContext()).addToQueue(song);
-                Toast.makeText(requireContext(), "Added to queue: " + song.getSong(), Toast.LENGTH_SHORT).show();
             }
 
             @Override
@@ -275,8 +274,16 @@ public class SearchFragment extends Fragment {
         binding.progressBar.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
         binding.emptyStateContainer.setVisibility(View.VISIBLE);
-        binding.emptyState.setText("Error");
-        binding.emptyStateSubtitle.setText(message);
+        
+        if (message.equals("Network error")) {
+            binding.emptyState.setText("No internet connection");
+            binding.emptyStateSubtitle.setText("Please check your network and try again.");
+            binding.emptyStateIcon.setImageResource(R.drawable.ic_search); // Fallback icon
+        } else {
+            binding.emptyState.setText("Error");
+            binding.emptyStateSubtitle.setText(message);
+            binding.emptyStateIcon.setImageResource(R.drawable.ic_search);
+        }
     }
 
     private void showInitialState() {
@@ -358,7 +365,6 @@ public class SearchFragment extends Fragment {
                         }
                     }
                     dialog.dismiss();
-                    Toast.makeText(requireContext(), "Playlists updated", Toast.LENGTH_SHORT).show();
                 })
                 .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
             
@@ -387,9 +393,7 @@ public class SearchFragment extends Fragment {
         // Use MusicRepository which preserves isLiked/isDownloaded flags
         com.midnight.music.data.repository.MusicRepository.getInstance(requireContext())
                 .addSongToPlaylist(playlistId, song, () -> {
-                    new Handler(Looper.getMainLooper()).post(() ->
-                        Toast.makeText(requireContext(), R.string.song_added_to_playlist, Toast.LENGTH_SHORT).show()
-                    );
+                    // Item added, no toast needed for quiet aesthetic
                 });
     }
 
