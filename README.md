@@ -30,7 +30,6 @@
 + Intelligent Recommendations via Last.fm
 + Advanced Offline Caching System
 + Dynamic User Authentication & Cloud Sync
-+ Smooth Transitions and High-FPS UI
 - Redundant Debug Logs
 - Unoptimized Media Sessions
 ```
