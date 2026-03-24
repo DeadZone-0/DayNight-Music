@@ -4,6 +4,7 @@
 ### A Premium Android Music Experience
 
 [![Version](https://img.shields.io/badge/Version-0.1-8A2BE2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/releases)
+[![Website](https://img.shields.io/badge/Website-Live-8A2BE2?style=for-the-badge&logo=vercel&logoColor=white)](https://daynightmusic.vercel.app/)
 [![Stars](https://img.shields.io/github/stars/DeadZone-0/DayNight-Music?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/stargazers)
 [![Forks](https://img.shields.io/github/forks/DeadZone-0/DayNight-Music?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/network/members)
 [![License](https://img.shields.io/github/license/DeadZone-0/DayNight-Music?style=for-the-badge&logo=opensourceinitiative&logoColor=white)](LICENSE)
@@ -96,7 +97,7 @@
 ## Installation
 
 1. Navigate to the [Releases](https://github.com/DeadZone-0/DayNight-Music/releases) page.
-2. Download the latest `DaynightMusic.apk`.
+2. Download the latest `app-release.apk`.
 3. Enable "Install from Unknown Sources" in your Android settings.
 4. Install and start listening.
 
