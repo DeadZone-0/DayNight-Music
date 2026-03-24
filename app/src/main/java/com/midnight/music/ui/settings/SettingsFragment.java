@@ -31,7 +31,8 @@ public class SettingsFragment extends Fragment {
 
     @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
+            @Nullable Bundle savedInstanceState) {
         binding = FragmentSettingsBinding.inflate(inflater, container, false);
         return binding.getRoot();
     }
@@ -40,7 +41,7 @@ public class SettingsFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
         sharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
-        
+
         setupToolbar();
         setupThemeToggle();
         setupClearCacheButton();
@@ -56,15 +57,15 @@ public class SettingsFragment extends Fragment {
 
     private void setupThemeToggle() {
         SwitchMaterial themeSwitch = binding.themeSwitch;
-        
+
         // Load saved preference
         boolean isDarkMode = sharedPreferences.getBoolean(DARK_MODE_KEY, true);
         themeSwitch.setChecked(isDarkMode);
-        
+
         themeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
             // Save preference
             sharedPreferences.edit().putBoolean(DARK_MODE_KEY, isChecked).apply();
-            
+
             // Apply theme
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
@@ -78,7 +79,8 @@ public class SettingsFragment extends Fragment {
         binding.clearCacheButton.setOnClickListener(v -> {
             new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
                     .setTitle("Clear Cache")
-                    .setMessage("Are you sure you want to clear the app cache? This will remove all temporarily stored data.")
+                    .setMessage(
+                            "Are you sure you want to clear the app cache? This will remove all temporarily stored data.")
                     .setPositiveButton("Clear", (dialog, which) -> {
                         clearAppCache();
                     })
@@ -92,9 +94,9 @@ public class SettingsFragment extends Fragment {
             String versionName = getAppVersion();
             new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
                     .setTitle("App Info")
-                    .setMessage("Daynight Music\nVersion: " + versionName + 
-                            "\n\nA  music streaming app  with Spotify like ui." +
-                            "\n\n made by DeadZone-0")
+                    .setMessage("Daynight Music\nVersion: " + versionName +
+                            "\n\nA  music streaming app." +
+                            "\n\n  by DeadZone-0")
                     .setPositiveButton("OK", null)
                     .show();
         });
@@ -103,7 +105,8 @@ public class SettingsFragment extends Fragment {
     private void setupCheckUpdatesButton() {
         if (binding.checkUpdatesButton != null) {
             binding.checkUpdatesButton.setOnClickListener(v -> {
-                com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(requireActivity());
+                com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(
+                        requireActivity());
                 updateManager.checkForUpdates(true);
             });
         }
@@ -153,4 +156,4 @@ public class SettingsFragment extends Fragment {
         super.onDestroyView();
         binding = null;
     }
-} 
+}
