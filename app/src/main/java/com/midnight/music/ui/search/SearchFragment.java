@@ -56,6 +56,11 @@ public class SearchFragment extends Fragment {
     // This will track the currently displayed playlist dialog
     private AlertDialog currentPlaylistDialog = null;
 
+    // Search stream properties
+    private final Handler searchHandler = new Handler(Looper.getMainLooper());
+    private Runnable searchRunnable;
+    private Call<List<SongResponse>> currentSearchCall;
+
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -112,8 +117,27 @@ public class SearchFragment extends Fragment {
 
             @Override
             public void afterTextChanged(Editable s) {
-                if (s.toString().trim().isEmpty()) {
+                String query = s.toString().trim();
+                
+                // Cancel any pending search executions
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+
+                if (query.isEmpty()) {
+                    // If empty, cancel any ongoing API call and show initial state immediately
+                    if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
+                        currentSearchCall.cancel();
+                    }
                     showInitialState();
+                } else {
+                    // Show a subtle loading state while typing
+                    binding.progressBar.setVisibility(View.VISIBLE);
+                    binding.emptyStateContainer.setVisibility(View.GONE);
+                    
+                    // Schedule a new search after user stops typing for 500ms
+                    searchRunnable = () -> performSearch(query);
+                    searchHandler.postDelayed(searchRunnable, 500);
                 }
             }
         });
@@ -182,9 +206,15 @@ public class SearchFragment extends Fragment {
             return;
         }
 
+        // Cancel the previous active search if one is running
+        if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
+            currentSearchCall.cancel();
+        }
+
         showLoadingState();
         
-        api.searchSongs(query.trim(), true).enqueue(new Callback<List<SongResponse>>() {
+        currentSearchCall = api.searchSongs(query.trim(), true);
+        currentSearchCall.enqueue(new Callback<List<SongResponse>>() {
             @Override
             public void onResponse(@NonNull Call<List<SongResponse>> call, @NonNull Response<List<SongResponse>> response) {
                 if (!isAdded()) return;
@@ -209,7 +239,11 @@ public class SearchFragment extends Fragment {
             @Override
             public void onFailure(@NonNull Call<List<SongResponse>> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                showError("Network error");
+                
+                // Don't show an error if we intentionally canceled the call
+                if (!call.isCanceled()) {
+                    showError("Network error");
+                }
             }
         });
     }
@@ -404,6 +438,15 @@ public class SearchFragment extends Fragment {
         if (currentPlaylistDialog != null && currentPlaylistDialog.isShowing()) {
             currentPlaylistDialog.dismiss();
         }
+        
+        // Clean up search resources
+        if (searchRunnable != null) {
+            searchHandler.removeCallbacks(searchRunnable);
+        }
+        if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
+            currentSearchCall.cancel();
+        }
+        
         binding = null;
     }
 } 

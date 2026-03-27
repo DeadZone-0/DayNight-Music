@@ -81,14 +81,30 @@
                         android:src="@drawable/ic_shuffle"
                         app:tint="@color/white" />
                         
-                    <ImageButton
-                        android:id="@+id/btn_download"
+                    <FrameLayout
                         android:layout_width="48dp"
                         android:layout_height="48dp"
-                        android:layout_marginStart="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
-                        android:src="@drawable/ic_download"
-                        app:tint="@color/white" />
+                        android:layout_marginStart="8dp">
+
+                        <ImageButton
+                            android:id="@+id/btn_download"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:src="@drawable/ic_download"
+                            app:tint="@color/white" />
+
+                        <com.google.android.material.progressindicator.CircularProgressIndicator
+                            android:id="@+id/progress_download"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_gravity="center"
+                            android:indeterminate="true"
+                            app:indicatorColor="@color/white"
+                            android:visibility="gone"
+                            app:indicatorSize="24dp"
+                            app:trackThickness="2dp" />
+                    </FrameLayout>
 
                     <ImageButton
                         android:id="@+id/btn_more"

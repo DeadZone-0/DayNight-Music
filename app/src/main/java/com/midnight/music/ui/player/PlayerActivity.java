@@ -222,6 +222,8 @@ public class PlayerActivity extends AppCompatActivity
             }
 
             binding.btnDownload.setEnabled(false);
+            binding.btnDownload.setVisibility(View.INVISIBLE);
+            binding.progressDownload.setVisibility(View.VISIBLE);
 
             com.midnight.music.utils.DownloadManager.getInstance(this)
                     .downloadSong(currentSong, new com.midnight.music.utils.DownloadManager.DownloadListener() {
@@ -234,19 +236,27 @@ public class PlayerActivity extends AppCompatActivity
                         public void onComplete(String filePath) {
                             currentSong.setDownloaded(true);
                             currentSong.setLocalPath(filePath);
-                            if (binding != null) {
-                                binding.btnDownload.setImageResource(R.drawable.ic_download_done);
-                                binding.btnDownload.setEnabled(true);
-                            }
+                            runOnUiThread(() -> {
+                                if (binding != null) {
+                                    binding.progressDownload.setVisibility(View.GONE);
+                                    binding.btnDownload.setVisibility(View.VISIBLE);
+                                    binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                                    binding.btnDownload.setEnabled(true);
+                                }
+                            });
                         }
 
                         @Override
                         public void onError(Exception e) {
-                            if (binding != null) {
-                                binding.btnDownload.setEnabled(true);
-                            }
-                            Toast.makeText(getApplicationContext(),
-                                    "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            runOnUiThread(() -> {
+                                if (binding != null) {
+                                    binding.progressDownload.setVisibility(View.GONE);
+                                    binding.btnDownload.setVisibility(View.VISIBLE);
+                                    binding.btnDownload.setEnabled(true);
+                                }
+                                Toast.makeText(getApplicationContext(),
+                                        "Download failed: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+                            });
                         }
                     });
         });
@@ -558,6 +568,9 @@ public class PlayerActivity extends AppCompatActivity
             }
             runOnUiThread(() -> {
                 updateLikeButton(song.isLiked());
+                binding.progressDownload.setVisibility(View.GONE);
+                binding.btnDownload.setVisibility(View.VISIBLE);
+                binding.btnDownload.setEnabled(true);
                 if (song.isDownloaded()) {
                     binding.btnDownload.setImageResource(R.drawable.ic_download_done);
                 } else {

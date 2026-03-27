@@ -1,0 +1,82 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/C:/Users/Ze/.gradle/wrapper/dists/gradle-9.0-bin/3czi7dcr1pf879blyy9qczdy7/gradle-9.0.0/lib/native-platform-0.22-milestone-28.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:dataBindingMergeDependencyArtifactsDebug UP-TO-DATE
+> Task :app:generateDebugResValues UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:mergeDebugResources UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:dataBindingGenBaseClassesDebug UP-TO-DATE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths UP-TO-DATE
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+> Task :app:mergeDebugShaders UP-TO-DATE
+> Task :app:compileDebugShaders NO-SOURCE
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:l8DexDesugarLibDebug UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeDebugStartupProfile UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs NO-SOURCE
+> Task :app:stripDebugDebugSymbols NO-SOURCE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:processDebugResources FAILED
+
+[Incubating] Problems report is available at: file:///D:/DayNight-Music-main/build/reports/problems/problems-report.html
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:processDebugResources'.
+> A failure occurred while executing com.android.build.gradle.internal.res.LinkApplicationAndroidResourcesTask$TaskAction
+   > Android resource linking failed
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:35: error: resource font/space_grotesk (aka com.midnight.music:font/space_grotesk) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:66: error: resource style/CircleCrop (aka com.midnight.music:style/CircleCrop) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:78: error: resource color/surface_container_highest (aka com.midnight.music:color/surface_container_highest) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:100: error: resource font/space_grotesk (aka com.midnight.music:font/space_grotesk) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:100: error: resource color/on_surface_variant (aka com.midnight.music:color/on_surface_variant) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:114: error: resource color/on_surface_variant (aka com.midnight.music:color/on_surface_variant) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:114: error: resource font/manrope (aka com.midnight.music:font/manrope) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:114: error: resource color/surface_container_low (aka com.midnight.music:color/surface_container_low) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:125: error: resource font/space_grotesk (aka com.midnight.music:font/space_grotesk) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:125: error: resource color/on_surface_variant (aka com.midnight.music:color/on_surface_variant) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:140: error: resource color/on_surface_variant (aka com.midnight.music:color/on_surface_variant) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:140: error: resource font/manrope (aka com.midnight.music:font/manrope) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:140: error: resource color/surface_container_lowest (aka com.midnight.music:color/surface_container_lowest) not found.
+     com.midnight.music.app-mergeDebugResources-58:/layout/fragment_edit_profile.xml:166: error: resource font/space_grotesk (aka com.midnight.music:font/space_grotesk) not found.
+     error: failed linking file resources.
+
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to generate a Build Scan (Powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.0.0/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD FAILED in 4s
+30 actionable tasks: 1 executed, 29 up-to-date

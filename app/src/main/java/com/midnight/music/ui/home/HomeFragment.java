@@ -74,8 +74,7 @@ public class HomeFragment extends Fragment implements
                 .setOnClickListener(v -> Toast.makeText(requireContext(), "History", Toast.LENGTH_SHORT).show());
 
         binding.btnSettings.setOnClickListener(v -> {
-            NavController navController = Navigation.findNavController(requireActivity(), R.id.nav_host_fragment);
-            navController.navigate(R.id.action_navigation_home_to_settingsFragment);
+            startActivity(new android.content.Intent(requireContext(), com.midnight.music.ui.settings.SettingsActivity.class));
         });
     }
 

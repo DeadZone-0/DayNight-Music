@@ -266,6 +266,10 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                 }
 
                 binding.btnDownload.setEnabled(false);
+                binding.btnDownload.setVisibility(View.INVISIBLE);
+                if (binding.progressDownload != null) {
+                    binding.progressDownload.setVisibility(View.VISIBLE);
+                }
 
                 final int[] completed = {0};
                 final int total = toDownload.size();
@@ -280,6 +284,10 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                             completed[0]++;
                             if (completed[0] >= total) {
                                 mainHandler.post(() -> {
+                                    if (binding.progressDownload != null) {
+                                        binding.progressDownload.setVisibility(View.GONE);
+                                    }
+                                    binding.btnDownload.setVisibility(View.VISIBLE);
                                     binding.btnDownload.setEnabled(true);
                                     Toast.makeText(PlaylistDetailActivity.this,
                                             "All songs downloaded!", Toast.LENGTH_SHORT).show();
@@ -293,6 +301,10 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                             Log.e(TAG, "Failed to download: " + song.getSong(), e);
                             if (completed[0] >= total) {
                                 mainHandler.post(() -> {
+                                    if (binding.progressDownload != null) {
+                                        binding.progressDownload.setVisibility(View.GONE);
+                                    }
+                                    binding.btnDownload.setVisibility(View.VISIBLE);
                                     binding.btnDownload.setEnabled(true);
                                     Toast.makeText(PlaylistDetailActivity.this,
                                             "Downloads finished (some may have failed)", Toast.LENGTH_SHORT).show();

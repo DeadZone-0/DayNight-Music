@@ -2,20 +2,15 @@ package com.midnight.music.ui.settings;
 
 import android.app.AlertDialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
-import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Toast;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.fragment.app.Fragment;
 
 import com.midnight.music.R;
 import com.midnight.music.databinding.FragmentSettingsBinding;
@@ -23,24 +18,19 @@ import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
 
-public class SettingsFragment extends Fragment {
+public class SettingsActivity extends AppCompatActivity {
     private FragmentSettingsBinding binding;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "DaynightMusicPrefs";
     private static final String DARK_MODE_KEY = "darkMode";
 
-    @Nullable
     @Override
-    public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container,
-            @Nullable Bundle savedInstanceState) {
-        binding = FragmentSettingsBinding.inflate(inflater, container, false);
-        return binding.getRoot();
-    }
-
-    @Override
-    public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
-        super.onViewCreated(view, savedInstanceState);
-        sharedPreferences = requireActivity().getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+    protected void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        binding = FragmentSettingsBinding.inflate(getLayoutInflater());
+        setContentView(binding.getRoot());
+        
+        sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         setupToolbar();
         setupThemeToggle();
@@ -50,9 +40,7 @@ public class SettingsFragment extends Fragment {
     }
 
     private void setupToolbar() {
-        binding.toolbar.setNavigationOnClickListener(v -> {
-            requireActivity().getSupportFragmentManager().popBackStack();
-        });
+        binding.toolbar.setNavigationOnClickListener(v -> finish());
     }
 
     private void setupThemeToggle() {
@@ -77,7 +65,7 @@ public class SettingsFragment extends Fragment {
 
     private void setupClearCacheButton() {
         binding.clearCacheButton.setOnClickListener(v -> {
-            new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
+            new AlertDialog.Builder(this, R.style.AlertDialogTheme)
                     .setTitle("Clear Cache")
                     .setMessage(
                             "Are you sure you want to clear the app cache? This will remove all temporarily stored data.")
@@ -92,7 +80,7 @@ public class SettingsFragment extends Fragment {
     private void setupAppInfoButton() {
         binding.appInfoButton.setOnClickListener(v -> {
             String versionName = getAppVersion();
-            new AlertDialog.Builder(requireContext(), R.style.AlertDialogTheme)
+            new AlertDialog.Builder(this, R.style.AlertDialogTheme)
                     .setTitle("App Info")
                     .setMessage("Daynight Music\nVersion: " + versionName +
                             "\n\nA  music streaming app." +
@@ -105,8 +93,7 @@ public class SettingsFragment extends Fragment {
     private void setupCheckUpdatesButton() {
         if (binding.checkUpdatesButton != null) {
             binding.checkUpdatesButton.setOnClickListener(v -> {
-                com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(
-                        requireActivity());
+                com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(this);
                 updateManager.checkForUpdates(true);
             });
         }
@@ -114,8 +101,7 @@ public class SettingsFragment extends Fragment {
 
     private String getAppVersion() {
         try {
-            PackageInfo packageInfo = requireContext().getPackageManager()
-                    .getPackageInfo(requireContext().getPackageName(), 0);
+            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
             return packageInfo.versionName;
         } catch (PackageManager.NameNotFoundException e) {
             return "Unknown";
@@ -124,11 +110,11 @@ public class SettingsFragment extends Fragment {
 
     private void clearAppCache() {
         try {
-            File cacheDir = requireContext().getCacheDir();
+            File cacheDir = getCacheDir();
             deleteDir(cacheDir);
-            Toast.makeText(requireContext(), "Cache cleared successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cache cleared successfully", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(requireContext(), "Error clearing cache", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Error clearing cache", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -149,11 +135,5 @@ public class SettingsFragment extends Fragment {
         } else {
             return false;
         }
-    }
-
-    @Override
-    public void onDestroyView() {
-        super.onDestroyView();
-        binding = null;
     }
 }

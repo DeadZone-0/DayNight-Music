@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
+import android.content.Intent;
 
 import com.bumptech.glide.Glide;
 import com.midnight.music.R;
@@ -17,6 +18,9 @@ import com.midnight.music.data.auth.SessionManager;
 import com.midnight.music.data.auth.AuthRepository;
 import com.midnight.music.databinding.FragmentProfileBinding;
 import com.midnight.music.ui.auth.AuthActivity;
+import com.midnight.music.data.db.AppDatabase;
+
+import java.util.concurrent.Executors;
 
 public class ProfileFragment extends Fragment {
     private FragmentProfileBinding binding;
@@ -47,59 +51,95 @@ public class ProfileFragment extends Fragment {
     private void updateUI() {
         boolean isLoggedIn = sessionManager.isLoggedIn();
 
-        // Control visibility
-        binding.profileImage.setVisibility(isLoggedIn ? View.VISIBLE : View.GONE);
-        binding.profileName.setVisibility(isLoggedIn ? View.VISIBLE : View.GONE);
-        binding.profileEmail.setVisibility(isLoggedIn ? View.VISIBLE : View.GONE);
-        binding.logoutButton.setVisibility(isLoggedIn ? View.VISIBLE : View.GONE);
-
-        binding.loginButton.setVisibility(isLoggedIn ? View.GONE : View.VISIBLE);
-        binding.loginDivider.setVisibility(isLoggedIn ? View.GONE : View.VISIBLE);
-
         if (isLoggedIn) {
+            binding.layoutLoggedIn.getRoot().setVisibility(View.VISIBLE);
+            binding.layoutLoggedOut.getRoot().setVisibility(View.GONE);
+
             String nickname = sessionManager.getNickname();
             String email = sessionManager.getEmail();
             String avatarUrl = sessionManager.getAvatarUrl();
 
-            binding.profileName.setText(nickname != null ? nickname : "User");
-            binding.profileEmail.setText(email != null ? email : "");
+            binding.layoutLoggedIn.profileNickname.setText(nickname != null ? nickname : "User");
+            binding.layoutLoggedIn.profileEmail.setText(email != null ? email : "");
 
             if (avatarUrl != null && !avatarUrl.isEmpty()) {
                 Glide.with(this)
                         .load(avatarUrl)
                         .placeholder(R.drawable.placeholder_profile)
                         .error(R.drawable.placeholder_profile)
-                        .into(binding.profileImage);
+                        .into(binding.layoutLoggedIn.profileAvatar);
             } else {
-                binding.profileImage.setImageResource(R.drawable.placeholder_profile);
+                binding.layoutLoggedIn.profileAvatar.setImageResource(R.drawable.placeholder_profile);
             }
+
+            // Fetch stats quietly in the background
+            fetchUserStats();
+
+        } else {
+            binding.layoutLoggedIn.getRoot().setVisibility(View.GONE);
+            binding.layoutLoggedOut.getRoot().setVisibility(View.VISIBLE);
         }
     }
 
+    private void fetchUserStats() {
+        Executors.newSingleThreadExecutor().execute(() -> {
+            try {
+                AppDatabase db = AppDatabase.getInstance(requireContext());
+                int playlistCount = db.playlistDao().getAllPlaylistsSync().size();
+                int likedSongsCount = db.songDao().getLikedSongsSync().size();
+
+                if (getActivity() != null) {
+                    getActivity().runOnUiThread(() -> {
+                        if (binding != null && binding.layoutLoggedIn != null) {
+                            binding.layoutLoggedIn.statPlaylistsCount.setText(String.valueOf(playlistCount));
+                            binding.layoutLoggedIn.statLikedSongsCount.setText(String.valueOf(likedSongsCount));
+                        }
+                    });
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
     private void setupClickListeners() {
-        // Login button
-        binding.loginButton.setOnClickListener(v -> {
+        // --- LOGGED OUT STATE ---
+        binding.layoutLoggedOut.btnLogin.setOnClickListener(v -> {
             startActivity(new Intent(requireContext(), AuthActivity.class));
         });
 
-        // About button
-        binding.aboutButton.setOnClickListener(v -> {
-            Toast.makeText(requireContext(),
-                    "About DayNight Music",
-                    Toast.LENGTH_SHORT).show();
+        binding.layoutLoggedOut.btnGuestAbout.setOnClickListener(v -> {
+            Toast.makeText(requireContext(), "About DayNight Music", Toast.LENGTH_SHORT).show();
         });
 
-        // Logout button
-        binding.logoutButton.setOnClickListener(v -> {
+        binding.layoutLoggedOut.btnGuestSettings.setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), com.midnight.music.ui.settings.SettingsActivity.class));
+        });
+
+        // --- LOGGED IN STATE ---
+        binding.layoutLoggedIn.llAccountDetails.setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), com.midnight.music.ui.profile.EditProfileActivity.class));
+        });
+
+        binding.layoutLoggedIn.llSettings.setOnClickListener(v -> {
+            startActivity(new Intent(requireContext(), com.midnight.music.ui.settings.SettingsActivity.class));
+        });
+
+        binding.layoutLoggedIn.llLogout.setOnClickListener(v -> {
             String accessToken = sessionManager.getAccessToken();
             if (accessToken != null) {
-                new AuthRepository().signOut(accessToken);
+                // Background execution for network call
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    new AuthRepository().signOut(accessToken);
+                });
             }
             sessionManager.clearSession();
             updateUI();
             Toast.makeText(requireContext(), "Logged out", Toast.LENGTH_SHORT).show();
         });
     }
+
+
 
     @Override
     public void onDestroyView() {

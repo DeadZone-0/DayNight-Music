@@ -1,129 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.core.widget.NestedScrollView
-     xmlns:android="http://schemas.android.com/apk/res/android"
-     xmlns:app="http://schemas.android.com/apk/res-auto"
-     android:layout_height="match_parent"
-     android:layout_width="match_parent"
-     android:background="@color/background"
-     android:fillViewport="true">
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/background">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-         android:layout_height="wrap_content"
-         android:layout_width="match_parent"
-         android:padding="20dp">
+    <include
+        android:id="@+id/layout_logged_in"
+        layout="@layout/layout_profile_logged_in"
+        android:visibility="gone" />
 
-        <com.google.android.material.imageview.ShapeableImageView
-             android:layout_height="140dp"
-             android:layout_width="140dp"
-             android:scaleType="centerCrop"
-             android:src="@drawable/placeholder_profile"
-             app:layout_constraintTop_toTopOf="parent"
-             app:layout_constraintStart_toStartOf="parent"
-             app:shapeAppearanceOverlay="@style/CircleImageView"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="32dp"
-             android:id="@+id/profile_image" />
+    <include
+        android:id="@+id/layout_logged_out"
+        layout="@layout/layout_profile_logged_out"
+        android:visibility="gone" />
 
-        <TextView
-             android:layout_height="wrap_content"
-             android:layout_width="wrap_content"
-             app:layout_constraintStart_toStartOf="parent"
-             android:textSize="26sp"
-             android:textColor="@color/text_primary"
-             android:fontFamily="@font/poppins_bold"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="20dp"
-             app:layout_constraintTop_toBottomOf="@id/profile_image"
-             android:id="@+id/profile_name"
-             android:text="Dead" />
-
-        <TextView
-             android:layout_height="wrap_content"
-             android:layout_width="wrap_content"
-             app:layout_constraintStart_toStartOf="parent"
-             android:textSize="16sp"
-             android:textColor="@color/text_secondary"
-             android:fontFamily="@font/poppins"
-             app:layout_constraintEnd_toEndOf="parent"
-             android:layout_marginTop="4dp"
-             app:layout_constraintTop_toBottomOf="@id/profile_name"
-             android:id="@+id/profile_email"
-             android:text="dead@gmail.com" />
-
-        <com.google.android.material.card.MaterialCardView
-             android:layout_height="wrap_content"
-             android:layout_width="match_parent"
-             app:cardElevation="2dp"
-             app:cardBackgroundColor="@color/card_background"
-             android:layout_marginTop="36dp"
-             app:cardCornerRadius="24dp"
-             app:layout_constraintTop_toBottomOf="@id/profile_email"
-             android:id="@+id/settings_card">
-
-            <LinearLayout
-                 android:layout_height="wrap_content"
-                 android:layout_width="match_parent"
-                 android:orientation="vertical">
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="wrap_content"
-                     android:layout_margin="20dp"
-                     android:textSize="20sp"
-                     android:textColor="@color/text_primary"
-                     android:fontFamily="@font/poppins_bold"
-                     android:text="Settings" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:background="?attr/selectableItemBackground"
-                     android:padding="20dp"
-                     android:textSize="16sp"
-                     android:textColor="@color/accent"
-                     android:fontFamily="@font/poppins_medium"
-                     android:id="@+id/login_button"
-                     android:text="Login / Register" />
-
-                <View
-                     android:layout_height="1dp"
-                     android:layout_width="match_parent"
-                     android:background="@color/surface_variant"
-                     android:layout_marginHorizontal="20dp"
-                     android:id="@+id/login_divider" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:background="?attr/selectableItemBackground"
-                     android:padding="20dp"
-                     android:textSize="16sp"
-                     android:textColor="@color/text_primary"
-                     android:fontFamily="@font/poppins_medium"
-                     android:id="@+id/about_button"
-                     android:text="About" />
-
-                <View
-                     android:layout_height="1dp"
-                     android:layout_width="match_parent"
-                     android:background="@color/surface_variant"
-                     android:layout_marginHorizontal="20dp" />
-
-                <TextView
-                     android:layout_height="wrap_content"
-                     android:layout_width="match_parent"
-                     android:background="?attr/selectableItemBackground"
-                     android:padding="20dp"
-                     android:textSize="16sp"
-                     android:textColor="@color/error"
-                     android:fontFamily="@font/poppins_medium"
-                     android:id="@+id/logout_button"
-                     android:text="Logout" />
-
-            </LinearLayout>
-
-        </com.google.android.material.card.MaterialCardView>
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</androidx.core.widget.NestedScrollView>
+</FrameLayout>
