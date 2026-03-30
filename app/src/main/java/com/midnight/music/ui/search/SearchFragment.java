@@ -1,6 +1,10 @@
 package com.midnight.music.ui.search;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
@@ -27,6 +31,9 @@ import com.midnight.music.R;
 import com.midnight.music.databinding.FragmentSearchBinding;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.network.JioSaavnService;
+import com.midnight.music.data.network.SaavnApiService;
+import com.midnight.music.data.network.SaavnSearchResponse;
+import com.midnight.music.data.network.SaavnSongResult;
 import com.google.android.material.textfield.TextInputEditText;
 import com.midnight.music.player.MusicPlayerManager;
 import com.midnight.music.ui.player.PlayerActivity;
@@ -35,6 +42,7 @@ import com.midnight.music.data.model.PlaylistSongCrossRef;
 import com.midnight.music.data.model.Playlist;
 import com.midnight.music.data.network.SongResponse;
 import com.midnight.music.data.model.PlaylistWithSongs;
+import com.midnight.music.ui.settings.SettingsActivity;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -50,16 +58,35 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class SearchFragment extends Fragment {
     private FragmentSearchBinding binding;
     private SearchAdapter searchAdapter;
-    private JioSaavnService api;
+
+    // Audio quality preference
+    private SharedPreferences sharedPreferences;
+
+    // Animation duration for smooth transitions
+    private static final int CROSSFADE_DURATION = 200;
+    
+    // Dual API clients
+    private SaavnApiService primaryApi;     // New API (primary, with pagination)
+    private JioSaavnService fallbackApi;    // Vercel API (fallback)
+    
     private RecyclerView.LayoutManager searchLayoutManager;
 
-    // This will track the currently displayed playlist dialog
+    // Playlist dialog tracker
     private AlertDialog currentPlaylistDialog = null;
 
     // Search stream properties
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
-    private Call<List<SongResponse>> currentSearchCall;
+    private Call<?> currentSearchCall;
+
+    // Pagination state
+    private static final int PAGE_LIMIT = 10;
+    private int currentPage = 1;
+    private boolean isLoadingMore = false;
+    private boolean hasMorePages = true;
+    private boolean usingFallback = false;
+    private String currentQuery = "";
+    private final List<Song> allSongs = new ArrayList<>();
 
     @Nullable
     @Override
@@ -67,16 +94,25 @@ public class SearchFragment extends Fragment {
                            @Nullable ViewGroup container,
                            @Nullable Bundle savedInstanceState) {
         binding = FragmentSearchBinding.inflate(inflater, container, false);
+        sharedPreferences = requireContext().getSharedPreferences("DaynightMusicPrefs", Context.MODE_PRIVATE);
         setupRetrofit();
         return binding.getRoot();
     }
 
     private void setupRetrofit() {
-        Retrofit retrofit = new Retrofit.Builder()
+        // Primary API (new one with pagination)
+        Retrofit primaryRetrofit = new Retrofit.Builder()
+                .baseUrl(SaavnApiService.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        primaryApi = primaryRetrofit.create(SaavnApiService.class);
+
+        // Fallback API (old Vercel one)
+        Retrofit fallbackRetrofit = new Retrofit.Builder()
                 .baseUrl(JioSaavnService.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        api = retrofit.create(JioSaavnService.class);
+        fallbackApi = fallbackRetrofit.create(JioSaavnService.class);
     }
 
     @Override
@@ -85,6 +121,12 @@ public class SearchFragment extends Fragment {
         setupLayoutManagers();
         setupSearchInput();
         setupRecyclerView();
+        setupPaginationListener();
+        
+        // Attach adapter and layout manager ONCE to preserve scroll position
+        binding.searchResultsRecycler.setLayoutManager(searchLayoutManager);
+        binding.searchResultsRecycler.setAdapter(searchAdapter);
+        
         showInitialState();
     }
 
@@ -101,6 +143,7 @@ public class SearchFragment extends Fragment {
                 if (query.isEmpty()) {
                     showInitialState();
                 } else {
+                    resetPagination();
                     performSearch(query);
                 }
                 return true;
@@ -125,19 +168,18 @@ public class SearchFragment extends Fragment {
                 }
 
                 if (query.isEmpty()) {
-                    // If empty, cancel any ongoing API call and show initial state immediately
-                    if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
-                        currentSearchCall.cancel();
-                    }
-                    showInitialState();
+                    // Cancel any ongoing API call and show initial state
+                    cancelCurrentCall();
+                    resetPagination();
+                    crossfadeToInitialState();
                 } else {
-                    // Show a subtle loading state while typing
-                    binding.progressBar.setVisibility(View.VISIBLE);
-                    binding.emptyStateContainer.setVisibility(View.GONE);
-                    
-                    // Schedule a new search after user stops typing for 500ms
-                    searchRunnable = () -> performSearch(query);
-                    searchHandler.postDelayed(searchRunnable, 500);
+                    // Schedule a new search after user stops typing for 400ms
+                    // Don't show spinner instantly — feels jarring. Let the debounce handle it.
+                    searchRunnable = () -> {
+                        resetPagination();
+                        performSearch(query);
+                    };
+                    searchHandler.postDelayed(searchRunnable, 400);
                 }
             }
         });
@@ -161,7 +203,6 @@ public class SearchFragment extends Fragment {
 
             @Override
             public void onAddToPlaylist(Song song) {
-                // Show playlist selection dialog
                 showPlaylistsDialog(song);
             }
 
@@ -200,23 +241,164 @@ public class SearchFragment extends Fragment {
         });
     }
 
+    /**
+     * Sets up infinite scroll pagination listener on the RecyclerView.
+     */
+    private void setupPaginationListener() {
+        binding.searchResultsRecycler.addOnScrollListener(new RecyclerView.OnScrollListener() {
+            @Override
+            public void onScrolled(@NonNull RecyclerView recyclerView, int dx, int dy) {
+                super.onScrolled(recyclerView, dx, dy);
+                
+                // Only trigger when scrolling down
+                if (dy <= 0) return;
+                
+                // Skip if already loading, no more pages, or using fallback (no pagination)
+                if (isLoadingMore || !hasMorePages || usingFallback) return;
+                
+                LinearLayoutManager layoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
+                if (layoutManager == null) return;
+                
+                int visibleItemCount = layoutManager.getChildCount();
+                int totalItemCount = layoutManager.getItemCount();
+                int firstVisibleItemPosition = layoutManager.findFirstVisibleItemPosition();
+                
+                // Load more when user has scrolled to within 3 items of the bottom
+                if ((visibleItemCount + firstVisibleItemPosition) >= totalItemCount - 3
+                        && firstVisibleItemPosition >= 0) {
+                    loadNextPage();
+                }
+            }
+        });
+    }
+
+    /**
+     * Resets all pagination state for a new search query.
+     */
+    private void resetPagination() {
+        currentPage = 1;
+        isLoadingMore = false;
+        hasMorePages = true;
+        usingFallback = false;
+        allSongs.clear();
+    }
+
+    /**
+     * Cancel the currently running API call, if any.
+     */
+    private void cancelCurrentCall() {
+        if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
+            currentSearchCall.cancel();
+        }
+    }
+
+    /**
+     * Primary search entry point. Tries the new API first, falls back to Vercel.
+     */
     private void performSearch(String query) {
         if (query == null || query.trim().isEmpty()) {
             showInitialState();
             return;
         }
 
-        // Cancel the previous active search if one is running
-        if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
-            currentSearchCall.cancel();
+        cancelCurrentCall();
+        currentQuery = query.trim();
+
+        if (currentPage == 1) {
+            showLoadingState();
         }
 
-        showLoadingState();
+        // Try the primary API first
+        searchWithPrimaryApi(currentQuery, currentPage);
+    }
+
+    /**
+     * Search using the new paginated API.
+     */
+    private void searchWithPrimaryApi(String query, int page) {
+        Call<SaavnSearchResponse> call = primaryApi.searchSongs(query, page, PAGE_LIMIT);
+        currentSearchCall = call;
         
-        currentSearchCall = api.searchSongs(query.trim(), true);
-        currentSearchCall.enqueue(new Callback<List<SongResponse>>() {
+        call.enqueue(new Callback<SaavnSearchResponse>() {
             @Override
-            public void onResponse(@NonNull Call<List<SongResponse>> call, @NonNull Response<List<SongResponse>> response) {
+            public void onResponse(@NonNull Call<SaavnSearchResponse> call, 
+                                   @NonNull Response<SaavnSearchResponse> response) {
+                if (!isAdded()) return;
+                
+                if (response.isSuccessful() && response.body() != null 
+                        && response.body().isSuccess()
+                        && response.body().getData() != null
+                        && response.body().getData().getResults() != null) {
+                    
+                    List<SaavnSongResult> results = response.body().getData().getResults();
+                    
+                    if (results.isEmpty() && page == 1) {
+                        showEmptyState();
+                        return;
+                    }
+                    
+                    // Convert to Song objects using preferred quality
+                    String preferredQuality = sharedPreferences.getString(
+                            SettingsActivity.AUDIO_QUALITY_KEY, SettingsActivity.DEFAULT_QUALITY);
+                    List<Song> songs = new ArrayList<>();
+                    for (SaavnSongResult result : results) {
+                        songs.add(result.toSong(preferredQuality));
+                    }
+                    
+                    // If fewer results than the limit, we've reached the end
+                    if (results.size() < PAGE_LIMIT) {
+                        hasMorePages = false;
+                    }
+                    
+                    if (page == 1) {
+                        allSongs.clear();
+                    }
+                    allSongs.addAll(songs);
+                    
+                    isLoadingMore = false;
+                    showSearchResults(new ArrayList<>(allSongs));
+                } else {
+                    // Primary API failed or returned bad data - fallback for page 1
+                    if (page == 1) {
+                        searchWithFallbackApi(query);
+                    } else {
+                        // For subsequent pages, just mark no more pages
+                        isLoadingMore = false;
+                        hasMorePages = false;
+                    }
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<SaavnSearchResponse> call, @NonNull Throwable t) {
+                if (!isAdded()) return;
+                if (call.isCanceled()) return;
+                
+                // Primary API network failure - fallback for page 1
+                if (page == 1) {
+                    searchWithFallbackApi(query);
+                } else {
+                    isLoadingMore = false;
+                    hasMorePages = false;
+                }
+            }
+        });
+    }
+
+    /**
+     * Fallback to the old Vercel API (no pagination support).
+     */
+    private void searchWithFallbackApi(String query) {
+        usingFallback = true;
+        hasMorePages = false; // Fallback doesn't support pagination
+        
+        Call<List<SongResponse>> call = fallbackApi.searchSongs(query, true);
+        currentSearchCall = call;
+        
+        call.enqueue(new Callback<List<SongResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<SongResponse>> call, 
+                                   @NonNull Response<List<SongResponse>> response) {
                 if (!isAdded()) return;
                 
                 if (response.isSuccessful() && response.body() != null) {
@@ -224,12 +406,13 @@ public class SearchFragment extends Fragment {
                     if (songResponses.isEmpty()) {
                         showEmptyState();
                     } else {
-                        // Convert SongResponse to Song
                         List<Song> songs = new ArrayList<>();
                         for (SongResponse songResponse : songResponses) {
                             songs.add(songResponse.toSong());
                         }
-                        showSearchResults(songs);
+                        allSongs.clear();
+                        allSongs.addAll(songs);
+                        showSearchResults(new ArrayList<>(allSongs));
                     }
                 } else {
                     showError("Failed to get search results");
@@ -239,8 +422,6 @@ public class SearchFragment extends Fragment {
             @Override
             public void onFailure(@NonNull Call<List<SongResponse>> call, @NonNull Throwable t) {
                 if (!isAdded()) return;
-                
-                // Don't show an error if we intentionally canceled the call
                 if (!call.isCanceled()) {
                     showError("Network error");
                 }
@@ -248,46 +429,74 @@ public class SearchFragment extends Fragment {
         });
     }
 
-    private void showLoadingState() {
+    /**
+     * Loads the next page of results from the primary API.
+     */
+    private void loadNextPage() {
+        if (isLoadingMore || !hasMorePages || usingFallback) return;
+        
+        isLoadingMore = true;
+        currentPage++;
+        
+        // Show a subtle loading indicator at the bottom (reuse progress bar)
         binding.progressBar.setVisibility(View.VISIBLE);
-        binding.searchResultsRecycler.setVisibility(View.GONE);
-        binding.emptyStateContainer.setVisibility(View.GONE);
+        
+        searchWithPrimaryApi(currentQuery, currentPage);
+    }
+
+    private void showLoadingState() {
+        // Only hide the list if this is a fresh search (not a pagination load)
+        if (!isLoadingMore) {
+            binding.searchResultsRecycler.setAlpha(0.5f); // Dim existing results
+            binding.emptyStateContainer.setVisibility(View.GONE);
+        }
+        binding.progressBar.setVisibility(View.VISIBLE);
     }
 
     private void showSearchResults(List<Song> songs) {
-        binding.searchResultsRecycler.setLayoutManager(searchLayoutManager);
-        binding.searchResultsRecycler.setAdapter(searchAdapter);
-        
         // Check if songs are liked in database before displaying
         AppDatabase db = AppDatabase.getInstance(requireContext());
         Executor executor = Executors.newSingleThreadExecutor();
         
-        // First show the results with default state (not liked)
+        // Show results immediately
         binding.progressBar.setVisibility(View.GONE);
         binding.emptyStateContainer.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.VISIBLE);
+        
+        // Smooth fade-in for fresh results
+        if (currentPage <= 1) {
+            binding.searchResultsRecycler.setAlpha(0f);
+            binding.searchResultsRecycler.animate()
+                    .alpha(1f)
+                    .setDuration(CROSSFADE_DURATION)
+                    .start();
+        } else {
+            // For pagination, just restore full opacity smoothly
+            binding.searchResultsRecycler.animate()
+                    .alpha(1f)
+                    .setDuration(150)
+                    .start();
+        }
+        
         searchAdapter.submitList(new ArrayList<>(songs));  // Use a copy
         
         // Then update in background with actual like status
         executor.execute(() -> {
             try {
-                // Create a copy we can modify
                 List<Song> updatedSongs = new ArrayList<>(songs.size());
                 
-                // Check each song's liked status
                 for (Song song : songs) {
-                    // Get a fresh copy with the correct like status
                     Song existingSong = db.songDao().getSongByIdSync(song.getId());
                     if (existingSong != null) {
-                        // If the song exists in the database, copy its liked status
                         song.setLiked(existingSong.isLiked());
                     }
                     updatedSongs.add(song);
                 }
                 
-                // Update UI on main thread with the correct like status
                 new Handler(Looper.getMainLooper()).post(() -> {
-                    searchAdapter.submitList(updatedSongs);
+                    if (binding != null) {
+                        searchAdapter.submitList(updatedSongs);
+                    }
                 });
             } catch (Exception e) {
                 e.printStackTrace();
@@ -298,21 +507,28 @@ public class SearchFragment extends Fragment {
     private void showEmptyState() {
         binding.progressBar.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
+        
+        binding.emptyStateContainer.setAlpha(0f);
         binding.emptyStateContainer.setVisibility(View.VISIBLE);
+        binding.emptyStateContainer.animate().alpha(1f).setDuration(CROSSFADE_DURATION).start();
+        
         binding.emptyState.setText("No results found");
         binding.emptyStateSubtitle.setText("Try searching for something else.");
-        binding.emptyStateIcon.setImageResource(R.drawable.ic_search); // Subtle search icon
+        binding.emptyStateIcon.setImageResource(R.drawable.ic_search);
     }
 
     private void showError(String message) {
         binding.progressBar.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
+        
+        binding.emptyStateContainer.setAlpha(0f);
         binding.emptyStateContainer.setVisibility(View.VISIBLE);
+        binding.emptyStateContainer.animate().alpha(1f).setDuration(CROSSFADE_DURATION).start();
         
         if (message.equals("Network error")) {
             binding.emptyState.setText("No internet connection");
             binding.emptyStateSubtitle.setText("Please check your network and try again.");
-            binding.emptyStateIcon.setImageResource(R.drawable.ic_search); // Fallback icon
+            binding.emptyStateIcon.setImageResource(R.drawable.ic_search);
         } else {
             binding.emptyState.setText("Error");
             binding.emptyStateSubtitle.setText(message);
@@ -324,38 +540,57 @@ public class SearchFragment extends Fragment {
         binding.progressBar.setVisibility(View.GONE);
         binding.searchResultsRecycler.setVisibility(View.GONE);
         binding.emptyStateContainer.setVisibility(View.VISIBLE);
+        binding.emptyStateContainer.setAlpha(1f);
         binding.emptyState.setText("Find your next favorite song");
         binding.emptyStateSubtitle.setText("Search for songs, artists, or full albums to explore new music.");
         binding.emptyStateIcon.setImageResource(R.drawable.ic_search);
     }
 
+    /**
+     * Smooth crossfade back to the initial state when the user clears the search.
+     */
+    private void crossfadeToInitialState() {
+        binding.progressBar.setVisibility(View.GONE);
+        
+        // If results are visible, fade them out first
+        if (binding.searchResultsRecycler.getVisibility() == View.VISIBLE 
+                && binding.searchResultsRecycler.getAlpha() > 0) {
+            binding.searchResultsRecycler.animate()
+                    .alpha(0f)
+                    .setDuration(CROSSFADE_DURATION)
+                    .setListener(new AnimatorListenerAdapter() {
+                        @Override
+                        public void onAnimationEnd(Animator animation) {
+                            if (binding == null) return;
+                            binding.searchResultsRecycler.setVisibility(View.GONE);
+                            showInitialState();
+                        }
+                    })
+                    .start();
+        } else {
+            binding.searchResultsRecycler.setVisibility(View.GONE);
+            showInitialState();
+        }
+    }
+
     private void showPlaylistsDialog(Song song) {
-        // If a dialog is already showing, dismiss it first
         if (currentPlaylistDialog != null && currentPlaylistDialog.isShowing()) {
             currentPlaylistDialog.dismiss();
         }
 
-        // Get the playlists from the database
         AppDatabase db = AppDatabase.getInstance(requireContext());
         
-        // Create a new LiveData instance each time to avoid multiple observers
         LiveData<List<PlaylistWithSongs>> playlistsLiveData = db.playlistDao().getAllPlaylistsWithSongs();
-        
-        // Make sure we unregister any previous observers first
         playlistsLiveData.removeObservers(getViewLifecycleOwner());
         
-        // Use AtomicBoolean to ensure we only handle the callback once
         final boolean[] observerCalled = {false};
         
-        // Now observe only once
         playlistsLiveData.observe(getViewLifecycleOwner(), playlists -> {
-            // Prevent multiple callbacks
             if (observerCalled[0]) {
                 return;
             }
             observerCalled[0] = true;
             
-            // Remove the observer immediately to prevent multiple callbacks
             playlistsLiveData.removeObservers(getViewLifecycleOwner());
             
             if (playlists == null || playlists.isEmpty()) {
@@ -371,7 +606,6 @@ public class SearchFragment extends Fragment {
                 playlistNames[i] = playlists.get(i).playlist.getName();
                 playlistIds[i] = playlists.get(i).playlist.getId();
                 
-                // Check if the song is already in this playlist
                 if (playlists.get(i).songs != null) {
                     for (Song playlistSong : playlists.get(i).songs) {
                         if (playlistSong.getId().equals(song.getId())) {
@@ -382,19 +616,15 @@ public class SearchFragment extends Fragment {
                 }
             }
             
-            // Use our custom dialog style with multi-choice items
             AlertDialog.Builder builder = new AlertDialog.Builder(requireContext(), R.style.PlaylistDialogStyle)
                 .setTitle(R.string.add_to_playlist)
                 .setMultiChoiceItems(playlistNames, checkedItems, (dialog, which, isChecked) -> {
-                    // This will be handled in the positive button click
                 })
                 .setPositiveButton(R.string.save, (dialog, which) -> {
-                    // Add the song to all selected playlists
                     for (int i = 0; i < checkedItems.length; i++) {
                         if (checkedItems[i]) {
                             addSongToPlaylist(playlistIds[i], song);
                         } else {
-                            // If it was unchecked, remove from this playlist
                             removeSongFromPlaylist(playlistIds[i], song);
                         }
                     }
@@ -402,7 +632,6 @@ public class SearchFragment extends Fragment {
                 })
                 .setNegativeButton(R.string.cancel, (dialog, which) -> dialog.dismiss());
             
-            // Store the dialog and show it
             currentPlaylistDialog = builder.create();
             currentPlaylistDialog.show();
         });
@@ -413,7 +642,6 @@ public class SearchFragment extends Fragment {
             return;
         }
         
-        // Use MusicRepository which correctly resets isLiked when removing from Liked Songs
         com.midnight.music.data.repository.MusicRepository.getInstance(requireContext())
                 .removeSongFromPlaylist(playlistId, song.getId(), null);
     }
@@ -424,7 +652,6 @@ public class SearchFragment extends Fragment {
             return;
         }
         
-        // Use MusicRepository which preserves isLiked/isDownloaded flags
         com.midnight.music.data.repository.MusicRepository.getInstance(requireContext())
                 .addSongToPlaylist(playlistId, song, () -> {
                     // Item added, no toast needed for quiet aesthetic
@@ -434,7 +661,6 @@ public class SearchFragment extends Fragment {
     @Override
     public void onDestroyView() {
         super.onDestroyView();
-        // Dismiss any open dialog when the fragment is destroyed
         if (currentPlaylistDialog != null && currentPlaylistDialog.isShowing()) {
             currentPlaylistDialog.dismiss();
         }
@@ -443,9 +669,7 @@ public class SearchFragment extends Fragment {
         if (searchRunnable != null) {
             searchHandler.removeCallbacks(searchRunnable);
         }
-        if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
-            currentSearchCall.cancel();
-        }
+        cancelCurrentCall();
         
         binding = null;
     }

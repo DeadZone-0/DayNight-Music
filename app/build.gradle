@@ -19,8 +19,8 @@ android {
         applicationId "com.midnight.music"
         minSdk 24
         targetSdk 34
-        versionCode 8
-        versionName "0.2"
+        versionCode 9
+        versionName "0.3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
@@ -38,6 +38,7 @@ android {
         buildConfigField "String", "SUPABASE_URL", "\"${localProperties.getProperty('supabase.url', '')}\""
         buildConfigField "String", "SUPABASE_ANON_KEY", "\"${localProperties.getProperty('supabase.anon.key', '')}\""
         buildConfigField "String", "LASTFM_API_KEY", "\"${localProperties.getProperty('lastfm.api.key', '')}\""
+        buildConfigField "String", "SAAVN_API_URL", "\"${localProperties.getProperty('saavn.api.url', 'https://PLACEHOLDER_API_URL.com')}\""
         resValue "string", "google_web_client_id", localProperties.getProperty('google.web.client.id', '')
     }
 

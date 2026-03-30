@@ -23,6 +23,8 @@ public class SettingsActivity extends AppCompatActivity {
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "DaynightMusicPrefs";
     private static final String DARK_MODE_KEY = "darkMode";
+    public static final String AUDIO_QUALITY_KEY = "audioQuality";
+    public static final String DEFAULT_QUALITY = "320kbps";
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -34,6 +36,7 @@ public class SettingsActivity extends AppCompatActivity {
 
         setupToolbar();
         setupThemeToggle();
+        setupAudioQuality();
         setupClearCacheButton();
         setupAppInfoButton();
         setupCheckUpdatesButton();
@@ -61,6 +64,53 @@ public class SettingsActivity extends AppCompatActivity {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
             }
         });
+    }
+
+    private void setupAudioQuality() {
+        // Quality options
+        final String[] qualityLabels = {"Data Saver (96kbps)", "Standard (160kbps)", "High Quality (320kbps)"};
+        final String[] qualityValues = {"96kbps", "160kbps", "320kbps"};
+
+        // Load saved preference and update subtitle
+        String savedQuality = sharedPreferences.getString(AUDIO_QUALITY_KEY, DEFAULT_QUALITY);
+        updateQualitySubtitle(savedQuality);
+
+        binding.audioQualityButton.setOnClickListener(v -> {
+            String currentQuality = sharedPreferences.getString(AUDIO_QUALITY_KEY, DEFAULT_QUALITY);
+            int checkedIndex = 2; // default to 320kbps
+            for (int i = 0; i < qualityValues.length; i++) {
+                if (qualityValues[i].equals(currentQuality)) {
+                    checkedIndex = i;
+                    break;
+                }
+            }
+
+            new AlertDialog.Builder(this, R.style.AlertDialogTheme)
+                    .setTitle("Audio Quality")
+                    .setSingleChoiceItems(qualityLabels, checkedIndex, (dialog, which) -> {
+                        String selected = qualityValues[which];
+                        sharedPreferences.edit().putString(AUDIO_QUALITY_KEY, selected).apply();
+                        updateQualitySubtitle(selected);
+                        dialog.dismiss();
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show();
+        });
+    }
+
+    private void updateQualitySubtitle(String quality) {
+        switch (quality) {
+            case "96kbps":
+                binding.qualitySubtitle.setText("Data Saver (96kbps)");
+                break;
+            case "160kbps":
+                binding.qualitySubtitle.setText("Standard (160kbps)");
+                break;
+            case "320kbps":
+            default:
+                binding.qualitySubtitle.setText("High Quality (320kbps)");
+                break;
+        }
     }
 
     private void setupClearCacheButton() {
