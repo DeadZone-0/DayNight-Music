@@ -39,6 +39,7 @@
 
             <!-- Theme Section -->
             <TextView
+                android:id="@+id/header_appearance"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="24dp"
@@ -117,8 +118,147 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
+            <!-- Accent Color Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/accent_color_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="20dp">
+
+                    <!-- Header row with icon, title, and toggle -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_theme"
+                            app:tint="@color/text_primary" />
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="16dp"
+                            android:orientation="vertical">
+
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Accent Color"
+                                android:textColor="@color/text_primary"
+                                android:textSize="16sp"
+                                android:fontFamily="@font/poppins_medium" />
+
+                            <TextView
+                                android:id="@+id/accent_subtitle"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:layout_marginTop="2dp"
+                                android:text="Static · Purple"
+                                android:textColor="@color/text_secondary"
+                                android:textSize="12sp"
+                                android:fontFamily="@font/poppins" />
+                        </LinearLayout>
+
+                        <com.google.android.material.switchmaterial.SwitchMaterial
+                            android:id="@+id/accent_dynamic_switch"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            app:thumbTint="@color/white"
+                            app:trackTint="@color/primary" />
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/accent_dynamic_label"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="4dp"
+                        android:layout_marginStart="40dp"
+                        android:text="Dynamic: follows album art"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="11sp"
+                        android:fontFamily="@font/poppins"
+                        android:visibility="gone" />
+
+                    <!-- Color swatches row (visible only in static mode) -->
+                    <LinearLayout
+                        android:id="@+id/accent_swatches_row"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:gravity="center_horizontal"
+                        android:orientation="horizontal">
+
+                        <!-- Purple -->
+                        <View android:id="@+id/swatch_purple"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+
+                        <!-- Blue -->
+                        <View android:id="@+id/swatch_blue"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+
+                        <!-- Teal -->
+                        <View android:id="@+id/swatch_teal"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+
+                        <!-- Green -->
+                        <View android:id="@+id/swatch_green"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+
+                        <!-- Orange -->
+                        <View android:id="@+id/swatch_orange"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+
+                        <!-- Red -->
+                        <View android:id="@+id/swatch_red"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+
+                        <!-- Pink -->
+                        <View android:id="@+id/swatch_pink"
+                            android:layout_width="32dp"
+                            android:layout_height="32dp"
+                            android:layout_marginHorizontal="6dp"
+                            android:background="@drawable/bg_circle_swatch" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
             <!-- Data Section -->
             <TextView
+                android:id="@+id/header_data"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"
@@ -257,6 +397,7 @@
 
             <!-- About Section -->
             <TextView
+                android:id="@+id/header_about"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="28dp"

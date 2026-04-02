@@ -91,8 +91,7 @@ public class HomeViewModel extends AndroidViewModel {
                 continue;
             }
 
-            repository.getSimilarTracks(seed.getSong(),
-                    seed.getSingers() != null ? seed.getSingers() : "",
+            repository.getSimilarTracks(seed,
                     8,
                     new RecommendationManager.RecommendationCallback() {
                         @Override

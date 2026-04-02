@@ -4,7 +4,7 @@ import android.Manifest;
 import android.app.ActivityOptions;
 import android.content.Intent;
 import android.content.pm.PackageManager;
-import android.content.res.ColorStateList;
+
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -15,7 +15,7 @@ import android.os.Looper;
 import android.util.Log;
 import android.util.Pair;
 import android.view.View;
-import android.view.animation.AnimationUtils;
+
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
@@ -30,11 +30,16 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.transition.Transition;
 import com.midnight.music.data.auth.SessionManager;
+import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.repository.CloudSyncWorker;
 import com.midnight.music.databinding.ActivityMainBinding;
 import com.midnight.music.player.MusicPlayerManager;
 import com.midnight.music.ui.player.PlayerActivity;
+import com.midnight.music.utils.AccentManager;
+
+import android.content.res.ColorStateList;
+import java.util.concurrent.Executors;
 
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
@@ -54,7 +59,10 @@ public class MainActivity extends AppCompatActivity {
         setupMiniPlayer();
         requestNotificationPermission();
         scheduleCloudSync();
-        
+
+        // Observe accent colour changes and tint bottom nav + other elements
+        AccentManager.getInstance(this).getAccentColor().observe(this, this::applyAccentColor);
+
         // Check for updates seamlessly on startup
         com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(this);
         updateManager.checkForUpdates(false);
@@ -114,11 +122,13 @@ public class MainActivity extends AppCompatActivity {
     private void setupMiniPlayer() {
         playerManager = MusicPlayerManager.getInstance(this);
 
-        // Handle click on mini player to open full player with slide up animation
+        // Enable hardware acceleration on the mini player for smooth 60fps rendering
+        binding.miniPlayer.getRoot().setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
+        // Handle click on mini player to open full player with shared-element transition
         binding.miniPlayer.miniPlayerContainer.setOnClickListener(v -> {
             Intent intent = new Intent(this, PlayerActivity.class);
 
-            // Create transition pairs for shared elements
             Pair<View, String> albumArt = Pair.create(
                     binding.miniPlayer.imgMiniArt,
                     "transition_album_art");
@@ -139,43 +149,62 @@ public class MainActivity extends AppCompatActivity {
             overridePendingTransition(R.anim.slide_up, R.anim.stay);
         });
 
+        // Enable marquee scrolling for long song titles
+        binding.miniPlayer.txtMiniTitle.setSelected(true);
+
         // Set initial play/pause button state
         updatePlayPauseButton(playerManager.isPlaying());
 
-        // Handle play/pause button with error handling
+        // Play/Pause button
         binding.miniPlayer.btnMiniPlayPause.setOnClickListener(v -> {
             try {
-                // Update UI immediately for better responsiveness
                 boolean isCurrentlyPlaying = playerManager.isPlaying();
                 updatePlayPauseButton(!isCurrentlyPlaying);
-
-                // Then perform the actual toggle
                 playerManager.togglePlayPause();
-
-                // Apply click animation
-                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+                v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(80).start())
+                        .start();
             } catch (Exception e) {
                 Log.e(TAG, "Error toggling play/pause state", e);
-                // Revert to correct state if there was an error
                 updatePlayPauseButton(playerManager.isPlaying());
             }
         });
 
-        // Handle skip previous button with error handling
-        binding.miniPlayer.btnMiniPrevious.setOnClickListener(v -> {
+        // Heart / Favorite button — toggles liked status in Room DB
+        binding.miniPlayer.btnMiniHeart.setOnClickListener(v -> {
             try {
-                playerManager.skipToPrevious();
-                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+                Song currentSong = playerManager.getCurrentSongLiveData().getValue();
+                if (currentSong == null) return;
+
+                // Pulse animation for the heart
+                v.animate().scaleX(1.3f).scaleY(1.3f).setDuration(100)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
+                        .start();
+
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    AppDatabase db = AppDatabase.getInstance(this);
+                    boolean isCurrentlyLiked = db.songDao().isSongLiked(currentSong.getId());
+                    boolean newLikedState = !isCurrentlyLiked;
+
+                    // Ensure the song exists in DB first
+                    currentSong.setLiked(newLikedState);
+                    currentSong.setTimestamp(System.currentTimeMillis());
+                    db.songDao().insert(currentSong);
+
+                    mainHandler.post(() -> updateHeartButton(newLikedState));
+                });
             } catch (Exception e) {
-                Log.e(TAG, "Error skipping to previous track", e);
+                Log.e(TAG, "Error toggling favorite", e);
             }
         });
 
-        // Handle skip next button with error handling
+        // Next button
         binding.miniPlayer.btnMiniNext.setOnClickListener(v -> {
             try {
                 playerManager.skipToNext();
-                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+                v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(80).start())
+                        .start();
             } catch (Exception e) {
                 Log.e(TAG, "Error skipping to next track", e);
             }
@@ -187,13 +216,13 @@ public class MainActivity extends AppCompatActivity {
         // Observe playback state
         playerManager.getPlayingLiveData().observe(this, this::updatePlayPauseButton);
 
-        // Observe progress with error handling
+        // Observe progress — smooth progress updates
         playerManager.getCurrentPosition().observe(this, position -> {
             try {
                 if (position != null && playerManager.getDuration() > 0) {
                     int progress = (int) ((position * 100) / playerManager.getDuration());
                     if (binding != null && binding.miniPlayer != null && binding.miniPlayer.progressMini != null) {
-                        binding.miniPlayer.progressMini.setProgress(progress);
+                        binding.miniPlayer.progressMini.setProgressCompat(progress, true);
                     }
                 }
             } catch (Exception e) {
@@ -201,16 +230,28 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Show/hide mini player based on current song
+        // Show/hide mini player — smooth alpha fade instead of jerky slide
         playerManager.getCurrentSongLiveData().observe(this, song -> {
             try {
                 if (binding != null && binding.miniPlayer != null) {
-                    if (song != null && binding.miniPlayer.getRoot().getVisibility() != View.VISIBLE) {
-                        binding.miniPlayer.getRoot().setVisibility(View.VISIBLE);
-                        binding.miniPlayer.getRoot().startAnimation(
-                                AnimationUtils.loadAnimation(this, R.anim.slide_up));
-                    } else if (song == null) {
-                        binding.miniPlayer.getRoot().setVisibility(View.GONE);
+                    View root = binding.miniPlayer.getRoot();
+                    if (song != null && root.getVisibility() != View.VISIBLE) {
+                        root.setAlpha(0f);
+                        root.setTranslationY(root.getHeight() > 0 ? root.getHeight() : 80);
+                        root.setVisibility(View.VISIBLE);
+                        root.animate()
+                                .alpha(1f)
+                                .translationY(0f)
+                                .setDuration(250)
+                                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                                .start();
+                    } else if (song == null && root.getVisibility() == View.VISIBLE) {
+                        root.animate()
+                                .alpha(0f)
+                                .translationY(80)
+                                .setDuration(200)
+                                .withEndAction(() -> root.setVisibility(View.GONE))
+                                .start();
                     }
                 }
             } catch (Exception e) {
@@ -218,11 +259,10 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Add direct listener to player for immediate updates
+        // Direct player listener for immediate play-state synchronization
         playerManager.getPlayer().addListener(new androidx.media3.common.Player.Listener() {
             @Override
             public void onIsPlayingChanged(boolean isPlaying) {
-                // Update on main thread
                 mainHandler.post(() -> updatePlayPauseButton(isPlaying));
             }
         });
@@ -236,12 +276,15 @@ public class MainActivity extends AppCompatActivity {
             binding.miniPlayer.txtMiniTitle.setText(song.getSong());
             binding.miniPlayer.txtMiniArtist.setText(song.getSingers());
 
+            // Re-enable marquee after text change
+            binding.miniPlayer.txtMiniTitle.setSelected(true);
+
             Glide.with(this)
                     .load(song.getImageUrl())
                     .placeholder(R.drawable.placeholder_song)
                     .into(binding.miniPlayer.imgMiniArt);
 
-            // Extract dominant color from album art for mini player tinting
+            // Extract palette for glassy color tinting
             Glide.with(this)
                     .asBitmap()
                     .load(song.getImageUrl())
@@ -251,20 +294,26 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 Palette.from(bitmap).generate(palette -> {
                                     if (palette != null && binding != null && binding.miniPlayer != null) {
-                                        int dominantColor = palette.getDominantColor(
-                                                ContextCompat.getColor(MainActivity.this, R.color.white));
-                                        int mutedColor = palette.getMutedColor(dominantColor);
+                                        // Forward palette to AccentManager for dynamic accent
+                                        AccentManager.getInstance(MainActivity.this).updateFromPalette(palette);
 
-                                        // Tint progress bar with dominant color
-                                        binding.miniPlayer.progressMini.setIndicatorColor(dominantColor);
+                                        int accentColor = AccentManager.getInstance(MainActivity.this).getAccentColorValue();
+                                        int mutedColor = palette.getMutedColor(accentColor);
 
-                                        // Create a subtle dark tinted background
-                                        int bgColor = blendColors(Color.parseColor("#1E1E1E"), mutedColor, 0.15f);
+                                        // Tint the progress bar with accent color
+                                        binding.miniPlayer.progressMini.setIndicatorColor(accentColor);
+
+                                        // Create a frosted glass background blended with album color
+                                        int glassBase = Color.parseColor("#141414");
+                                        int bgColor = blendColors(glassBase, mutedColor, 0.12f);
+                                        // Apply with alpha for translucency
+                                        int glassBg = Color.argb(230, Color.red(bgColor), Color.green(bgColor), Color.blue(bgColor));
+
                                         GradientDrawable bg = new GradientDrawable();
                                         bg.setShape(GradientDrawable.RECTANGLE);
                                         bg.setCornerRadius(dpToPx(16));
-                                        bg.setColor(bgColor);
-                                        bg.setStroke(1, Color.parseColor("#2A2A2A"));
+                                        bg.setColor(glassBg);
+                                        bg.setStroke(1, Color.argb(24, 255, 255, 255));
                                         binding.miniPlayer.miniPlayerContainer.setBackground(bg);
                                     }
                                 });
@@ -274,8 +323,17 @@ public class MainActivity extends AppCompatActivity {
                         }
                     });
 
-            // Update play/pause button state
             updatePlayPauseButton(playerManager.isPlaying());
+
+            // Check liked status for the heart button
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    boolean liked = AppDatabase.getInstance(this).songDao().isSongLiked(song.getId());
+                    mainHandler.post(() -> updateHeartButton(liked));
+                } catch (Exception e) {
+                    Log.e(TAG, "Error checking liked status", e);
+                }
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error updating mini player", e);
         }
@@ -307,6 +365,36 @@ public class MainActivity extends AppCompatActivity {
             }
         } catch (Exception e) {
             Log.e(TAG, "Error updating play/pause button", e);
+        }
+    }
+
+    private void updateHeartButton(boolean isLiked) {
+        try {
+            if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniHeart != null) {
+                binding.miniPlayer.btnMiniHeart.setImageResource(
+                        isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
+                // Tint: liked = accent color, unliked = muted white
+                int accent = AccentManager.getInstance(this).getAccentColorValue();
+                binding.miniPlayer.btnMiniHeart.setImageTintList(
+                        ColorStateList.valueOf(
+                                isLiked ? accent : Color.parseColor("#88FFFFFF")));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating heart button", e);
+        }
+    }
+
+    private void applyAccentColor(int color) {
+        try {
+            if (binding == null) return;
+            // Bottom nav icon tint
+            binding.bottomNav.setItemIconTintList(ColorStateList.valueOf(color));
+            // Progress bar
+            if (binding.miniPlayer != null && binding.miniPlayer.progressMini != null) {
+                binding.miniPlayer.progressMini.setIndicatorColor(color);
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error applying accent color", e);
         }
     }
 

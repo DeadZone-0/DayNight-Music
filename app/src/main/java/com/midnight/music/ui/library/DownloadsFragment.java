@@ -45,6 +45,15 @@ public class DownloadsFragment extends Fragment implements DownloadedSongsAdapte
         setupRecyclerView();
         setupEmptyState();
         observeDownloads();
+
+        // Observe accent colour and tint the browse button
+        com.midnight.music.utils.AccentManager.getInstance(requireContext())
+                .getAccentColor().observe(getViewLifecycleOwner(), color -> {
+                    if (binding != null && binding.browseButton != null) {
+                        binding.browseButton.setBackgroundTintList(
+                                android.content.res.ColorStateList.valueOf(color));
+                    }
+                });
     }
 
     private void setupRecyclerView() {

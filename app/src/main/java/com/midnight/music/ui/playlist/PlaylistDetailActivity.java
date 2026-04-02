@@ -9,6 +9,9 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.animation.AnimationUtils;
 import android.widget.Toast;
+import android.graphics.Color;
+import android.graphics.Bitmap;
+import android.graphics.drawable.GradientDrawable;
 
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
@@ -16,8 +19,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.palette.graphics.Palette;
+import androidx.core.content.ContextCompat;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.midnight.music.R;
 import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.PlaylistSongCrossRef;
@@ -34,6 +41,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import android.content.res.ColorStateList;
+import com.midnight.music.utils.AccentManager;
 
 public class PlaylistDetailActivity extends AppCompatActivity implements SearchAdapter.SearchAdapterListener {
     private static final String TAG = "PlaylistDetailActivity";
@@ -94,6 +103,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
     private void setupMiniPlayer() {
         playerManager = MusicPlayerManager.getInstance(this);
 
+        // Enable hardware acceleration
+        binding.miniPlayer.getRoot().setLayerType(View.LAYER_TYPE_HARDWARE, null);
+
         // Handle click on mini player to open full player with slide up animation
         binding.miniPlayer.miniPlayerContainer.setOnClickListener(v -> {
             Intent intent = new Intent(this, PlayerActivity.class);
@@ -124,6 +136,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             overridePendingTransition(R.anim.slide_up, R.anim.stay);
         });
 
+        // Enable marquee scrolling for long song titles
+        binding.miniPlayer.txtMiniTitle.setSelected(true);
+
         // Set initial play/pause button state
         updatePlayPauseButton(playerManager.isPlaying());
 
@@ -138,7 +153,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                 playerManager.togglePlayPause();
                 
                 // Apply click animation
-                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+                v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(80).start())
+                        .start();
             } catch (Exception e) {
                 Log.e(TAG, "Error toggling play/pause state", e);
                 // Revert to correct state if there was an error
@@ -146,13 +163,29 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             }
         });
 
-        // Handle skip previous button with error handling
-        binding.miniPlayer.btnMiniPrevious.setOnClickListener(v -> {
+        // Heart / Favorite button — toggles liked status in Room DB
+        binding.miniPlayer.btnMiniHeart.setOnClickListener(v -> {
             try {
-                playerManager.skipToPrevious();
-                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+                Song currentSong = playerManager.getCurrentSongLiveData().getValue();
+                if (currentSong == null) return;
+
+                v.animate().scaleX(1.3f).scaleY(1.3f).setDuration(100)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
+                        .start();
+
+                Executors.newSingleThreadExecutor().execute(() -> {
+                    AppDatabase db = AppDatabase.getInstance(this);
+                    boolean isCurrentlyLiked = db.songDao().isSongLiked(currentSong.getId());
+                    boolean newLikedState = !isCurrentlyLiked;
+
+                    currentSong.setLiked(newLikedState);
+                    currentSong.setTimestamp(System.currentTimeMillis());
+                    db.songDao().insert(currentSong);
+
+                    mainHandler.post(() -> updateHeartButton(newLikedState));
+                });
             } catch (Exception e) {
-                Log.e(TAG, "Error skipping to previous track", e);
+                Log.e(TAG, "Error toggling favorite", e);
             }
         });
 
@@ -160,7 +193,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         binding.miniPlayer.btnMiniNext.setOnClickListener(v -> {
             try {
                 playerManager.skipToNext();
-                v.startAnimation(AnimationUtils.loadAnimation(this, R.anim.button_click));
+                v.animate().scaleX(0.85f).scaleY(0.85f).setDuration(80)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(80).start())
+                        .start();
             } catch (Exception e) {
                 Log.e(TAG, "Error skipping to next track", e);
             }
@@ -178,7 +213,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                 if (position != null && playerManager.getDuration() > 0) {
                     int progress = (int) ((position * 100) / playerManager.getDuration());
                     if (binding != null && binding.miniPlayer != null && binding.miniPlayer.progressMini != null) {
-                        binding.miniPlayer.progressMini.setProgress(progress);
+                        binding.miniPlayer.progressMini.setProgressCompat(progress, true);
                     }
                 }
             } catch (Exception e) {
@@ -190,13 +225,24 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         playerManager.getCurrentSongLiveData().observe(this, song -> {
             try {
                 if (binding != null && binding.miniPlayer != null) {
-                    if (song != null && binding.miniPlayer.getRoot().getVisibility() != View.VISIBLE) {
-                        binding.miniPlayer.getRoot().setVisibility(View.VISIBLE);
-                        binding.miniPlayer.getRoot().startAnimation(
-                            AnimationUtils.loadAnimation(this, R.anim.slide_up)
-                        );
-                    } else if (song == null) {
-                        binding.miniPlayer.getRoot().setVisibility(View.GONE);
+                    View root = binding.miniPlayer.getRoot();
+                    if (song != null && root.getVisibility() != View.VISIBLE) {
+                        root.setAlpha(0f);
+                        root.setTranslationY(root.getHeight() > 0 ? root.getHeight() : 80);
+                        root.setVisibility(View.VISIBLE);
+                        root.animate()
+                                .alpha(1f)
+                                .translationY(0f)
+                                .setDuration(250)
+                                .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                                .start();
+                    } else if (song == null && root.getVisibility() == View.VISIBLE) {
+                        root.animate()
+                                .alpha(0f)
+                                .translationY(80)
+                                .setDuration(200)
+                                .withEndAction(() -> root.setVisibility(View.GONE))
+                                .start();
                     }
                 }
             } catch (Exception e) {
@@ -394,13 +440,70 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             binding.miniPlayer.txtMiniTitle.setText(song.getSong());
             binding.miniPlayer.txtMiniArtist.setText(song.getSingers());
             
+            // Re-enable marquee after text change
+            binding.miniPlayer.txtMiniTitle.setSelected(true);
+
             Glide.with(this)
                 .load(song.getImageUrl())
                 .placeholder(R.drawable.placeholder_song)
                 .into(binding.miniPlayer.imgMiniArt);
+                
+            // Extract dominant color from album art for mini player tinting
+            Glide.with(this)
+                    .asBitmap()
+                    .load(song.getImageUrl())
+                    .into(new SimpleTarget<Bitmap>() {
+                        @Override
+                        public void onResourceReady(Bitmap bitmap, Transition<? super Bitmap> transition) {
+                            try {
+                                Palette.from(bitmap).generate(palette -> {
+                                    if (palette != null && binding != null && binding.miniPlayer != null) {
+                                        // Forward palette to AccentManager for dynamic accent
+                                        AccentManager.getInstance(PlaylistDetailActivity.this).updateFromPalette(palette);
+
+                                        int accentColor = AccentManager.getInstance(PlaylistDetailActivity.this).getAccentColorValue();
+                                        int mutedColor = palette.getMutedColor(accentColor);
+
+                                        // Tint progress bar with accent color
+                                        binding.miniPlayer.progressMini.setIndicatorColor(accentColor);
+
+                                        // Create a frosted glass background blended with album color
+                                        int glassBase = Color.parseColor("#141414");
+                                        // A simple internal color blend function
+                                        int r = (int) (Color.red(glassBase) * 0.88f + Color.red(mutedColor) * 0.12f);
+                                        int g = (int) (Color.green(glassBase) * 0.88f + Color.green(mutedColor) * 0.12f);
+                                        int b = (int) (Color.blue(glassBase) * 0.88f + Color.blue(mutedColor) * 0.12f);
+                                        int bgColor = Color.rgb(r, g, b);
+
+                                        // Apply with alpha for translucency
+                                        int glassBg = Color.argb(230, Color.red(bgColor), Color.green(bgColor), Color.blue(bgColor));
+
+                                        GradientDrawable bg = new GradientDrawable();
+                                        bg.setShape(GradientDrawable.RECTANGLE);
+                                        bg.setCornerRadius(16 * getResources().getDisplayMetrics().density);
+                                        bg.setColor(glassBg);
+                                        bg.setStroke(1, Color.argb(24, 255, 255, 255));
+                                        binding.miniPlayer.miniPlayerContainer.setBackground(bg);
+                                    }
+                                });
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error extracting palette for mini player", e);
+                            }
+                        }
+                    });
 
             // Update play/pause button state
             updatePlayPauseButton(playerManager.isPlaying());
+
+            // Check liked status for the heart button
+            Executors.newSingleThreadExecutor().execute(() -> {
+                try {
+                    boolean liked = AppDatabase.getInstance(this).songDao().isSongLiked(song.getId());
+                    mainHandler.post(() -> updateHeartButton(liked));
+                } catch (Exception e) {
+                    Log.e(TAG, "Error checking liked status", e);
+                }
+            });
         } catch (Exception e) {
             Log.e(TAG, "Error updating mini player", e);
         }
@@ -421,6 +524,21 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             }
         } catch (Exception e) {
             Log.e(TAG, "Error updating play/pause button", e);
+        }
+    }
+
+    private void updateHeartButton(boolean isLiked) {
+        try {
+            if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniHeart != null) {
+                binding.miniPlayer.btnMiniHeart.setImageResource(
+                        isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
+                int accent = AccentManager.getInstance(this).getAccentColorValue();
+                binding.miniPlayer.btnMiniHeart.setImageTintList(
+                        ColorStateList.valueOf(
+                                isLiked ? accent : Color.parseColor("#88FFFFFF")));
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating heart button", e);
         }
     }
 

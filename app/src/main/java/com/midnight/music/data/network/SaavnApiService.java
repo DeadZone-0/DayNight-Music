@@ -24,4 +24,15 @@ public interface SaavnApiService {
             @Query("query") String query,
             @Query("page") int page,
             @Query("limit") int limit);
+
+    /**
+     * Get similar songs/suggestions based on a song ID.
+     *
+     * @param songId The JioSaavn song ID
+     * @param limit Maximum number of similar songs to return
+     */
+    @GET("api/songs/{id}/suggestions")
+    Call<SaavnSuggestionsResponse> getSimilarSongs(
+            @retrofit2.http.Path("id") String songId,
+            @Query("limit") int limit);
 }

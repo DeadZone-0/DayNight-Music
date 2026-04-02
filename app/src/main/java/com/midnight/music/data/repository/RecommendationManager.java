@@ -84,14 +84,21 @@ public class RecommendationManager {
      * 2. For each result, searches JioSaavn to get playable links
      * 3. Returns the resolved Song list
      */
-    public void getSimilarTracks(String trackName, String artistName, int limit,
+    public void getSimilarTracks(Song song, int limit,
                                   RecommendationCallback callback) {
+        if (song == null || song.getId() == null) {
+            callback.onError(new IllegalArgumentException("Invalid song for suggestions"));
+            return;
+        }
+
+        /* 
+        // --- RESTORE LAST.FM SUGGESTIONS BY UNCOMMENTING THIS BLOCK AND COMMENTING OUT SAAVN ---
         if (apiKey == null || apiKey.isEmpty()) {
             callback.onError(new IllegalStateException("Last.fm API key not set"));
             return;
         }
 
-        lastFmService.getSimilarTracks(trackName, artistName, apiKey, limit)
+        lastFmService.getSimilarTracks(song.getSong(), song.getSingers(), apiKey, limit)
                 .enqueue(new Callback<LastFmService.SimilarTracksResponse>() {
                     @Override
                     public void onResponse(@NonNull Call<LastFmService.SimilarTracksResponse> call,
@@ -115,6 +122,39 @@ public class RecommendationManager {
                                           @NonNull Throwable t) {
                         Log.e(TAG, "Last.fm API call failed", t);
                         callback.onError(new Exception("Last.fm error: " + t.getMessage()));
+                    }
+                });
+        */
+
+        // --- NEW SAAVN SUGGESTIONS IMPLEMENTATION ---
+        
+        // We need a Retrofit instance that uses SaavnApiService for suggestions
+        Retrofit saavnRetrofit = new Retrofit.Builder()
+                .baseUrl(com.midnight.music.data.network.SaavnApiService.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        com.midnight.music.data.network.SaavnApiService newSaavnApi = saavnRetrofit.create(com.midnight.music.data.network.SaavnApiService.class);
+
+        newSaavnApi.getSimilarSongs(song.getId(), limit)
+                .enqueue(new Callback<com.midnight.music.data.network.SaavnSuggestionsResponse>() {
+                    @Override
+                    public void onResponse(@NonNull Call<com.midnight.music.data.network.SaavnSuggestionsResponse> call,
+                                           @NonNull Response<com.midnight.music.data.network.SaavnSuggestionsResponse> response) {
+                        if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
+                            List<Song> resolvedSongs = new ArrayList<>();
+                            for (com.midnight.music.data.network.SaavnSongResult result : response.body().getData()) {
+                                resolvedSongs.add(result.toSong());
+                            }
+                            callback.onSuccess(resolvedSongs);
+                        } else {
+                            callback.onError(new Exception("No similar tracks found via Saavn API"));
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(@NonNull Call<com.midnight.music.data.network.SaavnSuggestionsResponse> call, @NonNull Throwable t) {
+                        Log.e(TAG, "Saavn suggestions API call failed", t);
+                        callback.onError(new Exception("Saavn API error: " + t.getMessage()));
                     }
                 });
     }

@@ -471,15 +471,16 @@ public class MusicRepository {
     }
 
     /**
-     * Get similar tracks based on a track name and artist
+     * Get similar tracks.
+     * Uses Saavn suggestions API by default, but keeps Last.fm code commented out as a fallback.
      */
-    public void getSimilarTracks(String trackName, String artistName, int limit,
+    public void getSimilarTracks(Song song, int limit,
             RecommendationManager.RecommendationCallback callback) {
         if (recommendationManager == null) {
-            callback.onError(new IllegalStateException("Last.fm API key not set. Call setLastFmApiKey() first."));
+            callback.onError(new IllegalStateException("Recommendation manager not setup."));
             return;
         }
-        recommendationManager.getSimilarTracks(trackName, artistName, limit, callback);
+        recommendationManager.getSimilarTracks(song, limit, callback);
     }
 
     /**

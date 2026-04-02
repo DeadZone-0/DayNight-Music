@@ -543,10 +543,10 @@ public class PlayerActivity extends AppCompatActivity
     private void updateLikeButton(boolean isLiked) {
         binding.btnLike.setImageResource(
                 isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
-        binding.btnLike.setImageTintList(
-                android.content.res.ColorStateList.valueOf(
-                        ContextCompat.getColor(this,
-                                isLiked ? R.color.accent : R.color.white)));
+        int tint = isLiked 
+                ? com.midnight.music.utils.AccentManager.getInstance(this).getAccentColorValue() 
+                : ContextCompat.getColor(this, R.color.white);
+        binding.btnLike.setImageTintList(android.content.res.ColorStateList.valueOf(tint));
     }
 
     private void updateSongUI(Song song) {

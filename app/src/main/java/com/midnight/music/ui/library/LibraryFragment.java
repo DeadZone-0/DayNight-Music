@@ -52,6 +52,12 @@ public class LibraryFragment extends Fragment {
                             break;
                     }
                 }).attach();
+
+        // Observe accent colour and tint tab indicator
+        com.midnight.music.utils.AccentManager.getInstance(requireContext())
+                .getAccentColor().observe(getViewLifecycleOwner(), color -> {
+                    tabLayout.setSelectedTabIndicatorColor(color);
+                });
     }
 
     @Override

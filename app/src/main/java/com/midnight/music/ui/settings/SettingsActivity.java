@@ -5,7 +5,10 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
@@ -14,6 +17,7 @@ import androidx.appcompat.app.AppCompatDelegate;
 
 import com.midnight.music.R;
 import com.midnight.music.databinding.FragmentSettingsBinding;
+import com.midnight.music.utils.AccentManager;
 import com.google.android.material.switchmaterial.SwitchMaterial;
 
 import java.io.File;
@@ -31,15 +35,51 @@ public class SettingsActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         binding = FragmentSettingsBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
-        
+
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
 
         setupToolbar();
         setupThemeToggle();
+        setupAccentColor();
         setupAudioQuality();
         setupClearCacheButton();
         setupAppInfoButton();
         setupCheckUpdatesButton();
+
+        // Observe accent colour to tint section headers and switches
+        AccentManager.getInstance(this).getAccentColor().observe(this, color -> {
+            if (binding == null) return;
+            binding.headerAppearance.setTextColor(color);
+            binding.headerData.setTextColor(color);
+            binding.headerAbout.setTextColor(color);
+
+            android.content.res.ColorStateList thumbStateList = new android.content.res.ColorStateList(
+                    new int[][]{
+                            new int[]{android.R.attr.state_checked},
+                            new int[]{-android.R.attr.state_checked}
+                    },
+                    new int[]{
+                            color,
+                            androidx.core.content.ContextCompat.getColor(this, R.color.gray_light)
+                    }
+            );
+
+            android.content.res.ColorStateList trackStateList = new android.content.res.ColorStateList(
+                    new int[][]{
+                            new int[]{android.R.attr.state_checked},
+                            new int[]{-android.R.attr.state_checked}
+                    },
+                    new int[]{
+                            android.graphics.Color.argb(76, android.graphics.Color.red(color), android.graphics.Color.green(color), android.graphics.Color.blue(color)), // 30% opacity
+                            androidx.core.content.ContextCompat.getColor(this, R.color.gray_dark)
+                    }
+            );
+
+            binding.themeSwitch.setThumbTintList(thumbStateList);
+            binding.themeSwitch.setTrackTintList(trackStateList);
+            binding.accentDynamicSwitch.setThumbTintList(thumbStateList);
+            binding.accentDynamicSwitch.setTrackTintList(trackStateList);
+        });
     }
 
     private void setupToolbar() {
@@ -48,16 +88,11 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setupThemeToggle() {
         SwitchMaterial themeSwitch = binding.themeSwitch;
-
-        // Load saved preference
         boolean isDarkMode = sharedPreferences.getBoolean(DARK_MODE_KEY, true);
         themeSwitch.setChecked(isDarkMode);
 
         themeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            // Save preference
             sharedPreferences.edit().putBoolean(DARK_MODE_KEY, isChecked).apply();
-
-            // Apply theme
             if (isChecked) {
                 AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             } else {
@@ -66,18 +101,98 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    // ============ Accent Color ============
+
+    private void setupAccentColor() {
+        AccentManager accentManager = AccentManager.getInstance(this);
+
+        View[] swatches = {
+                binding.swatchPurple, binding.swatchBlue, binding.swatchTeal,
+                binding.swatchGreen, binding.swatchOrange, binding.swatchRed,
+                binding.swatchPink
+        };
+        String[] colorNames = {"Purple", "Blue", "Teal", "Green", "Orange", "Red", "Pink"};
+
+        // Tint each swatch with its colour
+        for (int i = 0; i < swatches.length; i++) {
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(AccentManager.PRESET_COLORS[i]);
+            bg.setStroke(2, Color.argb(50, 255, 255, 255));
+            swatches[i].setBackground(bg);
+        }
+
+        // Initial state
+        boolean isDynamic = accentManager.getMode() == AccentManager.MODE_DYNAMIC;
+        binding.accentDynamicSwitch.setChecked(isDynamic);
+        binding.accentSwatchesRow.setVisibility(isDynamic ? View.GONE : View.VISIBLE);
+        binding.accentDynamicLabel.setVisibility(isDynamic ? View.VISIBLE : View.GONE);
+        updateAccentSubtitle(accentManager, colorNames);
+        highlightSelectedSwatch(swatches, accentManager.getStaticColor());
+
+        // Dynamic toggle
+        binding.accentDynamicSwitch.setOnCheckedChangeListener((btn, checked) -> {
+            accentManager.setMode(checked ? AccentManager.MODE_DYNAMIC : AccentManager.MODE_STATIC);
+            binding.accentSwatchesRow.setVisibility(checked ? View.GONE : View.VISIBLE);
+            binding.accentDynamicLabel.setVisibility(checked ? View.VISIBLE : View.GONE);
+            updateAccentSubtitle(accentManager, colorNames);
+        });
+
+        // Swatch clicks
+        for (int i = 0; i < swatches.length; i++) {
+            final int index = i;
+            swatches[i].setOnClickListener(v -> {
+                accentManager.setStaticColor(AccentManager.PRESET_COLORS[index]);
+                highlightSelectedSwatch(swatches, AccentManager.PRESET_COLORS[index]);
+                updateAccentSubtitle(accentManager, colorNames);
+                v.animate().scaleX(1.3f).scaleY(1.3f).setDuration(100)
+                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
+                        .start();
+            });
+        }
+    }
+
+    private void updateAccentSubtitle(AccentManager am, String[] names) {
+        if (am.getMode() == AccentManager.MODE_DYNAMIC) {
+            binding.accentSubtitle.setText("Dynamic · Album art");
+        } else {
+            String name = "Custom";
+            for (int i = 0; i < AccentManager.PRESET_COLORS.length; i++) {
+                if (AccentManager.PRESET_COLORS[i] == am.getStaticColor()) {
+                    name = names[i];
+                    break;
+                }
+            }
+            binding.accentSubtitle.setText("Static · " + name);
+        }
+    }
+
+    private void highlightSelectedSwatch(View[] swatches, int selectedColor) {
+        for (int i = 0; i < swatches.length; i++) {
+            GradientDrawable bg = new GradientDrawable();
+            bg.setShape(GradientDrawable.OVAL);
+            bg.setColor(AccentManager.PRESET_COLORS[i]);
+            if (AccentManager.PRESET_COLORS[i] == selectedColor) {
+                bg.setStroke(4, Color.WHITE);
+            } else {
+                bg.setStroke(2, Color.argb(50, 255, 255, 255));
+            }
+            swatches[i].setBackground(bg);
+        }
+    }
+
+    // ============ Audio Quality ============
+
     private void setupAudioQuality() {
-        // Quality options
         final String[] qualityLabels = {"Data Saver (96kbps)", "Standard (160kbps)", "High Quality (320kbps)"};
         final String[] qualityValues = {"96kbps", "160kbps", "320kbps"};
 
-        // Load saved preference and update subtitle
         String savedQuality = sharedPreferences.getString(AUDIO_QUALITY_KEY, DEFAULT_QUALITY);
         updateQualitySubtitle(savedQuality);
 
         binding.audioQualityButton.setOnClickListener(v -> {
             String currentQuality = sharedPreferences.getString(AUDIO_QUALITY_KEY, DEFAULT_QUALITY);
-            int checkedIndex = 2; // default to 320kbps
+            int checkedIndex = 2;
             for (int i = 0; i < qualityValues.length; i++) {
                 if (qualityValues[i].equals(currentQuality)) {
                     checkedIndex = i;
@@ -113,15 +228,14 @@ public class SettingsActivity extends AppCompatActivity {
         }
     }
 
+    // ============ Cache & Info ============
+
     private void setupClearCacheButton() {
         binding.clearCacheButton.setOnClickListener(v -> {
             new AlertDialog.Builder(this, R.style.AlertDialogTheme)
                     .setTitle("Clear Cache")
-                    .setMessage(
-                            "Are you sure you want to clear the app cache? This will remove all temporarily stored data.")
-                    .setPositiveButton("Clear", (dialog, which) -> {
-                        clearAppCache();
-                    })
+                    .setMessage("Are you sure you want to clear the app cache? This will remove all temporarily stored data.")
+                    .setPositiveButton("Clear", (dialog, which) -> clearAppCache())
                     .setNegativeButton("Cancel", null)
                     .show();
         });

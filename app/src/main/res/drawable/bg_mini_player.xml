@@ -2,8 +2,9 @@
 <shape xmlns:android="http://schemas.android.com/apk/res/android"
     android:shape="rectangle">
     <corners android:radius="16dp" />
-    <solid android:color="#1E1E1E" />
+    <!-- Translucent dark surface for frosted glass effect -->
+    <solid android:color="#E6141414" />
     <stroke
         android:width="0.5dp"
-        android:color="#2A2A2A" />
+        android:color="#18FFFFFF" />
 </shape>

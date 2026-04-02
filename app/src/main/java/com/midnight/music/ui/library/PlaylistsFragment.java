@@ -72,6 +72,27 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
                         // Log error but don't crash
                     }
                 });
+
+        // Observe accent colour and tint elements
+        com.midnight.music.utils.AccentManager.getInstance(requireContext())
+                .getAccentColor().observe(getViewLifecycleOwner(), this::applyAccentColor);
+    }
+
+    private void applyAccentColor(int color) {
+        if (binding == null) return;
+        // Liked songs card background (20% alpha of accent)
+        int cardBg = android.graphics.Color.argb(51,
+                android.graphics.Color.red(color),
+                android.graphics.Color.green(color),
+                android.graphics.Color.blue(color));
+        binding.likedSongsCard.setCardBackgroundColor(cardBg);
+        // Liked heart icon tint
+        binding.likedIcon.setImageTintList(android.content.res.ColorStateList.valueOf(color));
+        // Play FAB
+        binding.likedPlayBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
+        // Import and Create Playlist FABs
+        binding.fabImportPlaylist.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
+        binding.fabCreatePlaylist.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
     }
 
     private void setupViewModel() {

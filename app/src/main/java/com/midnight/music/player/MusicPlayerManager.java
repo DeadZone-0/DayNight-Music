@@ -736,8 +736,7 @@ public class MusicPlayerManager {
 
         com.midnight.music.data.repository.RecommendationManager
                 .getInstance(LASTFM_API_KEY)
-                .getSimilarTracks(baseSong.getSong(),
-                        baseSong.getSingers() != null ? baseSong.getSingers() : "",
+                .getSimilarTracks(baseSong,
                         10,
                         new com.midnight.music.data.repository.RecommendationManager.RecommendationCallback() {
                             @Override
