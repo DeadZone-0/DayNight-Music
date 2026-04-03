@@ -4,7 +4,7 @@ import androidx.room.Entity;
 import androidx.room.PrimaryKey;
 
 @Entity(tableName = "playlists")
-public class Playlist {
+public class    Playlist {
     @PrimaryKey(autoGenerate = true)
     private long id;
 

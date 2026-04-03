@@ -85,17 +85,31 @@ public class CloudSyncManager {
 
         isSyncing = true;
         String userId = sessionManager.getUserId();
+        String accessToken = sessionManager.getAccessToken();
+        
+        // Ensure token is set in SupabaseApiClient before sync
+        if (accessToken != null) {
+            SupabaseApiClient.getInstance().setAccessToken(accessToken);
+        }
+
+        Log.d(TAG, "Starting sync for user: " + userId);
 
         // Step 1: Push local data to cloud
         diskIO.execute(() -> {
             try {
+                Log.d(TAG, "Pushing songs to cloud...");
                 pushSongsToCloud(userId);
+                Log.d(TAG, "Pushing playlists to cloud...");
                 pushPlaylistsToCloud(userId);
+                Log.d(TAG, "Pushing playlist songs to cloud...");
                 pushPlaylistSongsToCloud(userId);
 
                 // Step 2: Pull cloud data to local
+                Log.d(TAG, "Pulling songs from cloud...");
                 pullSongsFromCloud(userId);
+                Log.d(TAG, "Pulling playlists from cloud...");
                 pullPlaylistsFromCloud(userId);
+                Log.d(TAG, "Pulling playlist songs from cloud...");
                 pullPlaylistSongsFromCloud(userId);
 
                 isSyncing = false;
@@ -111,35 +125,110 @@ public class CloudSyncManager {
 
     // ============ Push to Cloud ============
 
+    /**
+     * Delete a song from cloud or update its like status.
+     * Called when a song is unliked locally.
+     */
+    public void deleteOrUpdateSongInCloud(String userId, String songId, boolean isLiked) {
+        try {
+            if (!isLiked) {
+                // Song is no longer liked - delete from cloud songs table
+                Response<Void> response = dataService.deleteSong(songId, userId).execute();
+                if (response.isSuccessful()) {
+                    Log.d(TAG, "Deleted song from cloud: " + songId);
+                } else {
+                    Log.e(TAG, "Failed to delete song: " + response.code());
+                }
+            } else {
+                // Song is liked - update is_liked=true in cloud (in case it exists)
+                JsonObject body = new JsonObject();
+                body.addProperty("is_liked", true);
+                Response<JsonArray> response = dataService.updateSong(
+                        songId, userId, body, "return=minimal"
+                ).execute();
+                if (response.isSuccessful()) {
+                    Log.d(TAG, "Updated song like status in cloud: " + songId);
+                } else {
+                    Log.e(TAG, "Failed to update song: " + response.code());
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error in deleteOrUpdateSongInCloud", e);
+        }
+    }
+
     private void pushSongsToCloud(String userId) {
         try {
-            // Push liked songs
-            List<Song> likedSongs = songDao.getLikedSongsSync();
-            if (likedSongs == null || likedSongs.isEmpty()) return;
+            // Get all songs from local DB
+            List<Song> allLocalSongs = songDao.getAllSongsSync();
+            if (allLocalSongs == null || allLocalSongs.isEmpty()) return;
 
-            JsonArray songsArray = new JsonArray();
-            for (Song song : likedSongs) {
-                JsonObject obj = new JsonObject();
-                obj.addProperty("id", song.getId());
-                obj.addProperty("user_id", userId);
-                obj.addProperty("title", song.getSong());
-                obj.addProperty("artist", song.getSingers());
-                obj.addProperty("album", song.getAlbum());
-                obj.addProperty("duration", song.getDuration());
-                obj.addProperty("image_url", song.getImageUrl());
-                obj.addProperty("language", song.getLanguage());
-                obj.addProperty("year", song.getYear());
-                obj.addProperty("is_liked", song.isLiked());
-                songsArray.add(obj);
+            // First, get existing cloud songs to find which ones to delete (unliked)
+            try {
+                Response<JsonArray> cloudResponse = dataService.getSongs(
+                        "eq." + userId,
+                        "id"
+                ).execute();
+
+                if (cloudResponse.isSuccessful() && cloudResponse.body() != null) {
+                    // Build set of local song IDs (all songs in DB)
+                    java.util.Set<String> localSongIds = new java.util.HashSet<>();
+                    for (Song s : allLocalSongs) {
+                        localSongIds.add(s.getId());
+                    }
+
+                    // Find cloud songs that don't exist locally - they were unliked
+                    for (JsonElement elem : cloudResponse.body()) {
+                        JsonObject cloudSong = elem.getAsJsonObject();
+                        String cloudSongId = cloudSong.get("id").getAsString();
+
+                        if (!localSongIds.contains(cloudSongId)) {
+                            // Song was unliked - delete from cloud
+                            try {
+                                dataService.deleteSong(cloudSongId, userId).execute();
+                                Log.d(TAG, "Deleted unliked song from cloud: " + cloudSongId);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Failed to delete song: " + cloudSongId, e);
+                            }
+                        }
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error getting cloud songs for sync", e);
             }
 
-            Response<JsonArray> response = dataService.upsertSongs(
-                    songsArray,
-                    "resolution=merge-duplicates"
-            ).execute();
+            // Now push/update all liked songs
+            JsonArray songsArray = new JsonArray();
+            for (Song song : allLocalSongs) {
+                if (song.isLiked()) {
+                    JsonObject obj = new JsonObject();
+                    obj.addProperty("id", song.getId());
+                    obj.addProperty("user_id", userId);
+                    obj.addProperty("title", song.getSong());
+                    obj.addProperty("artist", song.getSingers());
+                    obj.addProperty("album", song.getAlbum());
+                    obj.addProperty("duration", song.getDuration());
+                    obj.addProperty("image_url", song.getImageUrl());
+                    obj.addProperty("language", song.getLanguage());
+                    obj.addProperty("year", song.getYear());
+                    obj.addProperty("is_liked", song.isLiked());
+                    obj.addProperty("perma_url", song.getPermaUrl());
+                    obj.addProperty("media_url", song.getMediaUrl());
+                    songsArray.add(obj);
+                }
+            }
 
-            if (!response.isSuccessful()) {
-                Log.e(TAG, "Failed to push songs: " + response.code());
+            if (songsArray.size() > 0) {
+                Response<JsonArray> response = dataService.upsertSongs(
+                        songsArray,
+                        "resolution=merge-duplicates"
+                ).execute();
+
+                if (!response.isSuccessful()) {
+                    Log.e(TAG, "Failed to push songs: " + response.code());
+                } else {
+                    Log.d(TAG, "Pushed " + songsArray.size() + " liked songs to cloud");
+                }
             }
         } catch (Exception e) {
             Log.e(TAG, "Error pushing songs", e);
@@ -196,6 +285,8 @@ public class CloudSyncManager {
                     songObj.addProperty("language", song.getLanguage());
                     songObj.addProperty("year", song.getYear());
                     songObj.addProperty("is_liked", song.isLiked());
+                    songObj.addProperty("perma_url", song.getPermaUrl());
+                    songObj.addProperty("media_url", song.getMediaUrl());
 
                     // Push it
                     JsonArray singleSong = new JsonArray();
@@ -254,8 +345,26 @@ public class CloudSyncManager {
                         song.setLanguage(getJsonString(obj, "language"));
                         song.setYear(getJsonString(obj, "year"));
                         song.setLiked(obj.has("is_liked") && obj.get("is_liked").getAsBoolean());
+                        song.setPermaUrl(getJsonString(obj, "perma_url"));
+                        song.setMediaUrl(getJsonString(obj, "media_url"));
                         song.setTimestamp(0); // Don't pollute recents
                         songDao.insert(song);
+                    } else {
+                        // Update URLs from cloud if local is missing them
+                        String cloudPermaUrl = getJsonString(obj, "perma_url");
+                        String cloudMediaUrl = getJsonString(obj, "media_url");
+                        boolean updated = false;
+                        if (existing.getPermaUrl() == null && cloudPermaUrl != null) {
+                            existing.setPermaUrl(cloudPermaUrl);
+                            updated = true;
+                        }
+                        if (existing.getMediaUrl() == null && cloudMediaUrl != null) {
+                            existing.setMediaUrl(cloudMediaUrl);
+                            updated = true;
+                        }
+                        if (updated) {
+                            songDao.update(existing);
+                        }
                     }
                 }
             }

@@ -62,6 +62,9 @@ public interface SongDao {
     @Query("SELECT * FROM songs WHERE isDownloaded = 1 ORDER BY timestamp DESC")
     List<Song> getDownloadedSongsSync();
 
+    @Query("SELECT * FROM songs")
+    List<Song> getAllSongsSync();
+
     @Query("SELECT COUNT(*) FROM songs WHERE id = :songId AND isDownloaded = 1")
     boolean isSongDownloaded(String songId);
 

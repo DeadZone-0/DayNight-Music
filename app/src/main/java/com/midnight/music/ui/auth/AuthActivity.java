@@ -317,11 +317,19 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     /**
-     * Trigger a background sync, then close the auth screen.
+     * Trigger a background sync, wait for completion, then close the auth screen.
      */
     private void triggerSyncAndGo() {
-        CloudSyncManager.getInstance(this).sync(null);
-        finish();
+        setLoading(true);
+        CloudSyncManager.getInstance(this).sync((success, message) -> {
+            runOnUiThread(() -> {
+                setLoading(false);
+                if (!success) {
+                    Log.e(TAG, "Sync failed after login: " + message);
+                }
+                finish();
+            });
+        });
     }
 
     // ============ UI Helpers ============

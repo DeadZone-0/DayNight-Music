@@ -5,6 +5,7 @@ import android.net.Uri;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.media3.common.MediaItem;
@@ -12,13 +13,25 @@ import androidx.media3.common.Player;
 import androidx.media3.exoplayer.ExoPlayer;
 import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
+import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.Song;
+import com.midnight.music.data.network.SaavnApiService;
+import com.midnight.music.data.network.SaavnSearchResponse;
+import com.midnight.music.data.network.SaavnSongResult;
 import com.midnight.music.service.MusicService;
 import com.midnight.music.utils.AudioCacheManager;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MusicPlayerManager {
     private static final String TAG = "MusicPlayerManager";
@@ -33,6 +46,9 @@ public class MusicPlayerManager {
     private AudioCacheManager audioCacheManager;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
     private final AtomicBoolean isProcessingAction = new AtomicBoolean(false);
+    private volatile boolean isResolvingUrl = false;
+    private SaavnApiService saavnApiService;
+    private final Executor diskIO = Executors.newSingleThreadExecutor();
 
     // Auto-queue recommendations (only for search-sourced songs)
     private boolean autoQueueEnabled = false;
@@ -57,6 +73,12 @@ public class MusicPlayerManager {
         queue = new ArrayList<>();
         currentIndex = -1;
         audioCacheManager = AudioCacheManager.getInstance(context);
+
+        Retrofit saavnRetrofit = new Retrofit.Builder()
+                .baseUrl(SaavnApiService.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        this.saavnApiService = saavnRetrofit.create(SaavnApiService.class);
 
         player.addListener(new Player.Listener() {
             @Override
@@ -405,8 +427,14 @@ public class MusicPlayerManager {
                 }
             }
 
-            if (song == null || song.getMediaUrl() == null) {
-                Log.e(TAG, "Invalid song or media URL");
+            if (song == null) {
+                Log.e(TAG, "Cannot play null song");
+                return;
+            }
+
+            if (song.getMediaUrl() == null) {
+                Log.d(TAG, "Media URL missing for: " + song.getSong() + ", resolving...");
+                resolveAndPlay(song);
                 return;
             }
 
@@ -509,6 +537,90 @@ public class MusicPlayerManager {
         } catch (Exception e) {
             Log.e(TAG, "Error in playCurrentSong", e);
         }
+    }
+
+    /**
+     * Resolves a song's media URL via the JioSaavn search API, updates the song,
+     * and then plays it. Used as a fallback for cloud-restored songs missing URLs.
+     */
+    private void resolveAndPlay(Song song) {
+        // If already resolving, do nothing - the current resolution will handle playback when done
+        if (isResolvingUrl) {
+            Log.d(TAG, "Already resolving URL, ignoring duplicate tap");
+            return;
+        }
+        
+        isResolvingUrl = true;
+
+        String query = song.getSong();
+        if (song.getSingers() != null) {
+            query += " " + song.getSingers();
+        }
+
+        Log.d(TAG, "Resolving URL for: " + query);
+        final Song targetSong = song;
+
+        // Show loading toast immediately so user knows something is happening
+        mainHandler.post(() -> Toast.makeText(context, "Loading song...", Toast.LENGTH_SHORT).show());
+
+        // Try with more results to find a match
+        saavnApiService.searchSongs(query, 0, 5).enqueue(new Callback<SaavnSearchResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<SaavnSearchResponse> call,
+                                   @NonNull Response<SaavnSearchResponse> response) {
+                try {
+                    Log.d(TAG, "API Response code: " + response.code());
+
+                    if (response.isSuccessful() && response.body() != null
+                            && response.body().isSuccess() && response.body().getData() != null
+                            && response.body().getData().getResults() != null
+                            && !response.body().getData().getResults().isEmpty()) {
+
+                        Log.d(TAG, "Got " + response.body().getData().getResults().size() + " results");
+
+                        // Find a result with a playable URL
+                        for (SaavnSongResult result : response.body().getData().getResults()) {
+                            if (result.getDownloadUrl() != null && !result.getDownloadUrl().isEmpty()) {
+                                Song resolved = result.toSong();
+                                if (resolved.getMediaUrl() != null) {
+                                    Log.d(TAG, "Found playable URL for: " + targetSong.getSong());
+
+                                    // Update the song with fresh URLs
+                                    targetSong.setMediaUrl(resolved.getMediaUrl());
+                                    targetSong.setDownloadUrl(resolved.getDownloadUrl());
+                                    targetSong.setPermaUrl(resolved.getPermaUrl());
+
+                                    // Save updated song to local DB on background thread
+                                    final Song finalTargetSong = targetSong;
+                                    diskIO.execute(() -> {
+                                        AppDatabase.getInstance(context).songDao().update(finalTargetSong);
+                                        // Reset flag BEFORE playing
+                                        isResolvingUrl = false;
+                                        mainHandler.post(() -> playCurrentSong());
+                                    });
+                                    return;
+                                }
+                            }
+                        }
+                    }
+                    // No playable URL found
+                    Log.e(TAG, "Could not resolve URL for: " + targetSong.getSong());
+                    isResolvingUrl = false;
+                    mainHandler.post(() -> Toast.makeText(context, "Song not available", Toast.LENGTH_SHORT).show());
+                } catch (Exception e) {
+                    Log.e(TAG, "Error resolving URL", e);
+                    isResolvingUrl = false;
+                    mainHandler.post(() -> Toast.makeText(context, "Could not load song", Toast.LENGTH_SHORT).show());
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<SaavnSearchResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "URL resolution failed", t);
+                isResolvingUrl = false;
+                mainHandler.post(() -> Toast.makeText(context, "Could not load song", Toast.LENGTH_SHORT).show());
+            }
+        });
     }
 
     public void togglePlayPause() {

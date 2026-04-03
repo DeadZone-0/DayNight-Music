@@ -50,6 +50,13 @@ public interface SupabaseDataService {
             @Query("id") String idFilter,
             @Query("user_id") String userIdFilter);
 
+    @PATCH("rest/v1/songs")
+    Call<JsonArray> updateSong(
+            @Query("id") String idFilter,
+            @Query("user_id") String userIdFilter,
+            @Body JsonObject body,
+            @Header("Prefer") String prefer);
+
     // ============ Playlists ============
 
     @GET("rest/v1/playlists")
