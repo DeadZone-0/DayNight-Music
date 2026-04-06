@@ -50,80 +50,11 @@
                 android:fontFamily="@font/poppins_bold"
                 android:letterSpacing="0.1" />
 
+            <!-- Theme Picker Card - Compact Grid -->
             <com.google.android.material.card.MaterialCardView
+                android:id="@+id/theme_picker_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:cardBackgroundColor="@color/card_background"
-                app:cardCornerRadius="24dp"
-                app:cardElevation="1dp">
-
-                <androidx.constraintlayout.widget.ConstraintLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:paddingVertical="16dp">
-
-                    <ImageView
-                        android:id="@+id/theme_icon"
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:layout_marginStart="20dp"
-                        android:src="@drawable/ic_theme"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:tint="@color/text_primary" />
-
-                    <TextView
-                        android:id="@+id/theme_title"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:text="Dark Theme"
-                        android:textColor="@color/text_primary"
-                        android:textSize="16sp"
-                        android:fontFamily="@font/poppins_medium"
-                        app:layout_constraintBottom_toTopOf="@id/theme_subtitle"
-                        app:layout_constraintEnd_toStartOf="@id/theme_switch"
-                        app:layout_constraintStart_toEndOf="@id/theme_icon"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:layout_constraintVertical_chainStyle="packed" />
-
-                    <TextView
-                        android:id="@+id/theme_subtitle"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="16dp"
-                        android:layout_marginTop="2dp"
-                        android:text="Toggle between light and dark mode"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="12sp"
-                        android:fontFamily="@font/poppins"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toStartOf="@id/theme_switch"
-                        app:layout_constraintStart_toEndOf="@id/theme_icon"
-                        app:layout_constraintTop_toBottomOf="@id/theme_title" />
-
-                    <com.google.android.material.switchmaterial.SwitchMaterial
-                        android:id="@+id/theme_switch"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginEnd="20dp"
-                        android:checked="true"
-                        app:layout_constraintBottom_toBottomOf="parent"
-                        app:layout_constraintEnd_toEndOf="parent"
-                        app:layout_constraintTop_toTopOf="parent"
-                        app:thumbTint="@color/white"
-                        app:trackTint="@color/primary" />
-
-                </androidx.constraintlayout.widget.ConstraintLayout>
-            </com.google.android.material.card.MaterialCardView>
-
-            <!-- Accent Color Card -->
-            <com.google.android.material.card.MaterialCardView
-                android:id="@+id/accent_color_card"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
                 app:cardBackgroundColor="@color/card_background"
                 app:cardCornerRadius="24dp"
                 app:cardElevation="1dp">
@@ -132,10 +63,10 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="vertical"
-                    android:paddingVertical="16dp"
-                    android:paddingHorizontal="20dp">
+                    android:paddingVertical="20dp"
+                    android:paddingHorizontal="16dp">
 
-                    <!-- Header row with icon, title, and toggle -->
+                    <!-- Header Row -->
                     <LinearLayout
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
@@ -148,112 +79,105 @@
                             android:src="@drawable/ic_theme"
                             app:tint="@color/text_primary" />
 
-                        <LinearLayout
+                        <TextView
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
                             android:layout_weight="1"
                             android:layout_marginStart="16dp"
-                            android:orientation="vertical">
+                            android:text="Theme"
+                            android:textColor="@color/text_primary"
+                            android:textSize="16sp"
+                            android:fontFamily="@font/poppins_medium" />
 
-                            <TextView
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:text="Accent Color"
-                                android:textColor="@color/text_primary"
-                                android:textSize="16sp"
-                                android:fontFamily="@font/poppins_medium" />
-
-                            <TextView
-                                android:id="@+id/accent_subtitle"
-                                android:layout_width="wrap_content"
-                                android:layout_height="wrap_content"
-                                android:layout_marginTop="2dp"
-                                android:text="Static · Purple"
-                                android:textColor="@color/text_secondary"
-                                android:textSize="12sp"
-                                android:fontFamily="@font/poppins" />
-                        </LinearLayout>
-
-                        <com.google.android.material.switchmaterial.SwitchMaterial
-                            android:id="@+id/accent_dynamic_switch"
+                        <TextView
+                            android:id="@+id/current_theme_name"
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            app:thumbTint="@color/white"
-                            app:trackTint="@color/primary" />
+                            android:text="Midnight"
+                            android:textColor="@color/primary"
+                            android:textSize="14sp"
+                            android:fontFamily="@font/poppins_medium" />
                     </LinearLayout>
 
-                    <TextView
-                        android:id="@+id/accent_dynamic_label"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginTop="4dp"
-                        android:layout_marginStart="40dp"
-                        android:text="Dynamic: follows album art"
-                        android:textColor="@color/text_secondary"
-                        android:textSize="11sp"
-                        android:fontFamily="@font/poppins"
-                        android:visibility="gone" />
-
-                    <!-- Color swatches row (visible only in static mode) -->
-                    <LinearLayout
-                        android:id="@+id/accent_swatches_row"
+                    <!-- Theme Grid -->
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/theme_grid"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginTop="14dp"
-                        android:gravity="center_horizontal"
-                        android:orientation="horizontal">
-
-                        <!-- Purple -->
-                        <View android:id="@+id/swatch_purple"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-
-                        <!-- Blue -->
-                        <View android:id="@+id/swatch_blue"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-
-                        <!-- Teal -->
-                        <View android:id="@+id/swatch_teal"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-
-                        <!-- Green -->
-                        <View android:id="@+id/swatch_green"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-
-                        <!-- Orange -->
-                        <View android:id="@+id/swatch_orange"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-
-                        <!-- Red -->
-                        <View android:id="@+id/swatch_red"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-
-                        <!-- Pink -->
-                        <View android:id="@+id/swatch_pink"
-                            android:layout_width="32dp"
-                            android:layout_height="32dp"
-                            android:layout_marginHorizontal="6dp"
-                            android:background="@drawable/bg_circle_swatch" />
-                    </LinearLayout>
+                        android:layout_marginTop="16dp"
+                        android:overScrollMode="never"
+                        android:clipToPadding="false" />
 
                 </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Dynamic Accent Card -->
+            <com.google.android.material.card.MaterialCardView
+                android:id="@+id/dynamic_accent_card"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                app:cardBackgroundColor="@color/card_background"
+                app:cardCornerRadius="24dp"
+                app:cardElevation="1dp">
+
+                <androidx.constraintlayout.widget.ConstraintLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingVertical="16dp"
+                    android:paddingHorizontal="20dp">
+
+                    <ImageView
+                        android:id="@+id/dynamic_icon"
+                        android:layout_width="24dp"
+                        android:layout_height="24dp"
+                        android:src="@drawable/ic_palette"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintStart_toStartOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:tint="@color/text_primary" />
+
+                    <TextView
+                        android:id="@+id/dynamic_title"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:text="Dynamic Accent"
+                        android:textColor="@color/text_primary"
+                        android:textSize="16sp"
+                        android:fontFamily="@font/poppins_medium"
+                        app:layout_constraintBottom_toTopOf="@id/dynamic_subtitle"
+                        app:layout_constraintEnd_toStartOf="@id/dynamic_accent_switch"
+                        app:layout_constraintStart_toEndOf="@id/dynamic_icon"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:layout_constraintVertical_chainStyle="packed" />
+
+                    <TextView
+                        android:id="@+id/dynamic_subtitle"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_marginTop="2dp"
+                        android:text="Accent color follows album art"
+                        android:textColor="@color/text_secondary"
+                        android:textSize="12sp"
+                        android:fontFamily="@font/poppins"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toStartOf="@id/dynamic_accent_switch"
+                        app:layout_constraintStart_toEndOf="@id/dynamic_icon"
+                        app:layout_constraintTop_toBottomOf="@id/dynamic_title" />
+
+                    <com.google.android.material.switchmaterial.SwitchMaterial
+                        android:id="@+id/dynamic_accent_switch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        app:layout_constraintBottom_toBottomOf="parent"
+                        app:layout_constraintEnd_toEndOf="parent"
+                        app:layout_constraintTop_toTopOf="parent"
+                        app:thumbTint="@color/white"
+                        app:trackTint="@color/primary" />
+
+                </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
             <!-- Data Section -->
@@ -408,7 +332,7 @@
                 android:fontFamily="@font/poppins_bold"
                 android:letterSpacing="0.1" />
 
-            <!-- App Info Card (original) -->
+            <!-- App Info Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/app_info_button"
                 android:layout_width="match_parent"

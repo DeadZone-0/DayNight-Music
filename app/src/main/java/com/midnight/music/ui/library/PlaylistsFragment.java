@@ -27,6 +27,7 @@ import com.midnight.music.ui.adapters.PlaylistAdapter;
 import com.midnight.music.ui.playlist.PlaylistDetailActivity;
 import com.midnight.music.ui.library.PlaylistViewModel;
 import com.midnight.music.data.repository.PlaylistImportManager;
+import com.midnight.music.utils.ThemeManager;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -74,7 +75,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
                 });
 
         // Observe accent colour and tint elements
-        com.midnight.music.utils.AccentManager.getInstance(requireContext())
+        ThemeManager.getInstance(requireContext())
                 .getAccentColor().observe(getViewLifecycleOwner(), this::applyAccentColor);
     }
 

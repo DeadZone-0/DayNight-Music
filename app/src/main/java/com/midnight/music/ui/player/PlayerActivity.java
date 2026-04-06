@@ -57,6 +57,7 @@ import retrofit2.Response;
 import com.midnight.music.data.network.LrcLibService;
 import com.midnight.music.data.network.LrcResponse;
 import com.midnight.music.utils.LrcParser;
+import com.midnight.music.utils.ThemeManager;
 
 public class PlayerActivity extends AppCompatActivity
         implements QueueAdapter.QueueItemClickListener, MusicPlayerManager.PlayerCallback {
@@ -544,7 +545,7 @@ public class PlayerActivity extends AppCompatActivity
         binding.btnLike.setImageResource(
                 isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
         int tint = isLiked 
-                ? com.midnight.music.utils.AccentManager.getInstance(this).getAccentColorValue() 
+                ? ThemeManager.getInstance(this).getAccentColorValue() 
                 : ContextCompat.getColor(this, R.color.white);
         binding.btnLike.setImageTintList(android.content.res.ColorStateList.valueOf(tint));
     }

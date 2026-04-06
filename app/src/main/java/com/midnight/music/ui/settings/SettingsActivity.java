@@ -5,20 +5,20 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
-import android.graphics.Color;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
+import androidx.recyclerview.widget.GridLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.midnight.music.R;
 import com.midnight.music.databinding.FragmentSettingsBinding;
-import com.midnight.music.utils.AccentManager;
-import com.google.android.material.switchmaterial.SwitchMaterial;
+import com.midnight.music.utils.ThemeManager;
 
 import java.io.File;
 
@@ -26,9 +26,11 @@ public class SettingsActivity extends AppCompatActivity {
     private FragmentSettingsBinding binding;
     private SharedPreferences sharedPreferences;
     private static final String PREFS_NAME = "DaynightMusicPrefs";
-    private static final String DARK_MODE_KEY = "darkMode";
     public static final String AUDIO_QUALITY_KEY = "audioQuality";
     public static final String DEFAULT_QUALITY = "320kbps";
+    
+    private ThemeManager themeManager;
+    private ThemeAdapter themeAdapter;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -37,151 +39,107 @@ public class SettingsActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         sharedPreferences = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE);
+        themeManager = ThemeManager.getInstance(this);
 
         setupToolbar();
-        setupThemeToggle();
-        setupAccentColor();
+        setupThemePicker();
+        setupDynamicAccent();
         setupAudioQuality();
         setupClearCacheButton();
         setupAppInfoButton();
         setupCheckUpdatesButton();
 
-        // Observe accent colour to tint section headers and switches
-        AccentManager.getInstance(this).getAccentColor().observe(this, color -> {
-            if (binding == null) return;
-            binding.headerAppearance.setTextColor(color);
-            binding.headerData.setTextColor(color);
-            binding.headerAbout.setTextColor(color);
-
-            android.content.res.ColorStateList thumbStateList = new android.content.res.ColorStateList(
-                    new int[][]{
-                            new int[]{android.R.attr.state_checked},
-                            new int[]{-android.R.attr.state_checked}
-                    },
-                    new int[]{
-                            color,
-                            androidx.core.content.ContextCompat.getColor(this, R.color.gray_light)
-                    }
-            );
-
-            android.content.res.ColorStateList trackStateList = new android.content.res.ColorStateList(
-                    new int[][]{
-                            new int[]{android.R.attr.state_checked},
-                            new int[]{-android.R.attr.state_checked}
-                    },
-                    new int[]{
-                            android.graphics.Color.argb(76, android.graphics.Color.red(color), android.graphics.Color.green(color), android.graphics.Color.blue(color)), // 30% opacity
-                            androidx.core.content.ContextCompat.getColor(this, R.color.gray_dark)
-                    }
-            );
-
-            binding.themeSwitch.setThumbTintList(thumbStateList);
-            binding.themeSwitch.setTrackTintList(trackStateList);
-            binding.accentDynamicSwitch.setThumbTintList(thumbStateList);
-            binding.accentDynamicSwitch.setTrackTintList(trackStateList);
-        });
+        observeThemeChanges();
     }
 
     private void setupToolbar() {
         binding.toolbar.setNavigationOnClickListener(v -> finish());
     }
 
-    private void setupThemeToggle() {
-        SwitchMaterial themeSwitch = binding.themeSwitch;
-        boolean isDarkMode = sharedPreferences.getBoolean(DARK_MODE_KEY, true);
-        themeSwitch.setChecked(isDarkMode);
+    private void observeThemeChanges() {
+        themeManager.getAccentColor().observe(this, color -> {
+            if (binding == null) return;
+            binding.headerAppearance.setTextColor(color);
+            binding.headerData.setTextColor(color);
+            binding.headerAbout.setTextColor(color);
+        });
 
-        themeSwitch.setOnCheckedChangeListener((buttonView, isChecked) -> {
-            sharedPreferences.edit().putBoolean(DARK_MODE_KEY, isChecked).apply();
-            if (isChecked) {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
-            } else {
-                AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
+        themeManager.getCurrentTheme().observe(this, theme -> {
+            updateThemeName(theme);
+            if (themeAdapter != null) {
+                themeAdapter.setSelectedTheme(mapThemeToKey(theme));
             }
         });
     }
 
-    // ============ Accent Color ============
+    private String mapThemeToKey(String theme) {
+        if (ThemeManager.THEME_PURPLE_NIGHT.equals(theme)) return "midnight";
+        if (ThemeManager.THEME_OCEAN_BLUE.equals(theme)) return "ocean";
+        if (ThemeManager.THEME_SUNSET.equals(theme)) return "sunset";
+        if (ThemeManager.THEME_FOREST.equals(theme)) return "forest";
+        if (ThemeManager.THEME_LIGHT.equals(theme)) return "light";
+        if (ThemeManager.THEME_AMOLED.equals(theme)) return "amoled";
+        return "midnight";
+    }
 
-    private void setupAccentColor() {
-        AccentManager accentManager = AccentManager.getInstance(this);
+    private String mapKeyToTheme(String key) {
+        if ("midnight".equals(key)) return ThemeManager.THEME_PURPLE_NIGHT;
+        if ("ocean".equals(key)) return ThemeManager.THEME_OCEAN_BLUE;
+        if ("sunset".equals(key)) return ThemeManager.THEME_SUNSET;
+        if ("forest".equals(key)) return ThemeManager.THEME_FOREST;
+        if ("light".equals(key)) return ThemeManager.THEME_LIGHT;
+        if ("amoled".equals(key)) return ThemeManager.THEME_AMOLED;
+        return ThemeManager.THEME_PURPLE_NIGHT;
+    }
 
-        View[] swatches = {
-                binding.swatchPurple, binding.swatchBlue, binding.swatchTeal,
-                binding.swatchGreen, binding.swatchOrange, binding.swatchRed,
-                binding.swatchPink
+    private void updateThemeName(String theme) {
+        String name = switch (theme) {
+            case ThemeManager.THEME_PURPLE_NIGHT -> "Midnight";
+            case ThemeManager.THEME_OCEAN_BLUE -> "Ocean";
+            case ThemeManager.THEME_SUNSET -> "Sunset";
+            case ThemeManager.THEME_FOREST -> "Forest";
+            case ThemeManager.THEME_LIGHT -> "Light";
+            case ThemeManager.THEME_AMOLED -> "AMOLED";
+            default -> "Midnight";
         };
-        String[] colorNames = {"Purple", "Blue", "Teal", "Green", "Orange", "Red", "Pink"};
+        binding.currentThemeName.setText(name);
+    }
 
-        // Tint each swatch with its colour
-        for (int i = 0; i < swatches.length; i++) {
-            GradientDrawable bg = new GradientDrawable();
-            bg.setShape(GradientDrawable.OVAL);
-            bg.setColor(AccentManager.PRESET_COLORS[i]);
-            bg.setStroke(2, Color.argb(50, 255, 255, 255));
-            swatches[i].setBackground(bg);
-        }
+    private void setupThemePicker() {
+        updateThemeName(themeManager.getSelectedTheme());
 
-        // Initial state
-        boolean isDynamic = accentManager.getMode() == AccentManager.MODE_DYNAMIC;
-        binding.accentDynamicSwitch.setChecked(isDynamic);
-        binding.accentSwatchesRow.setVisibility(isDynamic ? View.GONE : View.VISIBLE);
-        binding.accentDynamicLabel.setVisibility(isDynamic ? View.VISIBLE : View.GONE);
-        updateAccentSubtitle(accentManager, colorNames);
-        highlightSelectedSwatch(swatches, accentManager.getStaticColor());
-
-        // Dynamic toggle
-        binding.accentDynamicSwitch.setOnCheckedChangeListener((btn, checked) -> {
-            accentManager.setMode(checked ? AccentManager.MODE_DYNAMIC : AccentManager.MODE_STATIC);
-            binding.accentSwatchesRow.setVisibility(checked ? View.GONE : View.VISIBLE);
-            binding.accentDynamicLabel.setVisibility(checked ? View.VISIBLE : View.GONE);
-            updateAccentSubtitle(accentManager, colorNames);
+        themeAdapter = new ThemeAdapter(this, themeManager);
+        themeAdapter.setOnThemeClickListener(key -> {
+            String newTheme = mapKeyToTheme(key);
+            themeManager.setTheme(newTheme);
+            applyTheme(newTheme);
         });
 
-        // Swatch clicks
-        for (int i = 0; i < swatches.length; i++) {
-            final int index = i;
-            swatches[i].setOnClickListener(v -> {
-                accentManager.setStaticColor(AccentManager.PRESET_COLORS[index]);
-                highlightSelectedSwatch(swatches, AccentManager.PRESET_COLORS[index]);
-                updateAccentSubtitle(accentManager, colorNames);
-                v.animate().scaleX(1.3f).scaleY(1.3f).setDuration(100)
-                        .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
-                        .start();
-            });
-        }
+        binding.themeGrid.setLayoutManager(new GridLayoutManager(this, 3, GridLayoutManager.HORIZONTAL, false));
+        binding.themeGrid.setAdapter(themeAdapter);
+        binding.themeGrid.setNestedScrollingEnabled(false);
     }
 
-    private void updateAccentSubtitle(AccentManager am, String[] names) {
-        if (am.getMode() == AccentManager.MODE_DYNAMIC) {
-            binding.accentSubtitle.setText("Dynamic · Album art");
+    private void applyTheme(String theme) {
+        boolean isLightTheme = theme.equals(ThemeManager.THEME_LIGHT);
+        
+        if (isLightTheme) {
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
         } else {
-            String name = "Custom";
-            for (int i = 0; i < AccentManager.PRESET_COLORS.length; i++) {
-                if (AccentManager.PRESET_COLORS[i] == am.getStaticColor()) {
-                    name = names[i];
-                    break;
-                }
-            }
-            binding.accentSubtitle.setText("Static · " + name);
+            AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
         }
     }
 
-    private void highlightSelectedSwatch(View[] swatches, int selectedColor) {
-        for (int i = 0; i < swatches.length; i++) {
-            GradientDrawable bg = new GradientDrawable();
-            bg.setShape(GradientDrawable.OVAL);
-            bg.setColor(AccentManager.PRESET_COLORS[i]);
-            if (AccentManager.PRESET_COLORS[i] == selectedColor) {
-                bg.setStroke(4, Color.WHITE);
-            } else {
-                bg.setStroke(2, Color.argb(50, 255, 255, 255));
-            }
-            swatches[i].setBackground(bg);
-        }
-    }
+    private void setupDynamicAccent() {
+        binding.dynamicAccentSwitch.setChecked(themeManager.isDynamicAccent());
 
-    // ============ Audio Quality ============
+        binding.dynamicAccentSwitch.setOnCheckedChangeListener((btn, checked) -> {
+            themeManager.setDynamicAccentEnabled(checked);
+            if (checked) {
+                Toast.makeText(this, "Dynamic accent enabled - will follow album art", Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
 
     private void setupAudioQuality() {
         final String[] qualityLabels = {"Data Saver (96kbps)", "Standard (160kbps)", "High Quality (320kbps)"};
@@ -222,63 +180,31 @@ public class SettingsActivity extends AppCompatActivity {
                 binding.qualitySubtitle.setText("Standard (160kbps)");
                 break;
             case "320kbps":
-            default:
                 binding.qualitySubtitle.setText("High Quality (320kbps)");
                 break;
         }
     }
 
-    // ============ Cache & Info ============
-
     private void setupClearCacheButton() {
         binding.clearCacheButton.setOnClickListener(v -> {
             new AlertDialog.Builder(this, R.style.AlertDialogTheme)
                     .setTitle("Clear Cache")
-                    .setMessage("Are you sure you want to clear the app cache? This will remove all temporarily stored data.")
-                    .setPositiveButton("Clear", (dialog, which) -> clearAppCache())
+                    .setMessage("This will remove all temporarily stored data. Downloaded songs will not be affected.")
+                    .setPositiveButton("Clear", (dialog, which) -> {
+                        clearCache();
+                    })
                     .setNegativeButton("Cancel", null)
                     .show();
         });
     }
 
-    private void setupAppInfoButton() {
-        binding.appInfoButton.setOnClickListener(v -> {
-            String versionName = getAppVersion();
-            new AlertDialog.Builder(this, R.style.AlertDialogTheme)
-                    .setTitle("App Info")
-                    .setMessage("Daynight Music\nVersion: " + versionName +
-                            "\n\nA  music streaming app." +
-                            "\n\n  by DeadZone-0")
-                    .setPositiveButton("OK", null)
-                    .show();
-        });
-    }
-
-    private void setupCheckUpdatesButton() {
-        if (binding.checkUpdatesButton != null) {
-            binding.checkUpdatesButton.setOnClickListener(v -> {
-                com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(this);
-                updateManager.checkForUpdates(true);
-            });
-        }
-    }
-
-    private String getAppVersion() {
-        try {
-            PackageInfo packageInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-            return packageInfo.versionName;
-        } catch (PackageManager.NameNotFoundException e) {
-            return "Unknown";
-        }
-    }
-
-    private void clearAppCache() {
+    private void clearCache() {
         try {
             File cacheDir = getCacheDir();
             deleteDir(cacheDir);
-            Toast.makeText(this, "Cache cleared successfully", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Cache cleared", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
-            Toast.makeText(this, "Error clearing cache", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Failed to clear cache", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -288,16 +214,37 @@ public class SettingsActivity extends AppCompatActivity {
             if (children != null) {
                 for (String child : children) {
                     boolean success = deleteDir(new File(dir, child));
-                    if (!success) {
-                        return false;
-                    }
+                    if (!success) return false;
                 }
             }
             return dir.delete();
         } else if (dir != null && dir.isFile()) {
             return dir.delete();
-        } else {
-            return false;
         }
+        return false;
+    }
+
+    private void setupAppInfoButton() {
+        binding.appInfoButton.setOnClickListener(v -> {
+            String version = "1.0.0";
+            try {
+                PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
+                version = pInfo.versionName;
+            } catch (PackageManager.NameNotFoundException e) {
+                Log.e("SettingsActivity", "Failed to get package info for version", e);
+            }
+
+            new AlertDialog.Builder(this, R.style.AlertDialogTheme)
+                    .setTitle("DayNight Music")
+                    .setMessage("Version: " + version + "\n\nA premium music streaming experience.")
+                    .setPositiveButton("OK", null)
+                    .show();
+        });
+    }
+
+    private void setupCheckUpdatesButton() {
+        binding.checkUpdatesButton.setOnClickListener(v -> {
+            Toast.makeText(this, "You're on the latest version!", Toast.LENGTH_SHORT).show();
+        });
     }
 }

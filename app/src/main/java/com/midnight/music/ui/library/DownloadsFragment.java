@@ -19,6 +19,7 @@ import com.midnight.music.data.repository.MusicRepository;
 import com.midnight.music.databinding.FragmentDownloadsBinding;
 import com.midnight.music.player.MusicPlayerManager;
 import com.midnight.music.ui.adapters.DownloadedSongsAdapter;
+import com.midnight.music.utils.ThemeManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public class DownloadsFragment extends Fragment implements DownloadedSongsAdapte
         observeDownloads();
 
         // Observe accent colour and tint the browse button
-        com.midnight.music.utils.AccentManager.getInstance(requireContext())
+        ThemeManager.getInstance(requireContext())
                 .getAccentColor().observe(getViewLifecycleOwner(), color -> {
                     if (binding != null && binding.browseButton != null) {
                         binding.browseButton.setBackgroundTintList(

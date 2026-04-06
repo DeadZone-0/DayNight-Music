@@ -11,6 +11,7 @@ import androidx.fragment.app.Fragment;
 import androidx.viewpager2.widget.ViewPager2;
 
 import com.midnight.music.databinding.FragmentLibraryBinding;
+import com.midnight.music.utils.ThemeManager;
 import com.google.android.material.tabs.TabLayout;
 import com.google.android.material.tabs.TabLayoutMediator;
 
@@ -54,7 +55,7 @@ public class LibraryFragment extends Fragment {
                 }).attach();
 
         // Observe accent colour and tint tab indicator
-        com.midnight.music.utils.AccentManager.getInstance(requireContext())
+        ThemeManager.getInstance(requireContext())
                 .getAccentColor().observe(getViewLifecycleOwner(), color -> {
                     tabLayout.setSelectedTabIndicatorColor(color);
                 });

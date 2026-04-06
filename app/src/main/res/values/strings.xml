@@ -59,4 +59,8 @@
     <string name="auth_logout">Log out</string>
     <string name="auth_sync_now">Sync Now</string>
 
+    <!-- Settings UI -->
+    <string name="theme_selected">Selected</string>
+    <string name="theme_item_description">Theme option</string>
+
 </resources>

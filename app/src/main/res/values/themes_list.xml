@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Theme definitions -->
+    <string-array name="theme_entries">
+        <item>Purple Night</item>
+        <item>Ocean Blue</item>
+        <item>Sunset</item>
+        <item>Forest</item>
+        <item>Light</item>
+        <item>AMOLED</item>
+    </string-array>
+    
+    <string-array name="theme_values">
+        <item>purple_night</item>
+        <item>ocean_blue</item>
+        <item>sunset</item>
+        <item>forest</item>
+        <item>light</item>
+        <item>amoled</item>
+    </string-array>
+</resources>

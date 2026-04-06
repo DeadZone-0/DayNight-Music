@@ -36,7 +36,7 @@ import com.midnight.music.data.repository.CloudSyncWorker;
 import com.midnight.music.databinding.ActivityMainBinding;
 import com.midnight.music.player.MusicPlayerManager;
 import com.midnight.music.ui.player.PlayerActivity;
-import com.midnight.music.utils.AccentManager;
+import com.midnight.music.utils.ThemeManager;
 
 import android.content.res.ColorStateList;
 import java.util.concurrent.Executors;
@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity {
         scheduleCloudSync();
 
         // Observe accent colour changes and tint bottom nav + other elements
-        AccentManager.getInstance(this).getAccentColor().observe(this, this::applyAccentColor);
+        ThemeManager.getInstance(this).getAccentColor().observe(this, this::applyAccentColor);
 
         // Check for updates seamlessly on startup
         com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(this);
@@ -294,10 +294,10 @@ public class MainActivity extends AppCompatActivity {
                             try {
                                 Palette.from(bitmap).generate(palette -> {
                                     if (palette != null && binding != null && binding.miniPlayer != null) {
-                                        // Forward palette to AccentManager for dynamic accent
-                                        AccentManager.getInstance(MainActivity.this).updateFromPalette(palette);
+                                        // Forward palette to ThemeManager for dynamic accent
+                                        ThemeManager.getInstance(MainActivity.this).updateFromPalette(palette);
 
-                                        int accentColor = AccentManager.getInstance(MainActivity.this).getAccentColorValue();
+                                        int accentColor = ThemeManager.getInstance(MainActivity.this).getAccentColorValue();
                                         int mutedColor = palette.getMutedColor(accentColor);
 
                                         // Tint the progress bar with accent color
@@ -374,7 +374,7 @@ public class MainActivity extends AppCompatActivity {
                 binding.miniPlayer.btnMiniHeart.setImageResource(
                         isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
                 // Tint: liked = accent color, unliked = muted white
-                int accent = AccentManager.getInstance(this).getAccentColorValue();
+                int accent = ThemeManager.getInstance(this).getAccentColorValue();
                 binding.miniPlayer.btnMiniHeart.setImageTintList(
                         ColorStateList.valueOf(
                                 isLiked ? accent : Color.parseColor("#88FFFFFF")));

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- ==================== THEME: PURPLE NIGHT (Default Dark) ==================== -->
+    <color name="purple_night_primary">#BB86FC</color>
+    <color name="purple_night_primary_variant">#9C4DFF</color>
+    <color name="purple_night_accent">#BB86FC</color>
+    <color name="purple_night_accent_variant">#9C4DFF</color>
+    <color name="purple_night_background">#0F0F0F</color>
+    <color name="purple_night_surface">#1A1A1A</color>
+    <color name="purple_night_surface_variant">#2B2B2B</color>
+    <color name="purple_night_card_background">#242424</color>
+    <color name="purple_night_text_primary">#E1E1E1</color>
+    <color name="purple_night_text_secondary">#AAAAAA</color>
+    <color name="purple_night_text_hint">#707070</color>
+    <color name="purple_night_on_primary">#000000</color>
+    <color name="purple_night_on_background">#E1E1E1</color>
+    <color name="purple_night_on_surface">#E1E1E1</color>
+    <color name="purple_night_ripple_light">#1AFFFFFF</color>
+    <color name="purple_night_ripple_accent">#1ABB86FC</color>
+    <color name="purple_night_gradient_start">#BB86FC</color>
+    <color name="purple_night_gradient_end">#9C4DFF</color>
+    <color name="purple_night_accent_20">#33BB86FC</color>
+
+    <!-- ==================== THEME: OCEAN BLUE ==================== -->
+    <color name="ocean_blue_primary">#64B5F6</color>
+    <color name="ocean_blue_primary_variant">#2196F3</color>
+    <color name="ocean_blue_accent">#64B5F6</color>
+    <color name="ocean_blue_accent_variant">#42A5F5</color>
+    <color name="ocean_blue_background">#0D1B2A</color>
+    <color name="ocean_blue_surface">#152535</color>
+    <color name="ocean_blue_surface_variant">#1E3347</color>
+    <color name="ocean_blue_card_background">#1A2D40</color>
+    <color name="ocean_blue_text_primary">#E3F2FD</color>
+    <color name="ocean_blue_text_secondary">#90CAF9</color>
+    <color name="ocean_blue_text_hint">#5C9DD6</color>
+    <color name="ocean_blue_on_primary">#000000</color>
+    <color name="ocean_blue_on_background">#E3F2FD</color>
+    <color name="ocean_blue_on_surface">#E3F2FD</color>
+    <color name="ocean_blue_ripple_light">#1AFFFFFF</color>
+    <color name="ocean_blue_ripple_accent">#1A64B5F6</color>
+    <color name="ocean_blue_gradient_start">#64B5F6</color>
+    <color name="ocean_blue_gradient_end">#2196F3</color>
+    <color name="ocean_blue_accent_20">#3364B5F6</color>
+
+    <!-- ==================== THEME: SUNSET ==================== -->
+    <color name="sunset_primary">#FFAB40</color>
+    <color name="sunset_primary_variant">#FF6D00</color>
+    <color name="sunset_accent">#FFAB40</color>
+    <color name="sunset_accent_variant">#FF9100</color>
+    <color name="sunset_background">#1A0F0A</color>
+    <color name="sunset_surface">#251510</color>
+    <color name="sunset_surface_variant">#332015</color>
+    <color name="sunset_card_background">#2A1810</color>
+    <color name="sunset_text_primary">#FFF3E0</color>
+    <color name="sunset_text_secondary">#FFCC80</color>
+    <color name="sunset_text_hint">#A07040</color>
+    <color name="sunset_on_primary">#000000</color>
+    <color name="sunset_on_background">#FFF3E0</color>
+    <color name="sunset_on_surface">#FFF3E0</color>
+    <color name="sunset_ripple_light">#1AFFFFFF</color>
+    <color name="sunset_ripple_accent">#1AFFAB40</color>
+    <color name="sunset_gradient_start">#FF6D00</color>
+    <color name="sunset_gradient_end">#FFAB40</color>
+    <color name="sunset_accent_20">#33FFAB40</color>
+
+    <!-- ==================== THEME: FOREST ==================== -->
+    <color name="forest_primary">#69F0AE</color>
+    <color name="forest_primary_variant">#4CAF50</color>
+    <color name="forest_accent">#69F0AE</color>
+    <color name="forest_accent_variant">#00E676</color>
+    <color name="forest_background">#0A1A0F</color>
+    <color name="forest_surface">#102015</color>
+    <color name="forest_surface_variant">#153020</color>
+    <color name="forest_card_background">#0F2518</color>
+    <color name="forest_text_primary">#E8F5E9</color>
+    <color name="forest_text_secondary">#A5D6A7</color>
+    <color name="forest_text_hint">#5A8057</color>
+    <color name="forest_on_primary">#000000</color>
+    <color name="forest_on_background">#E8F5E9</color>
+    <color name="forest_on_surface">#E8F5E9</color>
+    <color name="forest_ripple_light">#1AFFFFFF</color>
+    <color name="forest_ripple_accent">#1A69F0AE</color>
+    <color name="forest_gradient_start">#4CAF50</color>
+    <color name="forest_gradient_end">#69F0AE</color>
+    <color name="forest_accent_20">#3369F0AE</color>
+
+    <!-- ==================== THEME: LIGHT ==================== -->
+    <color name="light_primary">#7A2BE2</color>
+    <color name="light_primary_variant">#5E21B0</color>
+    <color name="light_accent">#7A2BE2</color>
+    <color name="light_accent_variant">#9C4DFF</color>
+    <color name="light_background">#F5F5F7</color>
+    <color name="light_surface">#FFFFFF</color>
+    <color name="light_surface_variant">#F0EDF2</color>
+    <color name="light_card_background">#FFFFFF</color>
+    <color name="light_text_primary">#1C1B1F</color>
+    <color name="light_text_secondary">#49454F</color>
+    <color name="light_text_hint">#79747E</color>
+    <color name="light_on_primary">#FFFFFF</color>
+    <color name="light_on_background">#1C1B1F</color>
+    <color name="light_on_surface">#1C1B1F</color>
+    <color name="light_ripple_light">#1A000000</color>
+    <color name="light_ripple_accent">#1A7A2BE2</color>
+    <color name="light_gradient_start">#7A2BE2</color>
+    <color name="light_gradient_end">#9C4DFF</color>
+    <color name="light_accent_20">#337A2BE2</color>
+
+    <!-- ==================== THEME: AMOLED ==================== -->
+    <color name="amoled_primary">#BB86FC</color>
+    <color name="amoled_primary_variant">#9C4DFF</color>
+    <color name="amoled_accent">#BB86FC</color>
+    <color name="amoled_accent_variant">#9C4DFF</color>
+    <color name="amoled_background">#000000</color>
+    <color name="amoled_surface">#121212</color>
+    <color name="amoled_surface_variant">#121212</color>
+    <color name="amoled_card_background">#0D0D0D</color>
+    <color name="amoled_text_primary">#E1E1E1</color>
+    <color name="amoled_text_secondary">#AAAAAA</color>
+    <color name="amoled_text_hint">#555555</color>
+    <color name="amoled_on_primary">#000000</color>
+    <color name="amoled_on_background">#E1E1E1</color>
+    <color name="amoled_on_surface">#E1E1E1</color>
+    <color name="amoled_ripple_light">#1AFFFFFF</color>
+    <color name="amoled_ripple_accent">#1ABB86FC</color>
+    <color name="amoled_gradient_start">#BB86FC</color>
+    <color name="amoled_gradient_end">#9C4DFF</color>
+    <color name="amoled_accent_20">#33BB86FC</color>
+
+    <!-- ==================== DYNAMIC ACCENT COLORS ==================== -->
+    <!-- These are set programmatically by Palette API -->
+    <color name="dynamic_primary">#BB86FC</color>
+    <color name="dynamic_primary_variant">#9C4DFF</color>
+    <color name="dynamic_accent">#BB86FC</color>
+    <color name="dynamic_accent_20">#33BB86FC</color>
+    <color name="dynamic_gradient_start">#BB86FC</color>
+    <color name="dynamic_gradient_end">#9C4DFF</color>
+</resources>

@@ -42,7 +42,7 @@ import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import android.content.res.ColorStateList;
-import com.midnight.music.utils.AccentManager;
+import com.midnight.music.utils.ThemeManager;
 
 public class PlaylistDetailActivity extends AppCompatActivity implements SearchAdapter.SearchAdapterListener {
     private static final String TAG = "PlaylistDetailActivity";
@@ -459,9 +459,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                                 Palette.from(bitmap).generate(palette -> {
                                     if (palette != null && binding != null && binding.miniPlayer != null) {
                                         // Forward palette to AccentManager for dynamic accent
-                                        AccentManager.getInstance(PlaylistDetailActivity.this).updateFromPalette(palette);
+                                        ThemeManager.getInstance(PlaylistDetailActivity.this).updateFromPalette(palette);
 
-                                        int accentColor = AccentManager.getInstance(PlaylistDetailActivity.this).getAccentColorValue();
+                                        int accentColor = ThemeManager.getInstance(PlaylistDetailActivity.this).getAccentColorValue();
                                         int mutedColor = palette.getMutedColor(accentColor);
 
                                         // Tint progress bar with accent color
@@ -532,7 +532,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniHeart != null) {
                 binding.miniPlayer.btnMiniHeart.setImageResource(
                         isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
-                int accent = AccentManager.getInstance(this).getAccentColorValue();
+                int accent = ThemeManager.getInstance(this).getAccentColorValue();
                 binding.miniPlayer.btnMiniHeart.setImageTintList(
                         ColorStateList.valueOf(
                                 isLiked ? accent : Color.parseColor("#88FFFFFF")));

@@ -26,7 +26,7 @@ import com.midnight.music.ui.adapters.PlaylistTileAdapter;
 import com.midnight.music.ui.adapters.RecentCompactAdapter;
 import com.midnight.music.ui.adapters.SongCardAdapter;
 import com.midnight.music.ui.player.PlayerActivity;
-import com.midnight.music.utils.AccentManager;
+import com.midnight.music.utils.ThemeManager;
 
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
@@ -68,7 +68,7 @@ public class HomeFragment extends Fragment implements
         observeData();
 
         // Observe accent colour and tint header gradient
-        AccentManager.getInstance(requireContext()).getAccentColor().observe(getViewLifecycleOwner(), this::applyAccentToHeader);
+        ThemeManager.getInstance(requireContext()).getAccentColor().observe(getViewLifecycleOwner(), this::applyAccentToHeader);
     }
 
     private void applyAccentToHeader(int color) {
