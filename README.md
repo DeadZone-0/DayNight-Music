@@ -91,6 +91,7 @@
 - [x] song recommendations
 - [x] Cross-platform playlist import
 - [x] Sleep timer implementation
+- [ ] migrate to kotlin cuz why nottt
 - [ ] am still thinking what to do next 
 
 ## Installation
