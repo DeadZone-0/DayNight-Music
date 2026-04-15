@@ -9,6 +9,10 @@
     <!-- Background & Surface (Light) -->
     <color name="background">#F8F9FA</color>
     <color name="surface">#FFFFFF</color>
+    <color name="surface_container_low">#F8F9FA</color>
+    <color name="surface_container">#F8F9FA</color>
+    <color name="surface_container_high">#F8F9FA</color>
+    <color name="surface_container_highest">#F8F9FA</color>
     <color name="surface_variant">#E7E0EC</color>
     <color name="card_background">#FFFFFF</color>
     <color name="overlay">#0A000000</color>

@@ -14,6 +14,10 @@
   Daynight Music is a high-performance Android music streaming application built for speed and aesthetics. Inspired by modern minimalist design, it provides a seamless interface for discovering and enjoying your favorite tracks.
 </p>
 
+<p align="center">
+  <code>android</code> • <code>music-streaming</code> • <code>music-player</code> • <code>open-source</code> • <code>java</code> • <code>android-app</code> • <code>material-design</code> • <code>spotify-alternative</code>
+</p>
+
 ---
 
 [Features](#features) • [Screenshots](#screenshots) • [Tech Stack](#tech-stack) • [Installation](#installation) • [Contributing](#contributing)
