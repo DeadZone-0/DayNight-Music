@@ -10,14 +10,14 @@
 
     <com.google.android.material.imageview.ShapeableImageView
         android:id="@+id/song_image"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
         android:scaleType="centerCrop"
         android:src="@drawable/placeholder_song"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Medium" />
+        app:shapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Small" />
 
     <TextView
         android:id="@+id/song_name"
@@ -29,8 +29,8 @@
         android:maxLines="1"
         android:textSize="15sp"
         android:textColor="@color/text_primary"
-        android:fontFamily="@font/poppins_bold"
-        app:layout_constraintEnd_toStartOf="@id/more_options"
+        android:fontFamily="@font/poppins_medium"
+        app:layout_constraintEnd_toStartOf="@id/play_button"
         app:layout_constraintStart_toEndOf="@id/song_image"
         app:layout_constraintTop_toTopOf="@id/song_image"
         app:layout_constraintBottom_toTopOf="@id/song_info"
@@ -44,7 +44,7 @@
         android:layout_marginTop="2dp"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textSize="13sp"
+        android:textSize="12sp"
         android:textColor="@color/text_secondary"
         android:fontFamily="@font/poppins"
         app:layout_constraintEnd_toEndOf="@id/song_name"
@@ -54,21 +54,15 @@
         tools:text="Artist • Album" />
 
     <ImageButton
-        android:id="@+id/more_options"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:id="@+id/play_button"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:background="?attr/selectableItemBackgroundBorderless"
-        android:contentDescription="More options"
-        android:src="@drawable/ic_more_vert"
+        android:contentDescription="@string/play_pause"
+        android:src="@drawable/ic_play_rounded"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:tint="@color/text_secondary" />
-
-    <TextView
-        android:id="@+id/track_number"
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:visibility="gone" />
+        app:tint="@color/primary" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -35,4 +35,28 @@ public interface SaavnApiService {
     Call<SaavnSuggestionsResponse> getSimilarSongs(
             @retrofit2.http.Path("id") String songId,
             @Query("limit") int limit);
+
+    /**
+     * Search for artists with pagination.
+     *
+     * @param query Search query string
+     * @param page Page number
+     * @param limit Results per page
+     */
+    @GET("api/search/artists")
+    Call<SaavnArtistSearchResponse> searchArtists(
+            @Query("query") String query,
+            @Query("page") int page,
+            @Query("limit") int limit);
+
+    /**
+     * Get artist details with top songs.
+     *
+     * @param artistId The artist ID
+     * @param limit Number of top songs to fetch
+     */
+    @GET("api/artists/{id}/top-songs")
+    Call<SaavnArtistSongsResponse> getArtistTopSongs(
+            @retrofit2.http.Path("id") String artistId,
+            @Query("limit") int limit);
 }

@@ -29,14 +29,19 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.midnight.music.R;
 import com.midnight.music.databinding.FragmentSearchBinding;
+import com.midnight.music.data.model.Artist;
+import com.midnight.music.data.model.SearchItem;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.network.JioSaavnService;
 import com.midnight.music.data.network.SaavnApiService;
 import com.midnight.music.data.network.SaavnSearchResponse;
 import com.midnight.music.data.network.SaavnSongResult;
+import com.midnight.music.data.network.SaavnArtistSearchResponse;
+import com.midnight.music.data.network.SaavnArtistResult;
 import com.google.android.material.textfield.TextInputEditText;
 import com.midnight.music.player.MusicPlayerManager;
 import com.midnight.music.ui.player.PlayerActivity;
+import com.midnight.music.ui.artist.ArtistDetailActivity;
 import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.PlaylistSongCrossRef;
 import com.midnight.music.data.model.Playlist;
@@ -57,7 +62,8 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class SearchFragment extends Fragment {
     private FragmentSearchBinding binding;
-    private SearchAdapter searchAdapter;
+    private SearchResultsAdapter searchAdapter;
+    private ArtistAdapter artistAdapter;
 
     // Audio quality preference
     private SharedPreferences sharedPreferences;
@@ -65,9 +71,9 @@ public class SearchFragment extends Fragment {
     // Animation duration for smooth transitions
     private static final int CROSSFADE_DURATION = 200;
     
-    // Dual API clients
-    private SaavnApiService primaryApi;     // New API (primary, with pagination)
-    private JioSaavnService fallbackApi;    // Vercel API (fallback)
+    // API clients
+    private SaavnApiService primaryApi;
+    private JioSaavnService fallbackApi;
     
     private RecyclerView.LayoutManager searchLayoutManager;
 
@@ -78,15 +84,21 @@ public class SearchFragment extends Fragment {
     private final Handler searchHandler = new Handler(Looper.getMainLooper());
     private Runnable searchRunnable;
     private Call<?> currentSearchCall;
+    private Call<?> currentArtistSearchCall;
 
     // Pagination state
-    private static final int PAGE_LIMIT = 10;
+    private static final int PAGE_LIMIT = 20;
     private int currentPage = 1;
     private boolean isLoadingMore = false;
     private boolean hasMorePages = true;
     private boolean usingFallback = false;
     private String currentQuery = "";
     private final List<Song> allSongs = new ArrayList<>();
+    private final List<Artist> allArtists = new ArrayList<>();
+    
+    // Query coordination for concurrent callbacks
+    private volatile boolean artistSearchDone = false;
+    private volatile boolean songSearchDone = false;
 
     @Nullable
     @Override
@@ -121,11 +133,14 @@ public class SearchFragment extends Fragment {
         setupLayoutManagers();
         setupSearchInput();
         setupRecyclerView();
-        setupPaginationListener();
         
-        // Attach adapter and layout manager ONCE to preserve scroll position
-        binding.searchResultsRecycler.setLayoutManager(searchLayoutManager);
+        binding.searchResultsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.searchResultsRecycler.setAdapter(searchAdapter);
+        binding.artistsRecycler.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        binding.artistsRecycler.setAdapter(artistAdapter);
+        
+        // Setup pagination listener (has usingFallback guard)
+        setupPaginationListener();
         
         showInitialState();
     }
@@ -186,7 +201,7 @@ public class SearchFragment extends Fragment {
     }
 
     private void setupRecyclerView() {
-        searchAdapter = new SearchAdapter(new SearchAdapter.SearchAdapterListener() {
+        searchAdapter = new SearchResultsAdapter(new SearchResultsAdapter.SearchAdapterListener() {
             @Override
             public void onSongClick(Song song) {
                 MusicPlayerManager player = MusicPlayerManager.getInstance(requireContext());
@@ -238,7 +253,14 @@ public class SearchFragment extends Fragment {
                     }
                 });
             }
+
+            @Override
+            public void onArtistClick(Artist artist) {
+                ArtistDetailActivity.start(requireContext(), artist);
+            }
         });
+
+        artistAdapter = new ArtistAdapter(artist -> ArtistDetailActivity.start(requireContext(), artist));
     }
 
     /**
@@ -281,6 +303,10 @@ public class SearchFragment extends Fragment {
         hasMorePages = true;
         usingFallback = false;
         allSongs.clear();
+        allArtists.clear();
+        // Reset coordination flags
+        artistSearchDone = false;
+        songSearchDone = false;
     }
 
     /**
@@ -290,10 +316,13 @@ public class SearchFragment extends Fragment {
         if (currentSearchCall != null && !currentSearchCall.isCanceled()) {
             currentSearchCall.cancel();
         }
+        if (currentArtistSearchCall != null && !currentArtistSearchCall.isCanceled()) {
+            currentArtistSearchCall.cancel();
+        }
     }
 
     /**
-     * Primary search entry point. Tries the new API first, falls back to Vercel.
+     * Primary search entry point. Searches both songs and artists.
      */
     private void performSearch(String query) {
         if (query == null || query.trim().isEmpty()) {
@@ -306,9 +335,11 @@ public class SearchFragment extends Fragment {
 
         if (currentPage == 1) {
             showLoadingState();
+            // Search artists only on first page
+            searchArtists(currentQuery, currentPage);
         }
 
-        // Try the primary API first
+        // Search songs
         searchWithPrimaryApi(currentQuery, currentPage);
     }
 
@@ -345,7 +376,8 @@ public class SearchFragment extends Fragment {
                         songs.add(result.toSong(preferredQuality));
                     }
                     
-                    // If fewer results than the limit, we've reached the end
+                    // Check page size to determine if more pages exist
+                    // API may return fewer items than PAGE_LIMIT on last page
                     if (results.size() < PAGE_LIMIT) {
                         hasMorePages = false;
                     }
@@ -354,7 +386,7 @@ public class SearchFragment extends Fragment {
                         allSongs.clear();
                     }
                     allSongs.addAll(songs);
-                    
+
                     isLoadingMore = false;
                     showSearchResults(new ArrayList<>(allSongs));
                 } else {
@@ -430,6 +462,46 @@ public class SearchFragment extends Fragment {
     }
 
     /**
+     * Search for artists.
+     */
+    private void searchArtists(String query, int page) {
+        Call<SaavnArtistSearchResponse> call = primaryApi.searchArtists(query, page, PAGE_LIMIT);
+        currentArtistSearchCall = call;
+        
+        call.enqueue(new Callback<SaavnArtistSearchResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<SaavnArtistSearchResponse> call,
+                                  @NonNull Response<SaavnArtistSearchResponse> response) {
+                if (!isAdded()) return;
+                
+                if (response.isSuccessful() && response.body() != null
+                        && response.body().isSuccess()
+                        && response.body().getData() != null
+                        && response.body().getData().getResults() != null) {
+                    
+                    List<SaavnArtistResult> results = response.body().getData().getResults();
+                    
+                    if (page == 1) {
+                        allArtists.clear();
+                    }
+                    
+                    for (SaavnArtistResult result : results) {
+                        allArtists.add(result.toArtist());
+                    }
+                    
+                    artistSearchDone = true;
+                    checkAndUpdateResults();
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<SaavnArtistSearchResponse> call, @NonNull Throwable t) {
+                // Silently fail - artists are optional
+            }
+        });
+    }
+
+    /**
      * Loads the next page of results from the primary API.
      */
     private void loadNextPage() {
@@ -438,64 +510,83 @@ public class SearchFragment extends Fragment {
         isLoadingMore = true;
         currentPage++;
         
-        // Show a subtle loading indicator at the bottom (reuse progress bar)
+        // Show loading at bottom
         binding.progressBar.setVisibility(View.VISIBLE);
+        binding.progressBar.setPadding(0, 0, 0, 100);
         
         searchWithPrimaryApi(currentQuery, currentPage);
     }
 
+    private void checkAndUpdateResults() {
+        // Ignore stale results from old queries
+        if (!songSearchDone || !artistSearchDone) return;
+        
+        // Reset flags for next search
+        songSearchDone = false;
+        artistSearchDone = false;
+        
+        showSearchResults(new ArrayList<>(allSongs));
+    }
+
     private void showLoadingState() {
-        // Only hide the list if this is a fresh search (not a pagination load)
-        if (!isLoadingMore) {
-            binding.searchResultsRecycler.setAlpha(0.5f); // Dim existing results
-            binding.emptyStateContainer.setVisibility(View.GONE);
-        }
+        binding.emptyStateContainer.setVisibility(View.GONE);
         binding.progressBar.setVisibility(View.VISIBLE);
     }
 
-    private void showSearchResults(List<Song> songs) {
-        // Check if songs are liked in database before displaying
-        AppDatabase db = AppDatabase.getInstance(requireContext());
-        Executor executor = Executors.newSingleThreadExecutor();
-        
-        // Show results immediately
+    private void updateCombinedResults() {
         binding.progressBar.setVisibility(View.GONE);
         binding.emptyStateContainer.setVisibility(View.GONE);
-        binding.searchResultsRecycler.setVisibility(View.VISIBLE);
         
-        // Smooth fade-in for fresh results
-        if (currentPage <= 1) {
-            binding.searchResultsRecycler.setAlpha(0f);
-            binding.searchResultsRecycler.animate()
-                    .alpha(1f)
-                    .setDuration(CROSSFADE_DURATION)
-                    .start();
+        // Restore full opacity when results update
+        binding.searchResultsRecycler.setAlpha(1f);
+        
+        // Show top 3 artists only
+        List<Artist> top3Artists = allArtists.size() > 3 ? allArtists.subList(0, 3) : allArtists;
+        
+        // Show artists section if we have artists
+        if (!top3Artists.isEmpty()) {
+            binding.artistsSection.setVisibility(View.VISIBLE);
+            artistAdapter.submitList(new ArrayList<>(top3Artists));
         } else {
-            // For pagination, just restore full opacity smoothly
-            binding.searchResultsRecycler.animate()
-                    .alpha(1f)
-                    .setDuration(150)
-                    .start();
+            binding.artistsSection.setVisibility(View.GONE);
         }
         
-        searchAdapter.submitList(new ArrayList<>(songs));  // Use a copy
+        // Show songs section if we have songs
+        if (!allSongs.isEmpty()) {
+            binding.songsSection.setVisibility(View.VISIBLE);
+            binding.searchResultsRecycler.setVisibility(View.VISIBLE);
+            binding.searchResultsRecycler.setAlpha(1f);
+            List<SearchItem> items = SearchItem.buildSearchResults(new ArrayList<>(allSongs));
+            searchAdapter.submitList(items);
+        } else {
+            binding.songsSection.setVisibility(View.GONE);
+            binding.searchResultsRecycler.setVisibility(View.GONE);
+        }
+    }
+
+    private void showSearchResults(List<Song> songs) {
+        // Update the data lists
+        this.allSongs.clear();
+        this.allSongs.addAll(songs);
         
-        // Then update in background with actual like status
-        executor.execute(() -> {
+        // Update combined results (handles both sections)
+        updateCombinedResults();
+        
+        // Also check like status in background
+        AppDatabase db = AppDatabase.getInstance(requireContext());
+        Executor executor = Executors.newSingleThreadExecutor();
+executor.execute(() -> {
             try {
-                List<Song> updatedSongs = new ArrayList<>(songs.size());
-                
                 for (Song song : songs) {
                     Song existingSong = db.songDao().getSongByIdSync(song.getId());
                     if (existingSong != null) {
                         song.setLiked(existingSong.isLiked());
                     }
-                    updatedSongs.add(song);
                 }
                 
                 new Handler(Looper.getMainLooper()).post(() -> {
                     if (binding != null) {
-                        searchAdapter.submitList(updatedSongs);
+                        updateCombinedResults();
                     }
                 });
             } catch (Exception e) {

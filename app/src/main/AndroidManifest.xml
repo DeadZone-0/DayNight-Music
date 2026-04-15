@@ -68,6 +68,11 @@
             android:theme="@style/Theme.MidnightMusic"
             android:exported="false" />
 
+        <activity
+            android:name=".ui.artist.ArtistDetailActivity"
+            android:theme="@style/Theme.MidnightMusic"
+            android:exported="false" />
+
         <!-- Media playback notification service -->
         <service
             android:name=".service.MusicService"

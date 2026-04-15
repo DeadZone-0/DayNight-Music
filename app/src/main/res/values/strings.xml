@@ -63,4 +63,12 @@
     <string name="theme_selected">Selected</string>
     <string name="theme_item_description">Theme option</string>
 
+    <!-- Search UI -->
+    <string name="header_artists">Artists</string>
+    <string name="header_songs">Songs</string>
+    <string name="artist_image_description">Artist profile image</string>
+    <string name="verified_artist_badge">Verified artist</string>
+    <string name="top_songs">Top Songs</string>
+    <string name="verified_artist">Verified artist</string>
+
 </resources>

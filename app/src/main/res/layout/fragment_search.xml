@@ -21,7 +21,6 @@
             app:contentInsetStart="0dp"
             app:contentInsetEnd="0dp">
 
-            <!-- Sleek Search Bar Card -->
             <androidx.cardview.widget.CardView
                 android:layout_width="match_parent"
                 android:layout_height="52dp"
@@ -51,7 +50,6 @@
                         android:layout_weight="1"
                         android:layout_marginStart="12dp"
                         android:background="@null"
-                        android:fontFamily="@font/poppins"
                         android:hint="Search songs, artists, or albums"
                         android:imeOptions="actionSearch"
                         android:inputType="text"
@@ -69,18 +67,70 @@
         android:layout_height="match_parent"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
-        <!-- Search Results -->
-        <androidx.recyclerview.widget.RecyclerView
-            android:id="@+id/search_results_recycler"
+        <!-- Main content -->
+        <LinearLayout
+            android:id="@+id/content_container"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:clipToPadding="false"
-            android:paddingHorizontal="8dp"
-            android:paddingTop="8dp"
-            android:paddingBottom="100dp"
-            android:visibility="gone" />
+            android:orientation="vertical">
 
-        <!-- Loading State -->
+            <!-- Artists Section - Max 3 -->
+            <LinearLayout
+                android:id="@+id/artists_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/header_artists"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:fontFamily="@font/poppins_bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/artists_recycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="12dp"
+                    android:clipToPadding="false"
+                    android:paddingHorizontal="16dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            </LinearLayout>
+
+            <!-- Songs Section -->
+            <LinearLayout
+                android:id="@+id/songs_section"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="20dp"
+                    android:layout_marginTop="16dp"
+                    android:text="@string/header_songs"
+                    android:textColor="@color/text_primary"
+                    android:textSize="16sp"
+                    android:fontFamily="@font/poppins_bold" />
+
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/search_results_recycler"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:paddingHorizontal="8dp"
+                    app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Loading indicator -->
         <ProgressBar
             android:id="@+id/progress_bar"
             android:layout_width="wrap_content"
@@ -95,10 +145,8 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:gravity="center"
-            android:padding="32dp">
+            android:gravity="center">
 
-            <!-- Aesthetic Placeholder Icon -->
             <ImageView
                 android:id="@+id/empty_state_icon"
                 android:layout_width="100dp"
@@ -106,18 +154,20 @@
                 android:src="@drawable/ic_search"
                 app:tint="@color/text_secondary"
                 android:alpha="0.2"
-                android:layout_marginBottom="24dp" />
+                android:contentDescription="@null"
+                android:importantForAccessibility="no" />
 
             <TextView
                 android:id="@+id/empty_state"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
                 android:gravity="center"
                 android:text="Find your next favorite song"
                 android:textColor="@color/text_primary"
                 android:textSize="18sp"
                 android:fontFamily="@font/poppins_bold" />
-                
+
             <TextView
                 android:id="@+id/empty_state_subtitle"
                 android:layout_width="match_parent"
@@ -126,9 +176,8 @@
                 android:gravity="center"
                 android:text="Search for songs, artists, or full albums to explore new music."
                 android:textColor="@color/text_secondary"
-                android:textSize="14sp"
-                android:fontFamily="@font/poppins" />
-
+                android:textSize="14sp" />
         </LinearLayout>
     </FrameLayout>
+
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
