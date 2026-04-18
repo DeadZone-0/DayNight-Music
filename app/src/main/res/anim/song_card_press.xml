@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- StateListAnimator for song card press feedback -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <set>
+            <objectAnimator
+                android:propertyName="scaleX"
+                android:valueTo="0.96"
+                android:duration="100" />
+            <objectAnimator
+                android:propertyName="scaleY"
+                android:valueTo="0.96"
+                android:duration="100" />
+            <objectAnimator
+                android:propertyName="translationZ"
+                android:valueTo="2dp"
+                android:duration="100" />
+        </set>
+    </item>
+    <item>
+        <set>
+            <objectAnimator
+                android:propertyName="scaleX"
+                android:valueTo="1.0"
+                android:duration="150" />
+            <objectAnimator
+                android:propertyName="scaleY"
+                android:valueTo="1.0"
+                android:duration="150" />
+            <objectAnimator
+                android:propertyName="translationZ"
+                android:valueTo="0dp"
+                android:duration="150" />
+        </set>
+    </item>
+</selector>

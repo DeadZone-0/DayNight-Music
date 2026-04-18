@@ -5,9 +5,10 @@
     android:layout_width="160dp"
     android:layout_height="wrap_content"
     android:layout_margin="8dp"
+    android:stateListAnimator="@anim/song_card_press"
     app:cardBackgroundColor="@color/card_background"
-    app:cardCornerRadius="24dp"
-    app:cardElevation="2dp">
+    app:cardCornerRadius="28dp"
+    app:cardElevation="4dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -54,7 +55,7 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:paddingHorizontal="12dp"
+            android:paddingHorizontal="14dp"
             android:paddingTop="12dp"
             android:textColor="@color/text_primary"
             android:textSize="14sp"
@@ -67,12 +68,13 @@
             android:layout_height="wrap_content"
             android:ellipsize="end"
             android:maxLines="1"
-            android:paddingHorizontal="12dp"
+            android:paddingHorizontal="14dp"
             android:paddingTop="2dp"
-            android:paddingBottom="12dp"
+            android:paddingBottom="14dp"
             android:textColor="@color/text_secondary"
             android:textSize="12sp"
             android:fontFamily="@font/poppins"
             tools:text="Artist Name" />
     </LinearLayout>
-</androidx.cardview.widget.CardView> 
+</androidx.cardview.widget.CardView>
+ 

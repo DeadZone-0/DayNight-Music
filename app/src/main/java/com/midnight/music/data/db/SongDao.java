@@ -53,7 +53,7 @@ public interface SongDao {
     @Query("DELETE FROM songs WHERE isLiked = 0 AND isDownloaded = 0")
     void deleteUnlikedSongs();
 
-    @Query("SELECT * FROM songs ORDER BY timestamp DESC LIMIT :limit")
+    @Query("SELECT * FROM songs WHERE timestamp > 0 ORDER BY timestamp DESC LIMIT :limit")
     LiveData<List<Song>> getRecentSongs(int limit);
 
     @Query("SELECT * FROM songs WHERE isDownloaded = 1 ORDER BY timestamp DESC")

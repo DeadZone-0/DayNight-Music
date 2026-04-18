@@ -27,8 +27,10 @@ import androidx.navigation.ui.NavigationUI;
 import androidx.palette.graphics.Palette;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.bumptech.glide.request.transition.Transition;
+import androidx.annotation.Nullable;
+import android.graphics.drawable.Drawable;
 import com.midnight.music.data.auth.SessionManager;
 import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.Song;
@@ -235,6 +237,7 @@ public class MainActivity extends AppCompatActivity {
             try {
                 if (binding != null && binding.miniPlayer != null) {
                     View root = binding.miniPlayer.getRoot();
+                    View glow = findViewById(R.id.miniPlayerGlow);
                     if (song != null && root.getVisibility() != View.VISIBLE) {
                         root.setAlpha(0f);
                         root.setTranslationY(root.getHeight() > 0 ? root.getHeight() : 80);
@@ -245,6 +248,11 @@ public class MainActivity extends AppCompatActivity {
                                 .setDuration(250)
                                 .setInterpolator(new android.view.animation.DecelerateInterpolator())
                                 .start();
+                        // Show glow
+                        if (glow != null) {
+                            glow.setVisibility(View.VISIBLE);
+                            glow.animate().alpha(0.5f).setDuration(400).start();
+                        }
                     } else if (song == null && root.getVisibility() == View.VISIBLE) {
                         root.animate()
                                 .alpha(0f)
@@ -252,6 +260,11 @@ public class MainActivity extends AppCompatActivity {
                                 .setDuration(200)
                                 .withEndAction(() -> root.setVisibility(View.GONE))
                                 .start();
+                        // Hide glow
+                        if (glow != null) {
+                            glow.animate().alpha(0f).setDuration(200)
+                                    .withEndAction(() -> glow.setVisibility(View.GONE)).start();
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -279,19 +292,20 @@ public class MainActivity extends AppCompatActivity {
             // Re-enable marquee after text change
             binding.miniPlayer.txtMiniTitle.setSelected(true);
 
-            Glide.with(this)
-                    .load(song.getImageUrl())
-                    .placeholder(R.drawable.placeholder_song)
-                    .into(binding.miniPlayer.imgMiniArt);
-
-            // Extract palette for glassy color tinting
+            // Single consolidated Glide load: set image AND extract palette
             Glide.with(this)
                     .asBitmap()
                     .load(song.getImageUrl())
-                    .into(new SimpleTarget<Bitmap>() {
+                    .placeholder(R.drawable.placeholder_song)
+                    .into(new CustomTarget<Bitmap>() {
                         @Override
-                        public void onResourceReady(Bitmap bitmap, Transition<? super Bitmap> transition) {
+                        public void onResourceReady(@Nullable Bitmap bitmap, Transition<? super Bitmap> transition) {
                             try {
+                                // Set the album art image directly from bitmap
+                                if (binding != null && binding.miniPlayer != null) {
+                                    binding.miniPlayer.imgMiniArt.setImageBitmap(bitmap);
+                                }
+
                                 Palette.from(bitmap).generate(palette -> {
                                     if (palette != null && binding != null && binding.miniPlayer != null) {
                                         // Forward palette to ThemeManager for dynamic accent
@@ -315,10 +329,33 @@ public class MainActivity extends AppCompatActivity {
                                         bg.setColor(glassBg);
                                         bg.setStroke(1, Color.argb(24, 255, 255, 255));
                                         binding.miniPlayer.miniPlayerContainer.setBackground(bg);
+
+                                        // Update ambient glow behind mini player
+                                        View glow = findViewById(R.id.miniPlayerGlow);
+                                        if (glow != null) {
+                                            int glowColor = palette.getDominantColor(accentColor);
+                                            GradientDrawable glowDrawable = new GradientDrawable();
+                                            glowDrawable.setShape(GradientDrawable.OVAL);
+                                            glowDrawable.setColor(Color.argb(80,
+                                                    Color.red(glowColor), Color.green(glowColor), Color.blue(glowColor)));
+                                            glow.setBackground(glowDrawable);
+                                            glow.animate().alpha(0.6f).setDuration(500).start();
+                                        }
                                     }
                                 });
                             } catch (Exception e) {
                                 Log.e(TAG, "Error extracting palette for mini player", e);
+                            }
+                        }
+
+                        @Override
+                        public void onLoadCleared(@Nullable Drawable placeholder) {
+                            try {
+                                if (binding != null && binding.miniPlayer != null) {
+                                    binding.miniPlayer.imgMiniArt.setImageResource(R.drawable.placeholder_song);
+                                }
+                            } catch (Exception e) {
+                                Log.e(TAG, "Error clearing mini player image", e);
                             }
                         }
                     });

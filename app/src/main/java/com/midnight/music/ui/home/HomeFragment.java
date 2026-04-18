@@ -101,6 +101,8 @@ public class HomeFragment extends Fragment implements
         // Playlists grid
         binding.recentPlaylistsRecycler.setLayoutManager(new GridLayoutManager(requireContext(), 2));
         binding.recentPlaylistsRecycler.setNestedScrollingEnabled(false);
+        binding.recentPlaylistsRecycler.setHasFixedSize(true);
+        binding.recentPlaylistsRecycler.setItemViewCacheSize(8);
         recentPlaylistsAdapter = new PlaylistTileAdapter(new ArrayList<>(), this);
         binding.recentPlaylistsRecycler.setAdapter(recentPlaylistsAdapter);
 
@@ -108,6 +110,8 @@ public class HomeFragment extends Fragment implements
         binding.recentlyPlayedRecycler.setLayoutManager(
                 new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.recentlyPlayedRecycler.setNestedScrollingEnabled(false);
+        binding.recentlyPlayedRecycler.setHasFixedSize(true);
+        binding.recentlyPlayedRecycler.setItemViewCacheSize(10);
         recentlyPlayedAdapter = new RecentCompactAdapter(new ArrayList<>(), this);
         binding.recentlyPlayedRecycler.setAdapter(recentlyPlayedAdapter);
 
@@ -115,6 +119,8 @@ public class HomeFragment extends Fragment implements
         binding.recommendedRecycler.setLayoutManager(
                 new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.recommendedRecycler.setNestedScrollingEnabled(false);
+        binding.recommendedRecycler.setHasFixedSize(true);
+        binding.recommendedRecycler.setItemViewCacheSize(10);
         recommendedAdapter = new SongCardAdapter(new ArrayList<>(), this);
         binding.recommendedRecycler.setAdapter(recommendedAdapter);
 
@@ -122,6 +128,8 @@ public class HomeFragment extends Fragment implements
         binding.newReleasesRecycler.setLayoutManager(
                 new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.newReleasesRecycler.setNestedScrollingEnabled(false);
+        binding.newReleasesRecycler.setHasFixedSize(true);
+        binding.newReleasesRecycler.setItemViewCacheSize(10);
         trendingAdapter = new SongCardAdapter(new ArrayList<>(), this);
         binding.newReleasesRecycler.setAdapter(trendingAdapter);
     }
@@ -129,6 +137,7 @@ public class HomeFragment extends Fragment implements
     private void observeData() {
         // Playlists
         viewModel.getPlaylists().observe(getViewLifecycleOwner(), playlists -> {
+            setVisible(binding.shimmerPlaylists, false);
             if (playlists != null && !playlists.isEmpty()) {
                 List<PlaylistWithSongs> limited = playlists.size() > 4
                         ? playlists.subList(0, 4)
@@ -146,6 +155,7 @@ public class HomeFragment extends Fragment implements
 
         // Recently played (compact)
         viewModel.getRecentlyPlayedSongs().observe(getViewLifecycleOwner(), songs -> {
+            setVisible(binding.shimmerRecentlyPlayed, false);
             if (songs != null && !songs.isEmpty()) {
                 recentlyPlayedSongs = songs;
                 recentlyPlayedAdapter.updateData(songs);
@@ -157,11 +167,15 @@ public class HomeFragment extends Fragment implements
             } else {
                 setVisible(binding.recentlyPlayedTitle, false);
                 setVisible(binding.recentlyPlayedRecycler, false);
+                
+                // Signal empty recommendations when there is no recent history
+                viewModel.loadRecommendations(new ArrayList<>());
             }
         });
 
         // Recommended for you
         viewModel.getRecommendations().observe(getViewLifecycleOwner(), songs -> {
+            setVisible(binding.shimmerRecommended, false);
             if (songs != null && !songs.isEmpty()) {
                 recommendedSongs = songs;
                 recommendedAdapter.updateData(songs);
@@ -179,6 +193,7 @@ public class HomeFragment extends Fragment implements
 
         // Trending
         viewModel.getTrending().observe(getViewLifecycleOwner(), songs -> {
+            setVisible(binding.shimmerNewReleases, false);
             if (songs != null && !songs.isEmpty()) {
                 trendingSongs = songs;
                 trendingAdapter.updateData(songs);
@@ -186,7 +201,7 @@ public class HomeFragment extends Fragment implements
                 setVisible(binding.newReleasesSubtitle, true);
                 setVisible(binding.newReleasesRecycler, true);
                 setVisible(binding.trendingErrorState, false);
-            } else if (songs == null) {
+            } else if (songs == null || songs.isEmpty()) {
                 setVisible(binding.newReleasesTitle, true);
                 setVisible(binding.newReleasesSubtitle, false);
                 setVisible(binding.newReleasesRecycler, false);
@@ -218,7 +233,6 @@ public class HomeFragment extends Fragment implements
             return;
         }
 
-        viewModel.saveSongToHistory(song);
         MusicPlayerManager playerManager = MusicPlayerManager.getInstance(requireContext());
 
         // Check which section this song belongs to
@@ -259,7 +273,31 @@ public class HomeFragment extends Fragment implements
     }
 
     private void setVisible(View view, boolean visible) {
-        view.setVisibility(visible ? View.VISIBLE : View.GONE);
+        if (visible) {
+            view.animate().cancel();
+            if (view.getVisibility() != View.VISIBLE) {
+                view.setAlpha(0f);
+                view.setVisibility(View.VISIBLE);
+                view.animate()
+                        .alpha(1f)
+                        .setDuration(300)
+                        .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                        .start();
+            }
+        } else {
+            view.animate().cancel();
+            if (view.getVisibility() == View.VISIBLE) {
+                view.animate()
+                        .alpha(0f)
+                        .setDuration(200)
+                        .withEndAction(() -> {
+                            if (view.getAlpha() == 0f) {
+                                view.setVisibility(View.GONE);
+                            }
+                        })
+                        .start();
+            }
+        }
     }
 
     @Override

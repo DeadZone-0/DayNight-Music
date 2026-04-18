@@ -7,13 +7,18 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.midnight.music.R;
 import com.midnight.music.data.model.Song;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class SongCardAdapter extends RecyclerView.Adapter<SongCardAdapter.SongViewHolder> {
     
@@ -25,13 +30,27 @@ public class SongCardAdapter extends RecyclerView.Adapter<SongCardAdapter.SongVi
     }
     
     public SongCardAdapter(List<Song> songs, OnSongClickListener listener) {
-        this.songs = songs;
+        this.songs = new ArrayList<>(songs);
         this.listener = listener;
     }
     
     public void updateData(List<Song> newSongs) {
-        this.songs = newSongs;
-        notifyDataSetChanged();
+        List<Song> oldSongs = this.songs;
+        this.songs = new ArrayList<>(newSongs);
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override public int getOldListSize() { return oldSongs.size(); }
+            @Override public int getNewListSize() { return newSongs.size(); }
+            @Override public boolean areItemsTheSame(int oldPos, int newPos) {
+                return oldSongs.get(oldPos).getId().equals(newSongs.get(newPos).getId());
+            }
+            @Override public boolean areContentsTheSame(int oldPos, int newPos) {
+                Song o = oldSongs.get(oldPos), n = newSongs.get(newPos);
+                return Objects.equals(o.getSong(), n.getSong())
+                        && Objects.equals(o.getImageUrl(), n.getImageUrl())
+                        && Objects.equals(o.getSingers(), n.getSingers());
+            }
+        });
+        result.dispatchUpdatesTo(this);
     }
     
     public Song getSongAt(int position) {
@@ -85,11 +104,14 @@ public class SongCardAdapter extends RecyclerView.Adapter<SongCardAdapter.SongVi
             songTitle.setText(song.getSong());
             songArtist.setText(song.getSingers());
             
-            // Load song image
+            // Load song image with optimized caching and crossfade
             String imageUrl = song.getImageUrl();
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 Glide.with(itemView.getContext())
                         .load(imageUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .transition(DrawableTransitionOptions.withCrossFade(200))
+                        .thumbnail(0.25f)
                         .placeholder(R.drawable.placeholder_art)
                         .into(songImage);
             } else {

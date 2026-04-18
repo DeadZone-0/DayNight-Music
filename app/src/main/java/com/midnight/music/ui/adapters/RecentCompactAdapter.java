@@ -7,16 +7,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.recyclerview.widget.DiffUtil;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.midnight.music.R;
 import com.midnight.music.data.model.Song;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Compact adapter for recently played songs â€” smaller cards (120dp).
+ * Compact adapter for recently played songs — smaller cards (120dp).
  */
 public class RecentCompactAdapter extends RecyclerView.Adapter<RecentCompactAdapter.ViewHolder> {
     private List<Song> songs;
@@ -27,13 +31,31 @@ public class RecentCompactAdapter extends RecyclerView.Adapter<RecentCompactAdap
     }
 
     public RecentCompactAdapter(List<Song> songs, OnSongClickListener listener) {
-        this.songs = songs;
+        this.songs = songs == null ? new ArrayList<>() : new ArrayList<>(songs);
         this.listener = listener;
     }
 
     public void updateData(List<Song> newSongs) {
-        this.songs = newSongs;
-        notifyDataSetChanged();
+        if (newSongs == null) {
+            newSongs = new ArrayList<>();
+        }
+        List<Song> oldSongs = this.songs;
+        this.songs = new ArrayList<>(newSongs);
+        final List<Song> finalNewSongs = newSongs;
+        DiffUtil.DiffResult result = DiffUtil.calculateDiff(new DiffUtil.Callback() {
+            @Override public int getOldListSize() { return oldSongs.size(); }
+            @Override public int getNewListSize() { return finalNewSongs.size(); }
+            @Override public boolean areItemsTheSame(int oldPos, int newPos) {
+                return oldSongs.get(oldPos).getId().equals(finalNewSongs.get(newPos).getId());
+            }
+            @Override public boolean areContentsTheSame(int oldPos, int newPos) {
+                Song o = oldSongs.get(oldPos), n = finalNewSongs.get(newPos);
+                return o.getId().equals(n.getId())
+                        && String.valueOf(o.getSong()).equals(String.valueOf(n.getSong()))
+                        && String.valueOf(o.getImageUrl()).equals(String.valueOf(n.getImageUrl()));
+            }
+        });
+        result.dispatchUpdatesTo(this);
     }
 
     public Song getSongAt(int position) {
@@ -86,6 +108,9 @@ public class RecentCompactAdapter extends RecyclerView.Adapter<RecentCompactAdap
             if (imageUrl != null && !imageUrl.isEmpty()) {
                 Glide.with(itemView.getContext())
                         .load(imageUrl)
+                        .diskCacheStrategy(DiskCacheStrategy.ALL)
+                        .transition(DrawableTransitionOptions.withCrossFade(200))
+                        .thumbnail(0.25f)
                         .placeholder(R.drawable.placeholder_song)
                         .into(songImage);
             } else {
@@ -94,3 +119,4 @@ public class RecentCompactAdapter extends RecyclerView.Adapter<RecentCompactAdap
         }
     }
 }
+

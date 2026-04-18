@@ -136,6 +136,11 @@ public class SearchFragment extends Fragment {
         
         binding.searchResultsRecycler.setLayoutManager(new LinearLayoutManager(requireContext()));
         binding.searchResultsRecycler.setAdapter(searchAdapter);
+        // Apply staggered fade-in animation to search results
+        android.view.animation.LayoutAnimationController animation = 
+                android.view.animation.AnimationUtils.loadLayoutAnimation(requireContext(), R.anim.layout_anim_stagger);
+        binding.searchResultsRecycler.setLayoutAnimation(animation);
+        
         binding.artistsRecycler.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         binding.artistsRecycler.setAdapter(artistAdapter);
         
@@ -556,8 +561,19 @@ public class SearchFragment extends Fragment {
             binding.songsSection.setVisibility(View.VISIBLE);
             binding.searchResultsRecycler.setVisibility(View.VISIBLE);
             binding.searchResultsRecycler.setAlpha(1f);
+            
+            // Apply layout animation only if it's the first page or full refresh
+            boolean shouldAnimate = searchAdapter.getCurrentList().isEmpty() ||
+                                    (binding.searchResultsRecycler.computeVerticalScrollOffset() == 0);
+
+            final androidx.recyclerview.widget.RecyclerView recyclerView = binding.searchResultsRecycler;
             List<SearchItem> items = SearchItem.buildSearchResults(new ArrayList<>(allSongs));
-            searchAdapter.submitList(items);
+            searchAdapter.submitList(items, () -> {
+                // Run after the diff is calculated and items are added
+                if (shouldAnimate && recyclerView != null) {
+                    recyclerView.scheduleLayoutAnimation();
+                }
+            });
         } else {
             binding.songsSection.setVisibility(View.GONE);
             binding.searchResultsRecycler.setVisibility(View.GONE);

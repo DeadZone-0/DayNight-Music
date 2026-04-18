@@ -8,6 +8,12 @@ import android.widget.ImageView;
 import java.io.InputStream;
 import java.net.URL;
 
+/**
+ * @deprecated This class uses the deprecated AsyncTask API and a manual LruCache.
+ * The app now uses Glide exclusively for all image loading with a centralized
+ * GlideAppModule configuration. Use Glide directly instead.
+ */
+@Deprecated
 public class ImageLoader {
     // Memory cache for storing bitmaps
     private static final LruCache<String, Bitmap> memoryCache;

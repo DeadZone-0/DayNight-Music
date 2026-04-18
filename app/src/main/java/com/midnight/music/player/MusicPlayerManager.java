@@ -15,6 +15,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.MutableLiveData;
 import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.Song;
+import com.midnight.music.data.repository.MusicRepository;
 import com.midnight.music.data.network.SaavnApiService;
 import com.midnight.music.data.network.SaavnSearchResponse;
 import com.midnight.music.data.network.SaavnSongResult;
@@ -468,6 +469,7 @@ public class MusicPlayerManager {
                     MusicService.startService(context);
 
                     mainHandler.post(() -> {
+                        MusicRepository.getInstance(context).saveSong(finalSong);
                         currentSongLiveData.setValue(finalSong);
                         isPlayingLiveData.setValue(true);
                     });
@@ -495,6 +497,7 @@ public class MusicPlayerManager {
 
                 // Ensure UI is updated immediately
                 mainHandler.post(() -> {
+                    MusicRepository.getInstance(context).saveSong(finalSong);
                     currentSongLiveData.setValue(finalSong);
                     isPlayingLiveData.setValue(true);
                 });
@@ -517,6 +520,7 @@ public class MusicPlayerManager {
 
                 // Ensure UI is updated immediately
                 mainHandler.post(() -> {
+                    MusicRepository.getInstance(context).saveSong(finalSong);
                     currentSongLiveData.setValue(finalSong);
                     isPlayingLiveData.setValue(true);
                 });

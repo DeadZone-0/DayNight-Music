@@ -21,7 +21,10 @@ import androidx.palette.graphics.Palette;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.lifecycle.LiveData;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.CustomTarget;
 import com.midnight.music.R;
+import androidx.annotation.Nullable;
+import android.graphics.drawable.Drawable;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.model.Playlist;
 import com.midnight.music.data.model.PlaylistWithSongs;
@@ -583,16 +586,37 @@ public class PlayerActivity extends AppCompatActivity
         // Update queue (current song may have changed)
         updateQueueDisplay();
 
-        // Load album art (no RoundedCorners needed â€” ShapeableImageView handles it)
+        // Load album art with smooth crossfade
+        if (isFinishing() || isDestroyed() || binding == null) {
+            return;
+        }
         Glide.with(this)
                 .asBitmap()
                 .load(song.getImageUrl())
-                .into(binding.imgAlbumArt);
+                .into(new CustomTarget<Bitmap>() {
+                    @Override
+                    public void onResourceReady(@Nullable Bitmap bitmap,
+                            com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
+                        if (isFinishing() || isDestroyed() || binding == null) {
+                            return;
+                        }
+                        binding.imgAlbumArt.setImageBitmap(bitmap);
+                    }
 
-        // Load blurred background
+                    @Override
+                    public void onLoadCleared(@Nullable Drawable placeholder) {
+                        if (isFinishing() || isDestroyed() || binding == null) {
+                            return;
+                        }
+                        binding.imgAlbumArt.setImageResource(R.drawable.placeholder_song);
+                    }
+                });
+
+        // Load blurred background with smooth crossfade
         Glide.with(this)
                 .load(song.getImageUrl())
                 .transform(new BlurTransformation(25, 3))
+                .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade(400))
                 .into(binding.backgroundImage);
 
         // Extract dominant color for seekbar accent tint

@@ -71,7 +71,10 @@ public class HomeViewModel extends AndroidViewModel {
      * then merges + deduplicates the results.
      */
     public void loadRecommendations(List<Song> recentSongs) {
-        if (recentSongs == null || recentSongs.isEmpty()) return;
+        if (recentSongs == null || recentSongs.isEmpty()) {
+            recommendations.postValue(new ArrayList<>());
+            return;
+        }
 
         // Pick up to 3 seed songs spread across the list
         List<Song> seeds = new ArrayList<>();
