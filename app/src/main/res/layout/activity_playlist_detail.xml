@@ -178,6 +178,16 @@
         app:elevation="4dp" 
         app:pressedTranslationZ="8dp" />
 
+    <!-- Floating Download Progress Overlay -->
+    <include
+        android:id="@+id/floatingDownloadView"
+        layout="@layout/layout_floating_download"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="72dp"
+        android:visibility="gone" />
+
     <include
         android:id="@+id/miniPlayer"
         layout="@layout/layout_mini_player"

@@ -11,6 +11,8 @@
     <string name="queue">Queue</string>
     <string name="options">Options</string>
     <string name="close">Close</string>
+    <string name="download">Download</string>
+    <string name="downloading_song">Downloading Song...</string>
     <string name="shuffle">Shuffle</string>
     <string name="repeat">Repeat</string>
     

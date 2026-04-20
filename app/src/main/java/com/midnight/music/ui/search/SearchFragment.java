@@ -260,6 +260,39 @@ public class SearchFragment extends Fragment {
             }
 
             @Override
+            public void onDownload(Song song) {
+                if (song == null || song.getId() == null) {
+                    Toast.makeText(requireContext(), "Invalid song", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                Toast.makeText(requireContext(), "Downloading " + song.getSong() + " in background...", Toast.LENGTH_SHORT).show();
+
+                com.midnight.music.utils.DownloadManager.getInstance(requireContext())
+                    .downloadSong(song, new com.midnight.music.utils.DownloadManager.DownloadListener() {
+                        @Override
+                        public void onProgress(int percent) { }
+
+                        @Override
+                        public void onComplete(String filePath) {
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (isAdded()) {
+                                    Toast.makeText(requireContext(), "Downloaded " + song.getSong(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            new Handler(Looper.getMainLooper()).post(() -> {
+                                if (isAdded()) {
+                                    Toast.makeText(requireContext(), "Failed to download", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    });
+            }
+
+            @Override
             public void onArtistClick(Artist artist) {
                 ArtistDetailActivity.start(requireContext(), artist);
             }

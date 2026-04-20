@@ -39,6 +39,17 @@
     android:visibility="gone"
     app:layout_constraintBottom_toTopOf="@id/bottomNav" />
 
+  <!-- Floating Download Progress Overlay -->
+  <include
+    android:id="@+id/floatingDownloadView"
+    layout="@layout/layout_floating_download"
+    android:layout_width="0dp"
+    android:layout_height="wrap_content"
+    android:visibility="gone"
+    app:layout_constraintBottom_toTopOf="@id/miniPlayer"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent" />
+
   <com.google.android.material.bottomnavigation.BottomNavigationView
     android:id="@+id/bottomNav"
     android:layout_width="0dp"

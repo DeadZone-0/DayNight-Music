@@ -43,6 +43,9 @@ import com.midnight.music.utils.ThemeManager;
 import android.content.res.ColorStateList;
 import java.util.concurrent.Executors;
 
+import com.midnight.music.ui.playlist.DownloadProgressBottomSheet;
+import com.midnight.music.utils.DownloadObserver;
+
 public class MainActivity extends AppCompatActivity {
     private static final String TAG = "MainActivity";
     private static final int NOTIFICATION_PERMISSION_REQUEST_CODE = 1001;
@@ -50,6 +53,7 @@ public class MainActivity extends AppCompatActivity {
     private MusicPlayerManager playerManager;
     private NavController navController;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable floatingHideRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,6 +72,89 @@ public class MainActivity extends AppCompatActivity {
         // Check for updates seamlessly on startup
         com.midnight.music.utils.UpdateManager updateManager = new com.midnight.music.utils.UpdateManager(this);
         updateManager.checkForUpdates(false);
+
+        setupFloatingDownload();
+    }
+
+    private void setupFloatingDownload() {
+        View floatingDownloadView = findViewById(R.id.floatingDownloadView);
+        android.widget.TextView floatingTitle = findViewById(R.id.floatingTitle);
+        com.google.android.material.progressindicator.CircularProgressIndicator floatingProgress = findViewById(R.id.floatingProgress);
+        android.widget.ImageView floatingClose = findViewById(R.id.floatingClose);
+
+        if (floatingDownloadView == null) {
+            Log.w(TAG, "floatingDownloadView not found");
+            return;
+        }
+        if (floatingTitle == null) {
+            Log.w(TAG, "floatingTitle not found");
+        }
+        if (floatingProgress == null) {
+            Log.w(TAG, "floatingProgress not found");
+        }
+        if (floatingClose == null) {
+            Log.w(TAG, "floatingClose not found");
+        }
+
+        floatingDownloadView.setOnClickListener(v -> {
+            DownloadProgressBottomSheet sheet = DownloadProgressBottomSheet.newInstance();
+            sheet.show(getSupportFragmentManager(), "DownloadSheet");
+        });
+
+        if (floatingClose != null) {
+            floatingClose.setOnClickListener(v -> {
+                floatingDownloadView.setVisibility(View.GONE);
+            });
+        }
+
+        floatingHideRunnable = () -> {
+            if (floatingDownloadView != null && floatingDownloadView.getVisibility() == View.VISIBLE) {
+                floatingDownloadView.animate().alpha(0f).setDuration(300).withEndAction(() -> {
+                    if (floatingDownloadView != null) {
+                        floatingDownloadView.setVisibility(View.GONE);
+                    }
+                }).start();
+            }
+        };
+
+        DownloadObserver.getInstance().getDownloadState().observe(this, state -> {
+            if (mainHandler != null) {
+                mainHandler.removeCallbacks(floatingHideRunnable);
+            }
+            if (state.isActive) {
+                if (floatingDownloadView.getVisibility() != View.VISIBLE) {
+                    floatingDownloadView.setAlpha(0f);
+                    floatingDownloadView.setVisibility(View.VISIBLE);
+                    floatingDownloadView.animate().alpha(1f).setDuration(300).start();
+                }
+                if (floatingTitle != null) {
+                    floatingTitle.setText("Downloading...");
+                }
+                if (floatingProgress != null) {
+                    floatingProgress.setIndeterminate(false);
+                    floatingProgress.setProgressCompat(state.progress, true);
+                }
+            } else if (state.isError) {
+                if (floatingTitle != null) {
+                    floatingTitle.setText("Failed: " + state.title);
+                }
+                if (floatingProgress != null) {
+                    floatingProgress.setIndeterminate(false);
+                }
+            } else {
+                if (state.progress == 100) {
+                    if (floatingTitle != null) {
+                        floatingTitle.setText("Completed!");
+                    }
+                    if (floatingProgress != null) {
+                        floatingProgress.setProgressCompat(100, true);
+                    }
+                    if (floatingHideRunnable != null && mainHandler != null) {
+                        mainHandler.postDelayed(floatingHideRunnable, 2000);
+                    }
+                }
+            }
+        });
     }
 
     /**

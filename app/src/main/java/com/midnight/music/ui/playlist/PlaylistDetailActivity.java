@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 import android.content.res.ColorStateList;
 import com.midnight.music.utils.ThemeManager;
 
@@ -54,6 +55,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
     private MusicPlayerManager playerManager;
     private AlertDialog currentPlaylistDialog = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private Runnable floatingHideRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,6 +77,87 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         setupMiniPlayer();
         setupPlayAllButton();
         setupActionButtons();
+        setupFloatingDownload();
+    }
+
+    private void setupFloatingDownload() {
+        View floatingDownloadView = findViewById(R.id.floatingDownloadView);
+        if (floatingDownloadView == null) return;
+
+        android.widget.TextView floatingTitle = findViewById(R.id.floatingTitle);
+        com.google.android.material.progressindicator.CircularProgressIndicator floatingProgress = findViewById(R.id.floatingProgress);
+        android.widget.ImageView floatingClose = findViewById(R.id.floatingClose);
+
+        if (floatingTitle == null) {
+            Log.w(TAG, "floatingTitle not found");
+        }
+        if (floatingProgress == null) {
+            Log.w(TAG, "floatingProgress not found");
+        }
+        if (floatingClose == null) {
+            Log.w(TAG, "floatingClose not found");
+        }
+
+        floatingDownloadView.setOnClickListener(v -> {
+            DownloadProgressBottomSheet sheet = DownloadProgressBottomSheet.newInstance();
+            sheet.show(getSupportFragmentManager(), "DownloadSheet");
+        });
+
+        if (floatingClose != null) {
+            floatingClose.setOnClickListener(v -> {
+                floatingDownloadView.setVisibility(View.GONE);
+            });
+        }
+
+        com.midnight.music.utils.DownloadObserver.getInstance().getDownloadState().observe(this, state -> {
+            if (mainHandler != null) {
+                mainHandler.removeCallbacks(floatingHideRunnable);
+            }
+            if (state.isActive) {
+                if (floatingDownloadView.getVisibility() != View.VISIBLE) {
+                    floatingDownloadView.setAlpha(0f);
+                    floatingDownloadView.setVisibility(View.VISIBLE);
+                    floatingDownloadView.animate().alpha(1f).setDuration(300).start();
+                }
+                if (floatingTitle != null) {
+                    floatingTitle.setText("Downloading...");
+                }
+                if (floatingProgress != null) {
+                    floatingProgress.setIndeterminate(false);
+                    floatingProgress.setProgressCompat(state.progress, true);
+                }
+            } else if (state.isError) {
+                if (floatingTitle != null) {
+                    floatingTitle.setText("Failed: " + state.title);
+                }
+                if (floatingProgress != null) {
+                    floatingProgress.setIndeterminate(false);
+                }
+            } else {
+                if (state.progress == 100) {
+                    if (floatingTitle != null) {
+                        floatingTitle.setText("Completed!");
+                    }
+                    if (floatingProgress != null) {
+                        floatingProgress.setProgressCompat(100, true);
+                    }
+                    if (floatingHideRunnable != null) {
+                        mainHandler.removeCallbacks(floatingHideRunnable);
+                    }
+                    floatingHideRunnable = () -> {
+                        if (!isFinishing() && floatingDownloadView != null) {
+                            floatingDownloadView.animate().alpha(0f).setDuration(300).withEndAction(() -> {
+                                if (floatingDownloadView != null) {
+                                    floatingDownloadView.setVisibility(View.GONE);
+                                }
+                            }).start();
+                        }
+                        floatingHideRunnable = null;
+                    };
+                    mainHandler.postDelayed(floatingHideRunnable, 2000);
+                }
+            }
+        });
     }
 
     private void setupToolbar() {
@@ -210,7 +293,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         // Observe progress with error handling
         playerManager.getCurrentPosition().observe(this, position -> {
             try {
-                if (position != null && playerManager.getDuration() > 0) {
+                if (!isDestroyed() && position != null && playerManager.getDuration() > 0) {
                     int progress = (int) ((position * 100) / playerManager.getDuration());
                     if (binding != null && binding.miniPlayer != null && binding.miniPlayer.progressMini != null) {
                         binding.miniPlayer.progressMini.setProgressCompat(progress, true);
@@ -307,55 +390,98 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                     }
                 }
 
-                if (toDownload.isEmpty()) {
-                    return;
-                }
+                final AtomicInteger completed = new AtomicInteger(0);
+                final AtomicInteger errorCount = new AtomicInteger(0);
+                final int total = toDownload.size();
 
                 binding.btnDownload.setEnabled(false);
                 binding.btnDownload.setVisibility(View.INVISIBLE);
                 if (binding.progressDownload != null) {
+                    binding.progressDownload.setIndeterminate(false);
+                    binding.progressDownload.setMax(total * 100);
+                    binding.progressDownload.setProgressCompat(0, true);
                     binding.progressDownload.setVisibility(View.VISIBLE);
                 }
-
-                final int[] completed = {0};
-                final int total = toDownload.size();
 
                 for (Song song : toDownload) {
                     dlManager.downloadSong(song, new com.midnight.music.utils.DownloadManager.DownloadListener() {
                         @Override
-                        public void onProgress(int percent) { /* Ignored for batch */ }
+                        public void onProgress(int percent) { 
+                            mainHandler.post(() -> {
+                                if (!isDestroyed() && binding != null && binding.progressDownload != null) {
+                                    // Progress is scaled by number of completed items
+                                    int currentProgress = (completed.get() * 100) + percent;
+                                    binding.progressDownload.setProgressCompat(currentProgress, true);
+                                }
+                            });
+                        }
 
                         @Override
                         public void onComplete(String filePath) {
-                            completed[0]++;
-                            if (completed[0] >= total) {
-                                mainHandler.post(() -> {
-                                    if (binding.progressDownload != null) {
-                                        binding.progressDownload.setVisibility(View.GONE);
+                            completed.incrementAndGet();
+                            mainHandler.post(() -> {
+                                if (!isDestroyed()) {
+                                    if (binding != null && binding.progressDownload != null) {
+                                        binding.progressDownload.setProgressCompat(completed.get() * 100, true);
                                     }
-                                    binding.btnDownload.setVisibility(View.VISIBLE);
-                                    binding.btnDownload.setEnabled(true);
-                                    Toast.makeText(PlaylistDetailActivity.this,
-                                            "All songs downloaded!", Toast.LENGTH_SHORT).show();
-                                });
-                            }
+                                    if (completed.get() >= total) {
+                                        if (binding != null && binding.progressDownload != null) {
+                                            binding.progressDownload.setVisibility(View.GONE);
+                                        }
+                                        if (binding != null && binding.btnDownload != null) {
+                                            if (errorCount.get() == 0) {
+                                                binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                                            } else {
+                                                binding.btnDownload.setImageResource(R.drawable.ic_download);
+                                            }
+                                            binding.btnDownload.setVisibility(View.VISIBLE);
+                                            binding.btnDownload.setEnabled(true);
+                                        }
+                                        if (errorCount.get() == 0) {
+                                            Toast.makeText(PlaylistDetailActivity.this,
+                                                    "All songs downloaded!", Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            Toast.makeText(PlaylistDetailActivity.this,
+                                                    "Downloads finished with " + errorCount.get() + " error(s)", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                            });
                         }
 
                         @Override
                         public void onError(Exception e) {
-                            completed[0]++;
+                            completed.incrementAndGet();
+                            errorCount.incrementAndGet();
                             Log.e(TAG, "Failed to download: " + song.getSong(), e);
-                            if (completed[0] >= total) {
-                                mainHandler.post(() -> {
-                                    if (binding.progressDownload != null) {
-                                        binding.progressDownload.setVisibility(View.GONE);
+                            mainHandler.post(() -> {
+                                if (!isDestroyed()) {
+                                    if (binding != null && binding.progressDownload != null) {
+                                        binding.progressDownload.setProgressCompat(completed.get() * 100, true);
                                     }
-                                    binding.btnDownload.setVisibility(View.VISIBLE);
-                                    binding.btnDownload.setEnabled(true);
-                                    Toast.makeText(PlaylistDetailActivity.this,
-                                            "Downloads finished (some may have failed)", Toast.LENGTH_SHORT).show();
-                                });
-                            }
+                                    if (completed.get() >= total) {
+                                        if (binding != null && binding.progressDownload != null) {
+                                            binding.progressDownload.setVisibility(View.GONE);
+                                        }
+                                        if (binding != null && binding.btnDownload != null) {
+                                            if (errorCount.get() == 0) {
+                                                binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                                            } else {
+                                                binding.btnDownload.setImageResource(R.drawable.ic_download);
+                                            }
+                                            binding.btnDownload.setVisibility(View.VISIBLE);
+                                            binding.btnDownload.setEnabled(true);
+                                        }
+                                        if (errorCount.get() == 0) {
+                                            Toast.makeText(PlaylistDetailActivity.this,
+                                                    "All songs downloaded!", Toast.LENGTH_SHORT).show();
+                                        } else {
+                                            Toast.makeText(PlaylistDetailActivity.this,
+                                                    "Downloads finished with " + errorCount.get() + " error(s)", Toast.LENGTH_SHORT).show();
+                                        }
+                                    }
+                                }
+                            });
                         }
                     });
                 }
@@ -513,11 +639,13 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         try {
             // Always run on main thread
             if (Looper.myLooper() != Looper.getMainLooper()) {
-                mainHandler.post(() -> updatePlayPauseButton(isPlaying));
+                mainHandler.post(() -> {
+                    if (!isDestroyed()) updatePlayPauseButton(isPlaying);
+                });
                 return;
             }
             
-            if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniPlayPause != null) {
+            if (!isDestroyed() && binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniPlayPause != null) {
                 binding.miniPlayer.btnMiniPlayPause.setImageResource(
                     isPlaying ? R.drawable.ic_pause_rounded : R.drawable.ic_play_rounded
                 );
@@ -529,7 +657,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
 
     private void updateHeartButton(boolean isLiked) {
         try {
-            if (binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniHeart != null) {
+            if (!isDestroyed() && binding != null && binding.miniPlayer != null && binding.miniPlayer.btnMiniHeart != null) {
                 binding.miniPlayer.btnMiniHeart.setImageResource(
                         isLiked ? R.drawable.ic_heart_filled : R.drawable.ic_favorite_border);
                 int accent = ThemeManager.getInstance(this).getAccentColorValue();
@@ -564,9 +692,24 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         if (playlist.songs == null || playlist.songs.isEmpty()) {
             binding.emptyView.setVisibility(View.VISIBLE);
             binding.songList.setVisibility(View.GONE);
+            if (binding.btnDownload != null) {
+                binding.btnDownload.setImageResource(R.drawable.ic_download);
+            }
         } else {
             binding.emptyView.setVisibility(View.GONE);
             binding.songList.setVisibility(View.VISIBLE);
+            
+            // Check if fully downloaded
+            boolean allDownloaded = true;
+            for (Song song : playlist.songs) {
+                if (!song.isDownloaded()) {
+                    allDownloaded = false;
+                    break;
+                }
+            }
+            if (binding.btnDownload != null) {
+                binding.btnDownload.setImageResource(allDownloaded ? R.drawable.ic_download_done : R.drawable.ic_download);
+            }
         }
 
         // Load playlist image if available
@@ -600,6 +743,39 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
     @Override
     public void onPlayNow(Song song) {
         playFromPlaylist(song);
+    }
+
+    @Override
+    public void onDownload(Song song) {
+        downloadSingleSong(song);
+    }
+
+    private void downloadSingleSong(Song song) {
+        Toast.makeText(this, "Downloading " + song.getSong() + " in background...", Toast.LENGTH_SHORT).show();
+
+        com.midnight.music.utils.DownloadManager.getInstance(this)
+            .downloadSong(song, new com.midnight.music.utils.DownloadManager.DownloadListener() {
+                @Override
+                public void onProgress(int percent) { }
+
+                @Override
+                public void onComplete(String filePath) {
+                    mainHandler.post(() -> {
+                        if (!isDestroyed()) {
+                            Toast.makeText(PlaylistDetailActivity.this, "Downloaded " + song.getSong(), Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    mainHandler.post(() -> {
+                        if (!isDestroyed()) {
+                            Toast.makeText(PlaylistDetailActivity.this, "Failed to download", Toast.LENGTH_SHORT).show();
+                        }
+                    });
+                }
+            });
     }
 
     /**

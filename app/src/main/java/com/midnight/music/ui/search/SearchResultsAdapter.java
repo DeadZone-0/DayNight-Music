@@ -33,6 +33,7 @@ public class SearchResultsAdapter extends ListAdapter<SearchItem, RecyclerView.V
         void onPlayNow(Song song);
         void onAddToPlaylist(Song song);
         void onQueueNext(Song song);
+        void onDownload(Song song);
         void onToggleLike(Song song);
         void onArtistClick(Artist artist);
     }
@@ -193,6 +194,9 @@ public class SearchResultsAdapter extends ListAdapter<SearchItem, RecyclerView.V
                 } else if (itemId == R.id.action_queue_next) {
                     listener.onQueueNext(song);
                     return true;
+                } else if (itemId == R.id.action_download) {
+                    listener.onDownload(song);
+                    return true;
                 } else if (itemId == R.id.action_like) {
                     listener.onToggleLike(song);
                     return true;
@@ -204,12 +208,14 @@ public class SearchResultsAdapter extends ListAdapter<SearchItem, RecyclerView.V
         }
         
         private void updateLikeMenuItem(MenuItem item, boolean isLiked) {
-            if (isLiked) {
-                item.setTitle(R.string.unlike);
-                item.setIcon(R.drawable.ic_heart_filled);
-            } else {
-                item.setTitle(R.string.like);
-                item.setIcon(R.drawable.ic_heart);
+            if (item != null) {
+                if (isLiked) {
+                    item.setTitle(R.string.unlike);
+                    item.setIcon(R.drawable.ic_heart_filled);
+                } else {
+                    item.setTitle(R.string.like);
+                    item.setIcon(R.drawable.ic_heart);
+                }
             }
         }
 

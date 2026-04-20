@@ -104,12 +104,15 @@ public class DownloadManager {
                     outputStream.write(buffer, 0, bytesRead);
                     totalBytesRead += bytesRead;
 
-                    if (fileLength > 0 && listener != null) {
+                    if (fileLength > 0) {
                         int percent = (int) (totalBytesRead * 100 / fileLength);
                         if (percent != lastPercent) {
                             lastPercent = percent;
                             final int p = percent;
-                            mainHandler.post(() -> listener.onProgress(p));
+                            DownloadObserver.getInstance().updateProgress(song.getSong(), p);
+                            if (listener != null) {
+                                mainHandler.post(() -> listener.onProgress(p));
+                            }
                         }
                     }
                 }
@@ -129,6 +132,7 @@ public class DownloadManager {
                     if (listener != null) {
                         mainHandler.post(() -> listener.onComplete(localPath));
                     }
+                    DownloadObserver.getInstance().setComplete();
                 } else {
                     tempFile.delete();
                     if (listener != null) {
@@ -139,6 +143,7 @@ public class DownloadManager {
             } catch (Exception e) {
                 Log.e(TAG, "Download failed for: " + song.getSong(), e);
                 tempFile.delete();
+                DownloadObserver.getInstance().setError();
                 if (listener != null) {
                     mainHandler.post(() -> listener.onError(e));
                 }

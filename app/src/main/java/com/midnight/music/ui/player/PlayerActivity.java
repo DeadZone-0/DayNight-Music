@@ -571,14 +571,16 @@ public class PlayerActivity extends AppCompatActivity
                 song.setLocalPath(dbSong.getLocalPath());
             }
             runOnUiThread(() -> {
-                updateLikeButton(song.isLiked());
-                binding.progressDownload.setVisibility(View.GONE);
-                binding.btnDownload.setVisibility(View.VISIBLE);
-                binding.btnDownload.setEnabled(true);
-                if (song.isDownloaded()) {
-                    binding.btnDownload.setImageResource(R.drawable.ic_download_done);
-                } else {
-                    binding.btnDownload.setImageResource(R.drawable.ic_download_arrow);
+                if (!isDestroyed() && binding != null) {
+                    updateLikeButton(song.isLiked());
+                    binding.progressDownload.setVisibility(View.GONE);
+                    binding.btnDownload.setVisibility(View.VISIBLE);
+                    binding.btnDownload.setEnabled(true);
+                    if (song.isDownloaded()) {
+                        binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                    } else {
+                        binding.btnDownload.setImageResource(R.drawable.ic_download_arrow);
+                    }
                 }
             });
         });
@@ -904,6 +906,41 @@ public class PlayerActivity extends AppCompatActivity
             } else if (itemId == R.id.action_queue_next) {
                 playerManager.queueNext(currentSong);
                 Toast.makeText(this, "Added to queue", Toast.LENGTH_SHORT).show();
+                return true;
+            } else if (itemId == R.id.action_download) {
+                if (currentSong.isDownloaded() || (currentSong.getLocalPath() != null && !currentSong.getLocalPath().isEmpty())) {
+                    Toast.makeText(this, "Song already downloaded", Toast.LENGTH_SHORT).show();
+                    return true;
+                }
+                Toast.makeText(this, "Downloading " + currentSong.getSong() + " in background...", Toast.LENGTH_SHORT).show();
+
+                com.midnight.music.utils.DownloadManager.getInstance(this)
+                    .downloadSong(currentSong, new com.midnight.music.utils.DownloadManager.DownloadListener() {
+                        @Override
+                        public void onProgress(int percent) { }
+
+                        @Override
+                        public void onComplete(String filePath) {
+                            runOnUiThread(() -> {
+                                if (!isDestroyed() && binding != null) {
+                                    currentSong.setDownloaded(true);
+                                    currentSong.setLocalPath(filePath);
+                                    binding.btnDownload.setImageResource(R.drawable.ic_download_done);
+                                    binding.btnDownload.setEnabled(true);
+                                    Toast.makeText(PlayerActivity.this, "Downloaded " + currentSong.getSong(), Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+
+                        @Override
+                        public void onError(Exception e) {
+                            runOnUiThread(() -> {
+                                if (!isDestroyed()) {
+                                    Toast.makeText(PlayerActivity.this, "Failed to download", Toast.LENGTH_SHORT).show();
+                                }
+                            });
+                        }
+                    });
                 return true;
             } else if (itemId == R.id.action_like) {
                 MusicRepository.getInstance(this).toggleLikeSong(currentSong, new MusicRepository.LikeCallback() {
