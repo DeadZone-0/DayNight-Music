@@ -3,7 +3,7 @@
 # DAYNIGHT MUSIC
 ### A Premium Android Music Experience
 
-[![Version](https://img.shields.io/badge/Version-0.4-8A2BE2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/releases)
+[![Version](https://img.shields.io/badge/Version-0.6-8A2BE2?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/releases)
 [![Website](https://img.shields.io/badge/Website-Live-8A2BE2?style=for-the-badge&logo=vercel&logoColor=white)](https://daynightmusic.vercel.app/)
 [![Stars](https://img.shields.io/github/stars/DeadZone-0/DayNight-Music?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/stargazers)
 [![Forks](https://img.shields.io/github/forks/DeadZone-0/DayNight-Music?style=for-the-badge&logo=github&logoColor=white)](https://github.com/DeadZone-0/DayNight-Music/network/members)
