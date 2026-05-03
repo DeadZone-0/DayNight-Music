@@ -27,6 +27,7 @@ public class DownloadedSongsAdapter extends ListAdapter<Song, DownloadedSongsAda
     public interface OnItemClickListener {
         void onSongClick(Song song, int position);
         void onDeleteClick(Song song, int position);
+        void onExportClick(Song song, int position);
     }
 
     private static final DiffUtil.ItemCallback<Song> DIFF_CALLBACK = new DiffUtil.ItemCallback<Song>() {
@@ -65,6 +66,7 @@ public class DownloadedSongsAdapter extends ListAdapter<Song, DownloadedSongsAda
         private final TextView songTitle;
         private final TextView songArtist;
         private final ImageButton btnDelete;
+        private final ImageButton btnExport;
 
         ViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -72,6 +74,7 @@ public class DownloadedSongsAdapter extends ListAdapter<Song, DownloadedSongsAda
             songTitle = itemView.findViewById(R.id.song_title);
             songArtist = itemView.findViewById(R.id.song_artist);
             btnDelete = itemView.findViewById(R.id.btn_delete);
+            btnExport = itemView.findViewById(R.id.btn_export);
 
             itemView.setOnClickListener(v -> {
                 int pos = getAdapterPosition();
@@ -84,6 +87,13 @@ public class DownloadedSongsAdapter extends ListAdapter<Song, DownloadedSongsAda
                 int pos = getAdapterPosition();
                 if (pos != RecyclerView.NO_POSITION) {
                     listener.onDeleteClick(getItem(pos), pos);
+                }
+            });
+
+            btnExport.setOnClickListener(v -> {
+                int pos = getAdapterPosition();
+                if (pos != RecyclerView.NO_POSITION) {
+                    listener.onExportClick(getItem(pos), pos);
                 }
             });
         }
