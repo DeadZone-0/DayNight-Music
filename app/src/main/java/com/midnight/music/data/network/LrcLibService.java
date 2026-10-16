@@ -12,6 +12,11 @@ import java.util.List;
 public interface LrcLibService {
     String BASE_URL = "https://lrclib.net/";
 
+    @GET("api/get")
+    Call<LrcResponse> getLyrics(
+            @Query("track_name") String trackName,
+            @Query("artist_name") String artistName);
+
     @GET("api/search")
     Call<List<LrcResponse>> searchLyrics(
             @Query("track_name") String trackName,
@@ -22,4 +27,8 @@ public interface LrcLibService {
             @Query("track_name") String trackName,
             @Query("artist_name") String artistName,
             @Query("album_name") String albumName);
+
+    @GET("api/search")
+    Call<List<LrcResponse>> searchLyricsByQuery(
+            @Query("q") String query);
 }

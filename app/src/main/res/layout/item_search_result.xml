@@ -55,8 +55,10 @@
 
     <ImageButton
         android:id="@+id/more_options"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:padding="12dp"
+        android:scaleType="centerInside"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="More options"
         android:src="@drawable/ic_more_vert"

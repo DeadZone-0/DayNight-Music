@@ -6,15 +6,13 @@
     android:id="@+id/miniPlayerContainer"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginHorizontal="12dp"
-    android:layout_marginBottom="6dp"
     android:background="@drawable/bg_mini_player"
     android:clickable="true"
-    android:clipChildren="false"
-    android:clipToPadding="false"
     android:elevation="12dp"
     android:focusable="true"
     android:foreground="?attr/selectableItemBackground"
+    android:outlineProvider="background"
+    android:clipToOutline="true"
     android:paddingVertical="10dp"
     android:paddingStart="10dp"
     android:paddingEnd="6dp">
@@ -75,11 +73,11 @@
     <!-- Favorite / Heart button -->
     <ImageButton
         android:id="@+id/btnMiniHeart"
-        android:layout_width="34dp"
-        android:layout_height="34dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="Favorite"
-        android:padding="5dp"
+        android:padding="8dp"
         android:scaleType="centerInside"
         android:src="@drawable/ic_favorite_border"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -90,11 +88,11 @@
     <!-- Play/Pause button — the primary action -->
     <ImageButton
         android:id="@+id/btnMiniPlayPause"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/play_pause"
-        android:padding="6dp"
+        android:padding="8dp"
         android:scaleType="centerInside"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toStartOf="@id/btnMiniNext"
@@ -105,11 +103,11 @@
     <!-- Next button -->
     <ImageButton
         android:id="@+id/btnMiniNext"
-        android:layout_width="34dp"
-        android:layout_height="34dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/next"
-        android:padding="5dp"
+        android:padding="8dp"
         android:scaleType="centerInside"
         android:src="@drawable/ic_skip_next_rounded"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -117,17 +115,18 @@
         app:layout_constraintTop_toTopOf="parent"
         app:tint="#88FFFFFF" />
 
-    <!-- Progress bar — ultra-thin accent line pinned to the absolute bottom -->
+    <!-- Progress bar — ultra-thin accent line pinned to the base of the card -->
     <com.google.android.material.progressindicator.LinearProgressIndicator
         android:id="@+id/progressMini"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginHorizontal="0dp"
+        android:layout_marginHorizontal="16dp"
+        android:layout_marginBottom="2dp"
         app:indicatorColor="@color/primary"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:trackColor="@android:color/transparent"
+        app:trackColor="#1AFFFFFF"
         app:trackCornerRadius="2dp"
         app:trackThickness="2dp" />
 

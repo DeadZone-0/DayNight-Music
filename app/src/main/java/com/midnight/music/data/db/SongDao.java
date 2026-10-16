@@ -56,6 +56,12 @@ public interface SongDao {
     @Query("SELECT * FROM songs WHERE timestamp > 0 ORDER BY timestamp DESC LIMIT :limit")
     LiveData<List<Song>> getRecentSongs(int limit);
 
+    @Query("SELECT * FROM songs WHERE timestamp > 0 ORDER BY timestamp DESC")
+    LiveData<List<Song>> getAllRecentSongs();
+
+    @Query("UPDATE songs SET timestamp = 0 WHERE timestamp > 0")
+    void clearListeningHistory();
+
     @Query("SELECT * FROM songs WHERE isDownloaded = 1 ORDER BY timestamp DESC")
     LiveData<List<Song>> getDownloadedSongs();
 

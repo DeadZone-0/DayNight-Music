@@ -17,10 +17,14 @@ import android.util.Pair;
 import android.view.View;
 
 
+import android.view.ViewGroup;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.navigation.NavController;
 import androidx.navigation.fragment.NavHostFragment;
 import androidx.navigation.ui.NavigationUI;
@@ -35,6 +39,7 @@ import com.midnight.music.data.auth.SessionManager;
 import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.repository.CloudSyncWorker;
+import com.midnight.music.data.repository.MusicRepository;
 import com.midnight.music.databinding.ActivityMainBinding;
 import com.midnight.music.player.MusicPlayerManager;
 import com.midnight.music.ui.player.PlayerActivity;
@@ -53,13 +58,22 @@ public class MainActivity extends AppCompatActivity {
     private MusicPlayerManager playerManager;
     private NavController navController;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private Runnable floatingHideRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityMainBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // Respect system navigation bar so bottom nav is never clipped or obscured on compact screens
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) binding.bottomNav.getLayoutParams();
+            int baseBottomMargin = (int) (16 * getResources().getDisplayMetrics().density);
+            lp.bottomMargin = sysBars.bottom + baseBottomMargin;
+            binding.bottomNav.setLayoutParams(lp);
+            return insets;
+        });
 
         setupNavigation();
         setupMiniPlayer();
@@ -77,84 +91,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void setupFloatingDownload() {
-        View floatingDownloadView = findViewById(R.id.floatingDownloadView);
-        android.widget.TextView floatingTitle = findViewById(R.id.floatingTitle);
-        com.google.android.material.progressindicator.CircularProgressIndicator floatingProgress = findViewById(R.id.floatingProgress);
-        android.widget.ImageView floatingClose = findViewById(R.id.floatingClose);
-
-        if (floatingDownloadView == null) {
-            Log.w(TAG, "floatingDownloadView not found");
-            return;
-        }
-        if (floatingTitle == null) {
-            Log.w(TAG, "floatingTitle not found");
-        }
-        if (floatingProgress == null) {
-            Log.w(TAG, "floatingProgress not found");
-        }
-        if (floatingClose == null) {
-            Log.w(TAG, "floatingClose not found");
-        }
-
-        floatingDownloadView.setOnClickListener(v -> {
-            DownloadProgressBottomSheet sheet = DownloadProgressBottomSheet.newInstance();
-            sheet.show(getSupportFragmentManager(), "DownloadSheet");
-        });
-
-        if (floatingClose != null) {
-            floatingClose.setOnClickListener(v -> {
-                floatingDownloadView.setVisibility(View.GONE);
-            });
-        }
-
-        floatingHideRunnable = () -> {
-            if (floatingDownloadView != null && floatingDownloadView.getVisibility() == View.VISIBLE) {
-                floatingDownloadView.animate().alpha(0f).setDuration(300).withEndAction(() -> {
-                    if (floatingDownloadView != null) {
-                        floatingDownloadView.setVisibility(View.GONE);
-                    }
-                }).start();
-            }
-        };
-
-        DownloadObserver.getInstance().getDownloadState().observe(this, state -> {
-            if (mainHandler != null) {
-                mainHandler.removeCallbacks(floatingHideRunnable);
-            }
-            if (state.isActive) {
-                if (floatingDownloadView.getVisibility() != View.VISIBLE) {
-                    floatingDownloadView.setAlpha(0f);
-                    floatingDownloadView.setVisibility(View.VISIBLE);
-                    floatingDownloadView.animate().alpha(1f).setDuration(300).start();
-                }
-                if (floatingTitle != null) {
-                    floatingTitle.setText("Downloading...");
-                }
-                if (floatingProgress != null) {
-                    floatingProgress.setIndeterminate(false);
-                    floatingProgress.setProgressCompat(state.progress, true);
-                }
-            } else if (state.isError) {
-                if (floatingTitle != null) {
-                    floatingTitle.setText("Failed: " + state.title);
-                }
-                if (floatingProgress != null) {
-                    floatingProgress.setIndeterminate(false);
-                }
-            } else {
-                if (state.progress == 100) {
-                    if (floatingTitle != null) {
-                        floatingTitle.setText("Completed!");
-                    }
-                    if (floatingProgress != null) {
-                        floatingProgress.setProgressCompat(100, true);
-                    }
-                    if (floatingHideRunnable != null && mainHandler != null) {
-                        mainHandler.postDelayed(floatingHideRunnable, 2000);
-                    }
-                }
-            }
-        });
+        // ponytail: Deduplicated floating download view setup
+        com.midnight.music.utils.FloatingDownloadHelper.setup(this, binding.floatingDownloadView.getRoot(), mainHandler);
     }
 
     /**
@@ -205,7 +143,7 @@ public class MainActivity extends AppCompatActivity {
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
-        NavigationUI.setupWithNavController(binding.bottomNav, navController);
+        binding.bottomNav.setupWithNavController(navController);
     }
 
     private void setupMiniPlayer() {
@@ -259,7 +197,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Heart / Favorite button — toggles liked status in Room DB
+        // Heart / Favorite button — toggles liked status and syncs with Liked Songs playlist
         binding.miniPlayer.btnMiniHeart.setOnClickListener(v -> {
             try {
                 Song currentSong = playerManager.getCurrentSongLiveData().getValue();
@@ -270,17 +208,21 @@ public class MainActivity extends AppCompatActivity {
                         .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
                         .start();
 
-                Executors.newSingleThreadExecutor().execute(() -> {
-                    AppDatabase db = AppDatabase.getInstance(this);
-                    boolean isCurrentlyLiked = db.songDao().isSongLiked(currentSong.getId());
-                    boolean newLikedState = !isCurrentlyLiked;
+                MusicRepository.getInstance(this).toggleLikeSong(currentSong, new MusicRepository.LikeCallback() {
+                    @Override
+                    public void onComplete(boolean isLiked) {
+                        mainHandler.post(() -> {
+                            updateHeartButton(isLiked);
+                            android.widget.Toast.makeText(MainActivity.this,
+                                    isLiked ? "Added to Liked Songs" : "Removed from Liked Songs",
+                                    android.widget.Toast.LENGTH_SHORT).show();
+                        });
+                    }
 
-                    // Ensure the song exists in DB first
-                    currentSong.setLiked(newLikedState);
-                    currentSong.setTimestamp(System.currentTimeMillis());
-                    db.songDao().insert(currentSong);
-
-                    mainHandler.post(() -> updateHeartButton(newLikedState));
+                    @Override
+                    public void onError(Exception e) {
+                        Log.e(TAG, "Error toggling favorite", e);
+                    }
                 });
             } catch (Exception e) {
                 Log.e(TAG, "Error toggling favorite", e);
@@ -299,8 +241,11 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // Observe current song
-        playerManager.getCurrentSongLiveData().observe(this, this::updateMiniPlayer);
+        // ponytail: Consolidated single observer for mini player updates and visibility
+        playerManager.getCurrentSongLiveData().observe(this, song -> {
+            updateMiniPlayer(song);
+            updateMiniPlayerVisibility(song);
+        });
 
         // Observe playback state
         playerManager.getPlayingLiveData().observe(this, this::updatePlayPauseButton);
@@ -316,46 +261,6 @@ public class MainActivity extends AppCompatActivity {
                 }
             } catch (Exception e) {
                 Log.e(TAG, "Error updating progress", e);
-            }
-        });
-
-        // Show/hide mini player — smooth alpha fade instead of jerky slide
-        playerManager.getCurrentSongLiveData().observe(this, song -> {
-            try {
-                if (binding != null && binding.miniPlayer != null) {
-                    View root = binding.miniPlayer.getRoot();
-                    View glow = findViewById(R.id.miniPlayerGlow);
-                    if (song != null && root.getVisibility() != View.VISIBLE) {
-                        root.setAlpha(0f);
-                        root.setTranslationY(root.getHeight() > 0 ? root.getHeight() : 80);
-                        root.setVisibility(View.VISIBLE);
-                        root.animate()
-                                .alpha(1f)
-                                .translationY(0f)
-                                .setDuration(250)
-                                .setInterpolator(new android.view.animation.DecelerateInterpolator())
-                                .start();
-                        // Show glow
-                        if (glow != null) {
-                            glow.setVisibility(View.VISIBLE);
-                            glow.animate().alpha(0.5f).setDuration(400).start();
-                        }
-                    } else if (song == null && root.getVisibility() == View.VISIBLE) {
-                        root.animate()
-                                .alpha(0f)
-                                .translationY(80)
-                                .setDuration(200)
-                                .withEndAction(() -> root.setVisibility(View.GONE))
-                                .start();
-                        // Hide glow
-                        if (glow != null) {
-                            glow.animate().alpha(0f).setDuration(200)
-                                    .withEndAction(() -> glow.setVisibility(View.GONE)).start();
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                Log.e(TAG, "Error updating miniplayer visibility", e);
             }
         });
 
@@ -404,21 +309,20 @@ public class MainActivity extends AppCompatActivity {
                                         // Tint the progress bar with accent color
                                         binding.miniPlayer.progressMini.setIndicatorColor(accentColor);
 
-                                        // Create a frosted glass background blended with album color
-                                        int glassBase = Color.parseColor("#141414");
-                                        int bgColor = blendColors(glassBase, mutedColor, 0.12f);
-                                        // Apply with alpha for translucency
-                                        int glassBg = Color.argb(230, Color.red(bgColor), Color.green(bgColor), Color.blue(bgColor));
+                                        // Create a solid opaque dark background subtly tinted with album color — prevents text bleed-through
+                                        int surfaceBase = Color.parseColor("#15151A");
+                                        int bgColor = blendColors(surfaceBase, mutedColor, 0.15f);
+                                        int solidBg = Color.rgb(Color.red(bgColor), Color.green(bgColor), Color.blue(bgColor));
 
                                         GradientDrawable bg = new GradientDrawable();
                                         bg.setShape(GradientDrawable.RECTANGLE);
-                                        bg.setCornerRadius(dpToPx(16));
-                                        bg.setColor(glassBg);
-                                        bg.setStroke(1, Color.argb(24, 255, 255, 255));
+                                        bg.setCornerRadius(dpToPx(18));
+                                        bg.setColor(solidBg);
+                                        bg.setStroke((int) dpToPx(1), Color.argb(46, 255, 255, 255));
                                         binding.miniPlayer.miniPlayerContainer.setBackground(bg);
 
                                         // Update ambient glow behind mini player
-                                        View glow = findViewById(R.id.miniPlayerGlow);
+                                        View glow = binding.miniPlayerGlow;
                                         if (glow != null) {
                                             int glowColor = palette.getDominantColor(accentColor);
                                             GradientDrawable glowDrawable = new GradientDrawable();
@@ -449,8 +353,8 @@ public class MainActivity extends AppCompatActivity {
 
             updatePlayPauseButton(playerManager.isPlaying());
 
-            // Check liked status for the heart button
-            Executors.newSingleThreadExecutor().execute(() -> {
+            // Check liked status for the heart button using shared database executor
+            AppDatabase.databaseWriteExecutor.execute(() -> {
                 try {
                     boolean liked = AppDatabase.getInstance(this).songDao().isSongLiked(song.getId());
                     mainHandler.post(() -> updateHeartButton(liked));
@@ -460,6 +364,43 @@ public class MainActivity extends AppCompatActivity {
             });
         } catch (Exception e) {
             Log.e(TAG, "Error updating mini player", e);
+        }
+    }
+
+    private void updateMiniPlayerVisibility(Song song) {
+        try {
+            if (binding != null && binding.miniPlayer != null) {
+                View root = binding.miniPlayer.getRoot();
+                View glow = binding.miniPlayerGlow;
+                if (song != null && root.getVisibility() != View.VISIBLE) {
+                    root.setAlpha(0f);
+                    root.setTranslationY(root.getHeight() > 0 ? root.getHeight() : 80);
+                    root.setVisibility(View.VISIBLE);
+                    root.animate()
+                            .alpha(1f)
+                            .translationY(0f)
+                            .setDuration(250)
+                            .setInterpolator(new android.view.animation.DecelerateInterpolator())
+                            .start();
+                    if (glow != null) {
+                        glow.setVisibility(View.VISIBLE);
+                        glow.animate().alpha(0.5f).setDuration(400).start();
+                    }
+                } else if (song == null && root.getVisibility() == View.VISIBLE) {
+                    root.animate()
+                            .alpha(0f)
+                            .translationY(80)
+                            .setDuration(200)
+                            .withEndAction(() -> root.setVisibility(View.GONE))
+                            .start();
+                    if (glow != null) {
+                        glow.animate().alpha(0f).setDuration(200)
+                                .withEndAction(() -> glow.setVisibility(View.GONE)).start();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "Error updating miniplayer visibility", e);
         }
     }
 
@@ -511,8 +452,8 @@ public class MainActivity extends AppCompatActivity {
     private void applyAccentColor(int color) {
         try {
             if (binding == null) return;
-            // Bottom nav icon tint
-            binding.bottomNav.setItemIconTintList(ColorStateList.valueOf(color));
+            // Bubble nav accent tint
+            binding.bottomNav.setAccentColor(color);
             // Progress bar
             if (binding.miniPlayer != null && binding.miniPlayer.progressMini != null) {
                 binding.miniPlayer.progressMini.setIndicatorColor(color);

@@ -14,6 +14,10 @@ import com.midnight.music.data.model.PlaylistSongCrossRef;
 import com.midnight.music.data.model.PlaylistWithSongs;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.network.JioSaavnService;
+import com.midnight.music.data.network.NetworkClient;
+import com.midnight.music.data.network.SaavnApiService;
+import com.midnight.music.data.network.SaavnSearchResponse;
+import com.midnight.music.data.network.SaavnSongResult;
 import com.midnight.music.data.network.SongResponse;
 
 import com.midnight.music.data.auth.SessionManager;
@@ -43,7 +47,7 @@ public class MusicRepository {
 
     private final SongDao songDao;
     private final PlaylistDao playlistDao;
-    private final JioSaavnService apiService;
+    private final SaavnApiService apiService;
     private final Executor diskIO;
     private final Context appContext;
     private RecommendationManager recommendationManager;
@@ -56,10 +60,12 @@ public class MusicRepository {
         this.diskIO = Executors.newSingleThreadExecutor();
 
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(JioSaavnService.BASE_URL)
+                .baseUrl(SaavnApiService.BASE_URL)
+                .client(NetworkClient.getInstance())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
-        this.apiService = retrofit.create(JioSaavnService.class);
+        this.apiService = retrofit.create(SaavnApiService.class);
+        syncLikedSongsPlaylist();
     }
 
     public static MusicRepository getInstance(Context context) {
@@ -79,14 +85,16 @@ public class MusicRepository {
      * Search for songs from the API
      */
     public void searchSongs(String query, SearchCallback callback) {
-        apiService.searchSongs(query, false).enqueue(new Callback<List<SongResponse>>() {
+        apiService.searchSongs(query, 1, 20).enqueue(new Callback<SaavnSearchResponse>() {
             @Override
-            public void onResponse(@NonNull Call<List<SongResponse>> call,
-                    @NonNull Response<List<SongResponse>> response) {
-                if (response.isSuccessful() && response.body() != null) {
+            public void onResponse(@NonNull Call<SaavnSearchResponse> call,
+                    @NonNull Response<SaavnSearchResponse> response) {
+                if (response.isSuccessful() && response.body() != null && response.body().getData() != null) {
                     List<Song> songs = new ArrayList<>();
-                    for (SongResponse songResponse : response.body()) {
-                        songs.add(songResponse.toSong());
+                    if (response.body().getData().getResults() != null) {
+                        for (SaavnSongResult result : response.body().getData().getResults()) {
+                            songs.add(result.toSong());
+                        }
                     }
                     callback.onSuccess(songs);
                 } else {
@@ -95,7 +103,7 @@ public class MusicRepository {
             }
 
             @Override
-            public void onFailure(@NonNull Call<List<SongResponse>> call, @NonNull Throwable t) {
+            public void onFailure(@NonNull Call<SaavnSearchResponse> call, @NonNull Throwable t) {
                 Log.e(TAG, "Search failed", t);
                 callback.onError(new Exception("Network error: " + t.getMessage()));
             }
@@ -114,6 +122,30 @@ public class MusicRepository {
      */
     public LiveData<List<Song>> getRecentlyPlayedSongs() {
         return songDao.getRecentSongs(20);
+    }
+
+    /**
+     * Get all listening history
+     */
+    public LiveData<List<Song>> getAllListeningHistory() {
+        return songDao.getAllRecentSongs();
+    }
+
+    /**
+     * Clear listening history
+     */
+    public void clearListeningHistory(Runnable onComplete) {
+        diskIO.execute(() -> {
+            try {
+                songDao.clearListeningHistory();
+                songDao.deleteUnlikedSongs();
+            } catch (Exception e) {
+                Log.e(TAG, "Error clearing listening history", e);
+            }
+            if (onComplete != null) {
+                new android.os.Handler(android.os.Looper.getMainLooper()).post(onComplete);
+            }
+        });
     }
 
     /**
@@ -367,24 +399,60 @@ public class MusicRepository {
     }
 
     /**
-     * Get the "Liked Songs" playlist, creating it if it doesn't exist
+     * Get the "Liked Songs" playlist, creating it if it doesn't exist and healing cross-references
      */
     public void getOrCreateLikedPlaylist(PlaylistCallback callback) {
         diskIO.execute(() -> {
             try {
                 String likedSongsName = appContext.getString(com.midnight.music.R.string.liked_songs);
                 Playlist existing = playlistDao.getPlaylistByNameSync(likedSongsName);
+                long targetId;
                 if (existing != null) {
-                    callback.onSuccess(existing.getId());
+                    targetId = existing.getId();
                 } else {
                     Playlist liked = new Playlist(likedSongsName);
                     liked.setCreatedAt(System.currentTimeMillis());
-                    long id = playlistDao.insert(liked);
-                    callback.onSuccess(id);
+                    targetId = playlistDao.insert(liked);
                 }
+
+                // Self-healing: Ensure all songs marked liked in songs table exist in cross ref
+                List<Song> likedSongs = songDao.getLikedSongsSync();
+                if (likedSongs != null) {
+                    for (Song s : likedSongs) {
+                        playlistDao.insert(new PlaylistSongCrossRef(targetId, s.getId()));
+                    }
+                }
+
+                callback.onSuccess(targetId);
             } catch (Exception e) {
                 Log.e(TAG, "Error getting/creating liked playlist", e);
                 callback.onError(e);
+            }
+        });
+    }
+
+    /**
+     * Synchronize liked songs from SongDao into the special Liked Songs playlist cross-reference table
+     */
+    public void syncLikedSongsPlaylist() {
+        diskIO.execute(() -> {
+            try {
+                String likedSongsName = appContext.getString(com.midnight.music.R.string.liked_songs);
+                Playlist likedPlaylist = playlistDao.getPlaylistByNameSync(likedSongsName);
+                if (likedPlaylist == null) {
+                    likedPlaylist = new Playlist(likedSongsName);
+                    likedPlaylist.setCreatedAt(System.currentTimeMillis());
+                    long id = playlistDao.insert(likedPlaylist);
+                    likedPlaylist.setId(id);
+                }
+                List<Song> likedSongs = songDao.getLikedSongsSync();
+                if (likedSongs != null) {
+                    for (Song s : likedSongs) {
+                        playlistDao.insert(new PlaylistSongCrossRef(likedPlaylist.getId(), s.getId()));
+                    }
+                }
+            } catch (Exception e) {
+                Log.e(TAG, "Error syncing liked songs playlist", e);
             }
         });
     }

@@ -25,7 +25,7 @@
             android:layout_height="64dp"
             android:layout_gravity="center"
             android:src="@drawable/ic_library"
-            app:tint="@color/accent" />
+            app:tint="@color/text_primary" />
     </FrameLayout>
 
     <!-- Title -->
@@ -66,30 +66,33 @@
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_login"
         android:layout_width="match_parent"
-        android:layout_height="60dp"
+        android:layout_height="56dp"
         android:fontFamily="@font/poppins_bold"
         android:text="Login / Register"
         android:textAllCaps="false"
-        android:textColor="@android:color/white"
+        android:textColor="@color/black"
         android:textSize="16sp"
         app:backgroundTint="@null"
         android:background="@drawable/bg_gradient_button"
-        app:cornerRadius="30dp"
-        app:layout_constraintBottom_toBottomOf="parent"
+        app:cornerRadius="28dp"
+        app:layout_constraintBottom_toTopOf="@+id/secondary_links_layout"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/subtitle_text" />
+        app:layout_constraintTop_toBottomOf="@id/subtitle_text"
+        app:layout_constraintVertical_bias="0.4" />
 
     <!-- Secondary Links (Settings & About) -->
     <LinearLayout
+        android:id="@+id/secondary_links_layout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
+        android:layout_marginBottom="96dp"
         android:gravity="center"
         android:orientation="horizontal"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent">
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/btn_login">
 
         <TextView
             android:id="@+id/btn_guest_settings"

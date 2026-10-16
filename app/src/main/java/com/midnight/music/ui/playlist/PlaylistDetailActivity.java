@@ -21,6 +21,9 @@ import androidx.lifecycle.LiveData;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.palette.graphics.Palette;
 import androidx.core.content.ContextCompat;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -55,13 +58,24 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
     private MusicPlayerManager playerManager;
     private AlertDialog currentPlaylistDialog = null;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
-    private Runnable floatingHideRunnable;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         binding = ActivityPlaylistDetailBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
+
+        // Respect system navigation bar so floating mini player is never obscured
+        ViewCompat.setOnApplyWindowInsetsListener(binding.getRoot(), (v, insets) -> {
+            androidx.core.graphics.Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            if (binding != null && binding.miniPlayer != null) {
+                ViewGroup.MarginLayoutParams lp = (ViewGroup.MarginLayoutParams) binding.miniPlayer.getRoot().getLayoutParams();
+                int baseMargin = (int) (16 * getResources().getDisplayMetrics().density);
+                lp.bottomMargin = sysBars.bottom + baseMargin;
+                binding.miniPlayer.getRoot().setLayoutParams(lp);
+            }
+            return insets;
+        });
 
         // Get playlist ID from intent
         playlistId = getIntent().getLongExtra("playlist_id", -1);
@@ -81,83 +95,9 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
     }
 
     private void setupFloatingDownload() {
+        // ponytail: Deduplicated floating download view setup
         View floatingDownloadView = findViewById(R.id.floatingDownloadView);
-        if (floatingDownloadView == null) return;
-
-        android.widget.TextView floatingTitle = findViewById(R.id.floatingTitle);
-        com.google.android.material.progressindicator.CircularProgressIndicator floatingProgress = findViewById(R.id.floatingProgress);
-        android.widget.ImageView floatingClose = findViewById(R.id.floatingClose);
-
-        if (floatingTitle == null) {
-            Log.w(TAG, "floatingTitle not found");
-        }
-        if (floatingProgress == null) {
-            Log.w(TAG, "floatingProgress not found");
-        }
-        if (floatingClose == null) {
-            Log.w(TAG, "floatingClose not found");
-        }
-
-        floatingDownloadView.setOnClickListener(v -> {
-            DownloadProgressBottomSheet sheet = DownloadProgressBottomSheet.newInstance();
-            sheet.show(getSupportFragmentManager(), "DownloadSheet");
-        });
-
-        if (floatingClose != null) {
-            floatingClose.setOnClickListener(v -> {
-                floatingDownloadView.setVisibility(View.GONE);
-            });
-        }
-
-        com.midnight.music.utils.DownloadObserver.getInstance().getDownloadState().observe(this, state -> {
-            if (mainHandler != null) {
-                mainHandler.removeCallbacks(floatingHideRunnable);
-            }
-            if (state.isActive) {
-                if (floatingDownloadView.getVisibility() != View.VISIBLE) {
-                    floatingDownloadView.setAlpha(0f);
-                    floatingDownloadView.setVisibility(View.VISIBLE);
-                    floatingDownloadView.animate().alpha(1f).setDuration(300).start();
-                }
-                if (floatingTitle != null) {
-                    floatingTitle.setText("Downloading...");
-                }
-                if (floatingProgress != null) {
-                    floatingProgress.setIndeterminate(false);
-                    floatingProgress.setProgressCompat(state.progress, true);
-                }
-            } else if (state.isError) {
-                if (floatingTitle != null) {
-                    floatingTitle.setText("Failed: " + state.title);
-                }
-                if (floatingProgress != null) {
-                    floatingProgress.setIndeterminate(false);
-                }
-            } else {
-                if (state.progress == 100) {
-                    if (floatingTitle != null) {
-                        floatingTitle.setText("Completed!");
-                    }
-                    if (floatingProgress != null) {
-                        floatingProgress.setProgressCompat(100, true);
-                    }
-                    if (floatingHideRunnable != null) {
-                        mainHandler.removeCallbacks(floatingHideRunnable);
-                    }
-                    floatingHideRunnable = () -> {
-                        if (!isFinishing() && floatingDownloadView != null) {
-                            floatingDownloadView.animate().alpha(0f).setDuration(300).withEndAction(() -> {
-                                if (floatingDownloadView != null) {
-                                    floatingDownloadView.setVisibility(View.GONE);
-                                }
-                            }).start();
-                        }
-                        floatingHideRunnable = null;
-                    };
-                    mainHandler.postDelayed(floatingHideRunnable, 2000);
-                }
-            }
-        });
+        com.midnight.music.utils.FloatingDownloadHelper.setup(this, floatingDownloadView, mainHandler);
     }
 
     private void setupToolbar() {
@@ -165,7 +105,20 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
         if (getSupportActionBar() != null) {
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
             getSupportActionBar().setDisplayShowHomeEnabled(true);
+            getSupportActionBar().setTitle("");
         }
+        binding.appbar.addOnOffsetChangedListener((appBarLayout, verticalOffset) -> {
+            int totalScrollRange = appBarLayout.getTotalScrollRange();
+            if (totalScrollRange == 0) return;
+            float ratio = (float) Math.abs(verticalOffset) / totalScrollRange;
+            if (binding.toolbar != null) {
+                if (ratio > 0.75f) {
+                    binding.toolbar.setTitle(currentPlaylist != null ? currentPlaylist.playlist.getName() : "");
+                } else {
+                    binding.toolbar.setTitle("");
+                }
+            }
+        });
     }
 
     private void setupRecyclerView() {
@@ -246,7 +199,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             }
         });
 
-        // Heart / Favorite button — toggles liked status in Room DB
+        // Heart / Favorite button — toggles liked status and syncs with Liked Songs playlist
         binding.miniPlayer.btnMiniHeart.setOnClickListener(v -> {
             try {
                 Song currentSong = playerManager.getCurrentSongLiveData().getValue();
@@ -256,17 +209,23 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                         .withEndAction(() -> v.animate().scaleX(1f).scaleY(1f).setDuration(100).start())
                         .start();
 
-                Executors.newSingleThreadExecutor().execute(() -> {
-                    AppDatabase db = AppDatabase.getInstance(this);
-                    boolean isCurrentlyLiked = db.songDao().isSongLiked(currentSong.getId());
-                    boolean newLikedState = !isCurrentlyLiked;
+                com.midnight.music.data.repository.MusicRepository.getInstance(this)
+                        .toggleLikeSong(currentSong, new com.midnight.music.data.repository.MusicRepository.LikeCallback() {
+                            @Override
+                            public void onComplete(boolean isLiked) {
+                                mainHandler.post(() -> {
+                                    updateHeartButton(isLiked);
+                                    Toast.makeText(PlaylistDetailActivity.this,
+                                            isLiked ? "Added to Liked Songs" : "Removed from Liked Songs",
+                                            Toast.LENGTH_SHORT).show();
+                                });
+                            }
 
-                    currentSong.setLiked(newLikedState);
-                    currentSong.setTimestamp(System.currentTimeMillis());
-                    db.songDao().insert(currentSong);
-
-                    mainHandler.post(() -> updateHeartButton(newLikedState));
-                });
+                            @Override
+                            public void onError(Exception e) {
+                                Log.e(TAG, "Error toggling favorite", e);
+                            }
+                        });
             } catch (Exception e) {
                 Log.e(TAG, "Error toggling favorite", e);
             }
@@ -526,7 +485,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                         Toast.makeText(this, "Name cannot be empty", Toast.LENGTH_SHORT).show();
                         return;
                     }
-                    Executors.newSingleThreadExecutor().execute(() -> {
+                    AppDatabase.databaseWriteExecutor.execute(() -> {
                         AppDatabase.getInstance(this).playlistDao()
                                 .updatePlaylistName(playlistId, newName);
                         mainHandler.post(() -> {
@@ -546,7 +505,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                 .setTitle("Delete Playlist")
                 .setMessage("Are you sure you want to delete \"" + currentPlaylist.playlist.getName() + "\"?")
                 .setPositiveButton("Delete", (dialog, which) -> {
-                    Executors.newSingleThreadExecutor().execute(() -> {
+                    AppDatabase.databaseWriteExecutor.execute(() -> {
                         AppDatabase.getInstance(this).playlistDao()
                                 .delete(currentPlaylist.playlist);
                         mainHandler.post(() -> {
@@ -593,22 +552,18 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
                                         // Tint progress bar with accent color
                                         binding.miniPlayer.progressMini.setIndicatorColor(accentColor);
 
-                                        // Create a frosted glass background blended with album color
-                                        int glassBase = Color.parseColor("#141414");
-                                        // A simple internal color blend function
-                                        int r = (int) (Color.red(glassBase) * 0.88f + Color.red(mutedColor) * 0.12f);
-                                        int g = (int) (Color.green(glassBase) * 0.88f + Color.green(mutedColor) * 0.12f);
-                                        int b = (int) (Color.blue(glassBase) * 0.88f + Color.blue(mutedColor) * 0.12f);
-                                        int bgColor = Color.rgb(r, g, b);
-
-                                        // Apply with alpha for translucency
-                                        int glassBg = Color.argb(230, Color.red(bgColor), Color.green(bgColor), Color.blue(bgColor));
+                                        // Create a solid opaque dark background subtly tinted with album color — prevents text bleed-through
+                                        int surfaceBase = Color.parseColor("#15151A");
+                                        int r = (int) (Color.red(surfaceBase) * 0.85f + Color.red(mutedColor) * 0.15f);
+                                        int g = (int) (Color.green(surfaceBase) * 0.85f + Color.green(mutedColor) * 0.15f);
+                                        int b = (int) (Color.blue(surfaceBase) * 0.85f + Color.blue(mutedColor) * 0.15f);
+                                        int solidBg = Color.rgb(r, g, b);
 
                                         GradientDrawable bg = new GradientDrawable();
                                         bg.setShape(GradientDrawable.RECTANGLE);
-                                        bg.setCornerRadius(16 * getResources().getDisplayMetrics().density);
-                                        bg.setColor(glassBg);
-                                        bg.setStroke(1, Color.argb(24, 255, 255, 255));
+                                        bg.setCornerRadius(18 * getResources().getDisplayMetrics().density);
+                                        bg.setColor(solidBg);
+                                        bg.setStroke((int) (1 * getResources().getDisplayMetrics().density), Color.argb(46, 255, 255, 255));
                                         binding.miniPlayer.miniPlayerContainer.setBackground(bg);
                                     }
                                 });
@@ -621,8 +576,8 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             // Update play/pause button state
             updatePlayPauseButton(playerManager.isPlaying());
 
-            // Check liked status for the heart button
-            Executors.newSingleThreadExecutor().execute(() -> {
+            // Check liked status for the heart button using shared database executor
+            AppDatabase.databaseWriteExecutor.execute(() -> {
                 try {
                     boolean liked = AppDatabase.getInstance(this).songDao().isSongLiked(song.getId());
                     mainHandler.post(() -> updateHeartButton(liked));
@@ -682,7 +637,7 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             binding.btnMore.setVisibility(isLikedSongs ? View.GONE : View.VISIBLE);
         }
 
-        binding.collapsingToolbar.setTitle(playlist.playlist.getName());
+        binding.playlistTitleHero.setText(playlist.playlist.getName());
         binding.songCount.setText(playlist.getFormattedSongCount());
 
         // Update songs list
@@ -712,17 +667,24 @@ public class PlaylistDetailActivity extends AppCompatActivity implements SearchA
             }
         }
 
-        // Load playlist image if available
-        if (playlist.songs != null && !playlist.songs.isEmpty()) {
-            Song firstSong = playlist.songs.get(0);
-            Glide.with(this)
-                    .load(firstSong.getImageUrl())
-                    .placeholder(R.drawable.placeholder_album)
-                    .into(binding.playlistImage);
-        } else if (getString(R.string.liked_songs).equals(playlist.playlist.getName())) {
-            // Special image for Liked Songs
-            binding.playlistImage.setImageResource(R.drawable.placeholder_album);
-            binding.playlistImage.setBackgroundColor(getResources().getColor(R.color.accent, getTheme()));
+        // Load playlist image or vibrant Liked Songs artwork
+        if (isLikedSongs) {
+            binding.artworkFrame.setBackgroundResource(R.drawable.bg_liked_detail_artwork);
+            binding.iconLikedDetail.setVisibility(View.VISIBLE);
+            binding.playlistImage.setVisibility(View.GONE);
+        } else {
+            binding.artworkFrame.setBackground(null);
+            binding.iconLikedDetail.setVisibility(View.GONE);
+            binding.playlistImage.setVisibility(View.VISIBLE);
+            if (playlist.songs != null && !playlist.songs.isEmpty()) {
+                Song firstSong = playlist.songs.get(0);
+                Glide.with(this)
+                        .load(firstSong.getImageUrl())
+                        .placeholder(R.drawable.placeholder_album)
+                        .into(binding.playlistImage);
+            } else {
+                binding.playlistImage.setImageResource(R.drawable.placeholder_album);
+            }
         }
     }
 

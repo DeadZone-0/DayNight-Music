@@ -5,33 +5,69 @@
     android:layout_height="match_parent"
     android:background="@color/background">
 
-    <TextView
-        android:id="@+id/library_title"
-        android:layout_width="wrap_content"
+    <!-- Header Bar with Title & Actions -->
+    <LinearLayout
+        android:id="@+id/header_bar"
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="32dp"
-        android:text="Your Library"
-        android:textColor="@color/text_primary"
-        android:textSize="28sp"
-        android:fontFamily="@font/poppins_bold"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:paddingHorizontal="20dp"
+        android:paddingTop="32dp"
+        android:paddingBottom="8dp"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <TextView
+            android:id="@+id/library_title"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="Your Library"
+            android:textColor="@color/text_primary"
+            android:textSize="28sp"
+            android:fontFamily="@font/poppins_bold" />
+
+        <ImageButton
+            android:id="@+id/btn_import_playlist"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_circle_glass"
+            android:src="@drawable/ic_download"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            android:contentDescription="Import Playlist"
+            app:tint="@color/text_primary" />
+
+        <ImageButton
+            android:id="@+id/btn_create_playlist"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/bg_circle_glass"
+            android:src="@drawable/ic_add"
+            android:padding="9dp"
+            android:scaleType="centerInside"
+            android:contentDescription="@string/create_playlist"
+            app:tint="@color/text_primary" />
+    </LinearLayout>
 
     <com.google.android.material.tabs.TabLayout
         android:id="@+id/tab_layout"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="4dp"
+        android:paddingHorizontal="12dp"
         android:background="@android:color/transparent"
-        app:layout_constraintTop_toBottomOf="@id/library_title"
+        app:layout_constraintTop_toBottomOf="@id/header_bar"
         app:tabGravity="fill"
         app:tabIndicatorColor="@color/primary"
-        app:tabIndicatorHeight="3dp"
+        app:tabIndicatorHeight="2.5dp"
+        app:tabIndicatorAnimationMode="elastic"
         app:tabMode="fixed"
         app:tabRippleColor="@color/ripple_accent"
         app:tabSelectedTextColor="@color/text_primary"
-        app:tabTextColor="@color/text_secondary">
+        app:tabTextColor="@color/text_secondary"
+        app:tabTextAppearance="@style/LibraryTabTextAppearance">
 
         <com.google.android.material.tabs.TabItem
             android:layout_width="wrap_content"
@@ -49,6 +85,7 @@
         android:id="@+id/view_pager"
         android:layout_width="match_parent"
         android:layout_height="0dp"
+        android:layout_marginTop="4dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tab_layout" />
 

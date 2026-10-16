@@ -67,7 +67,12 @@ public class Song {
     // Timestamp for sorting purposes
     private long timestamp;
 
-    // Constructor
+    // Constructors
+    public Song() {
+        this(java.util.UUID.randomUUID().toString());
+    }
+
+    @androidx.room.Ignore
     public Song(@NonNull String id) {
         this.id = id;
         this.timestamp = System.currentTimeMillis();
@@ -108,9 +113,10 @@ public class Song {
     public void setDownloadUrl(String downloadUrl) { this.downloadUrl = downloadUrl; }
 
     public String getMediaUrl() { 
+        if (localPath != null && !localPath.isEmpty()) return localPath;
         if (mediaUrl != null) return mediaUrl;
         if (downloadUrl != null) return downloadUrl;
-        return null; // No fallback URL for media - should handle this case in the player
+        return null;
     }
     public void setMediaUrl(String mediaUrl) { this.mediaUrl = mediaUrl; }
 

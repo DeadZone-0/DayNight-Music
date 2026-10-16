@@ -46,13 +46,15 @@ public class PlaylistTileAdapter extends RecyclerView.Adapter<PlaylistTileAdapte
             @Override public boolean areContentsTheSame(int oldPos, int newPos) {
                 PlaylistWithSongs o = oldPlaylists.get(oldPos), n = newPlaylists.get(newPos);
                 boolean sameName = String.valueOf(o.playlist.getName()).equals(String.valueOf(n.playlist.getName()));
-                boolean sameSize = o.songs.size() == n.songs.size();
+                int oSize = (o.songs != null) ? o.songs.size() : 0;
+                int nSize = (n.songs != null) ? n.songs.size() : 0;
+                boolean sameSize = oSize == nSize;
                 boolean sameCover;
-                if (o.songs.isEmpty() && n.songs.isEmpty()) {
+                if (oSize == 0 && nSize == 0) {
                     sameCover = true;
                 } else {
-                    String oUrl = o.songs.isEmpty() ? null : o.songs.get(0).getImageUrl();
-                    String nUrl = n.songs.isEmpty() ? null : n.songs.get(0).getImageUrl();
+                    String oUrl = (o.songs != null && !o.songs.isEmpty()) ? o.songs.get(0).getImageUrl() : null;
+                    String nUrl = (n.songs != null && !n.songs.isEmpty()) ? n.songs.get(0).getImageUrl() : null;
                     sameCover = Objects.equals(oUrl, nUrl);
                 }
                 return o.playlist.getId() == n.playlist.getId() && sameName && sameSize && sameCover;
@@ -103,7 +105,8 @@ public class PlaylistTileAdapter extends RecyclerView.Adapter<PlaylistTileAdapte
             playlistName.setText(playlistWithSongs.playlist.getName());
             
             // Set playlist details (number of songs)
-            String songCount = playlistWithSongs.songs.size() + " songs";
+            int count = (playlistWithSongs.songs != null) ? playlistWithSongs.songs.size() : 0;
+            String songCount = count + (count == 1 ? " song" : " songs");
             playlistDetails.setText(songCount);
             
             // Load playlist image with optimized caching

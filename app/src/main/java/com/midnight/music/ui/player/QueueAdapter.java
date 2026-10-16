@@ -17,6 +17,7 @@ import com.midnight.music.data.model.Song;
 
 public class QueueAdapter extends ListAdapter<Song, QueueAdapter.QueueViewHolder> {
     private final QueueItemClickListener listener;
+    private String currentPlayingSongId;
 
     public interface QueueItemClickListener {
         void onQueueItemClick(Song song, int position);
@@ -25,6 +26,15 @@ public class QueueAdapter extends ListAdapter<Song, QueueAdapter.QueueViewHolder
     public QueueAdapter(QueueItemClickListener listener) {
         super(new QueueDiffCallback());
         this.listener = listener;
+    }
+
+    public void setCurrentPlayingSongId(String songId) {
+        if ((songId == null && this.currentPlayingSongId == null) ||
+            (songId != null && songId.equals(this.currentPlayingSongId))) {
+            return;
+        }
+        this.currentPlayingSongId = songId;
+        notifyDataSetChanged();
     }
 
     @NonNull
@@ -67,6 +77,19 @@ public class QueueAdapter extends ListAdapter<Song, QueueAdapter.QueueViewHolder
 
             txtSongName.setText(song.getSong());
             txtArtist.setText(song.getSingers());
+
+            // ponytail: visually emphasize current playing track in queue
+            boolean isPlaying = song.getId() != null && song.getId().equals(currentPlayingSongId);
+            if (isPlaying) {
+                int accent = com.midnight.music.utils.ThemeManager.getInstance(itemView.getContext()).getAccentColorValue();
+                txtSongName.setTextColor(accent);
+                txtArtist.setTextColor(accent);
+                itemView.setAlpha(1.0f);
+            } else {
+                txtSongName.setTextColor(androidx.core.content.ContextCompat.getColor(itemView.getContext(), R.color.text_primary));
+                txtArtist.setTextColor(androidx.core.content.ContextCompat.getColor(itemView.getContext(), R.color.text_secondary));
+                itemView.setAlpha(0.8f);
+            }
             
             // Format duration from seconds to MM:SS
             if (song.getDuration() != null) {

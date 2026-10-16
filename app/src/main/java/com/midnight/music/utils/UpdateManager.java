@@ -20,6 +20,7 @@ import androidx.core.content.FileProvider;
 import com.midnight.music.BuildConfig;
 import com.midnight.music.R;
 import com.midnight.music.data.api.GitHubApiService;
+import com.midnight.music.data.network.NetworkClient;
 import com.midnight.music.data.model.github.GitHubAsset;
 import com.midnight.music.data.model.github.GitHubRelease;
 
@@ -47,6 +48,7 @@ public class UpdateManager {
         
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl("https://api.github.com/")
+                .client(NetworkClient.getInstance())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
                 
@@ -61,18 +63,20 @@ public class UpdateManager {
         apiService.getLatestRelease(REPO_OWNER, REPO_NAME).enqueue(new Callback<GitHubRelease>() {
             @Override
             public void onResponse(Call<GitHubRelease> call, Response<GitHubRelease> response) {
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
                 if (response.isSuccessful() && response.body() != null) {
                     handleReleaseInfo(response.body(), manualCheck);
                 } else if (manualCheck) {
-                    Toast.makeText(activity, "Failed to check for updates.", Toast.LENGTH_SHORT).show();
+                    activity.runOnUiThread(() -> Toast.makeText(activity, "Failed to check for updates.", Toast.LENGTH_SHORT).show());
                 }
             }
 
             @Override
             public void onFailure(Call<GitHubRelease> call, Throwable t) {
                 Log.e(TAG, "API call failed", t);
+                if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
                 if (manualCheck) {
-                    Toast.makeText(activity, "Network error checking updates.", Toast.LENGTH_SHORT).show();
+                    activity.runOnUiThread(() -> Toast.makeText(activity, "Network error checking updates.", Toast.LENGTH_SHORT).show());
                 }
             }
         });
@@ -108,18 +112,20 @@ public class UpdateManager {
                 if (apkAsset != null) {
                     showUpdateDialog(release, apkAsset.getBrowserDownloadUrl(), isMandatory);
                 } else if (manualCheck) {
-                    Toast.makeText(activity, "New update found, but no APK is attached to the release.", Toast.LENGTH_LONG).show();
+                    activity.runOnUiThread(() -> Toast.makeText(activity, "New update found, but no APK is attached to the release.", Toast.LENGTH_LONG).show());
                 }
             } else if (manualCheck) {
-                Toast.makeText(activity, "New update found, but no files are attached.", Toast.LENGTH_SHORT).show();
+                activity.runOnUiThread(() -> Toast.makeText(activity, "New update found, but no files are attached.", Toast.LENGTH_SHORT).show());
             }
 
         } else if (manualCheck) {
-            Toast.makeText(activity, "You are on the latest version!", Toast.LENGTH_SHORT).show();
+            activity.runOnUiThread(() -> Toast.makeText(activity, "You are on the latest version!", Toast.LENGTH_SHORT).show());
         }
     }
 
     private void showUpdateDialog(GitHubRelease release, String downloadUrl, boolean isMandatory) {
+        if (activity == null || activity.isFinishing() || activity.isDestroyed()) return;
+
         AlertDialog.Builder builder = new AlertDialog.Builder(activity, R.style.PlaylistDialogStyle)
                 .setTitle("New Update Available: " + release.getTagName())
                 .setMessage("A new version of DayNight Music is ready to install!\n\n" + (release.getBody() != null ? release.getBody() : ""));
@@ -127,6 +133,18 @@ public class UpdateManager {
         // Download button
         builder.setPositiveButton("Update Now", (dialog, which) -> {
             downloadAndInstallApk(downloadUrl, release.getTagName());
+        });
+
+        // View on GitHub option
+        builder.setNeutralButton("View Release", (dialog, which) -> {
+            try {
+                String releaseUrl = release.getHtmlUrl() != null ? release.getHtmlUrl() : "https://github.com/" + REPO_OWNER + "/" + REPO_NAME + "/releases/latest";
+                Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(releaseUrl));
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                activity.startActivity(intent);
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to open release URL", e);
+            }
         });
 
         if (isMandatory) {
@@ -139,7 +157,15 @@ public class UpdateManager {
             });
         }
 
-        activity.runOnUiThread(() -> builder.show());
+        activity.runOnUiThread(() -> {
+            if (activity != null && !activity.isFinishing() && !activity.isDestroyed()) {
+                try {
+                    builder.show();
+                } catch (Exception e) {
+                    Log.e(TAG, "Failed to show update dialog", e);
+                }
+            }
+        });
     }
 
     private void downloadAndInstallApk(String url, String versionName) {
@@ -166,30 +192,42 @@ public class UpdateManager {
         // 2. Enqueue the download
         DownloadManager manager = (DownloadManager) activity.getSystemService(Context.DOWNLOAD_SERVICE);
         if (manager != null) {
-            downloadId = manager.enqueue(request);
+            try {
+                downloadId = manager.enqueue(request);
 
-            // 3. Register Receiver to listen for completion
-            BroadcastReceiver onComplete = new BroadcastReceiver() {
-                public void onReceive(Context ctxt, Intent intent) {
-                    long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
-                    if (id == downloadId) {
-                        try {
-                            activity.unregisterReceiver(this);
-                        } catch (Exception e) {
-                            Log.e(TAG, "Receiver already unregistered", e);
+                // 3. Register Receiver to listen for completion
+                BroadcastReceiver onComplete = new BroadcastReceiver() {
+                    public void onReceive(Context ctxt, Intent intent) {
+                        long id = intent.getLongExtra(DownloadManager.EXTRA_DOWNLOAD_ID, -1);
+                        if (id == downloadId) {
+                            try {
+                                activity.unregisterReceiver(this);
+                            } catch (Exception e) {
+                                Log.e(TAG, "Receiver already unregistered", e);
+                            }
+                            
+                            // Proceed to install
+                            installApk(id, fileName);
                         }
-                        
-                        // Proceed to install
-                        installApk(id, fileName);
                     }
+                };
+                
+                // Use correct flags for newer Android versions
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    activity.registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED);
+                } else {
+                    activity.registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
                 }
-            };
-            
-            // Use correct flags for newer Android versions
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                activity.registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE), Context.RECEIVER_EXPORTED);
-            } else {
-                activity.registerReceiver(onComplete, new IntentFilter(DownloadManager.ACTION_DOWNLOAD_COMPLETE));
+            } catch (Exception e) {
+                Log.e(TAG, "DownloadManager failed to enqueue, falling back to browser", e);
+                try {
+                    Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                    browserIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    activity.startActivity(browserIntent);
+                } catch (Exception ex) {
+                    Log.e(TAG, "Browser fallback failed", ex);
+                    Toast.makeText(activity, "Failed to start download.", Toast.LENGTH_SHORT).show();
+                }
             }
         }
     }
@@ -218,15 +256,16 @@ public class UpdateManager {
         }
     }
 
-    // Helper: Compare "1.0.1" vs "1.1" etc.
+    // Helper: Compare "1.0.1" vs "1.1" etc. safely
     private boolean isNewerVersion(String current, String latest) {
+        if (current == null || latest == null) return false;
         String[] currentParts = current.split("\\.");
         String[] latestParts = latest.split("\\.");
         int length = Math.max(currentParts.length, latestParts.length);
 
         for (int i = 0; i < length; i++) {
-            int currentPart = i < currentParts.length ? Integer.parseInt(currentParts[i]) : 0;
-            int latestPart = i < latestParts.length ? Integer.parseInt(latestParts[i]) : 0;
+            int currentPart = i < currentParts.length ? parsePart(currentParts[i]) : 0;
+            int latestPart = i < latestParts.length ? parsePart(latestParts[i]) : 0;
             if (latestPart > currentPart) {
                 return true;
             } else if (latestPart < currentPart) {
@@ -234,6 +273,16 @@ public class UpdateManager {
             }
         }
         return false;
+    }
+
+    private int parsePart(String part) {
+        if (part == null) return 0;
+        String digits = part.replaceAll("[^0-9].*$", "");
+        try {
+            return digits.isEmpty() ? 0 : Integer.parseInt(digits);
+        } catch (NumberFormatException e) {
+            return 0;
+        }
     }
 
     private boolean hasSkippedVersion(String version) {

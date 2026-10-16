@@ -1,63 +1,79 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Brand Colors (Light) -->
-    <color name="primary">#7A2BE2</color>
-    <color name="primary_variant">#5E21B0</color>
-    <color name="accent">#9C4DFF</color>
-    <color name="accent_variant">#B27BFF</color>
+    <!-- Brand Colors (Animeze Signature Modern Accent - Pure Monochrome) -->
+    <color name="primary">#FFFFFF</color>
+    <color name="primary_variant">#E2E8F0</color>
+    <color name="accent">#FFFFFF</color>
+    <color name="accent_variant">#E2E8F0</color>
 
-    <!-- Background & Surface (Light) -->
-    <color name="background">#F8F9FA</color>
-    <color name="surface">#FFFFFF</color>
-    <color name="surface_container_low">#F8F9FA</color>
-    <color name="surface_container">#F8F9FA</color>
-    <color name="surface_container_high">#F8F9FA</color>
-    <color name="surface_container_highest">#F8F9FA</color>
-    <color name="surface_variant">#E7E0EC</color>
-    <color name="card_background">#FFFFFF</color>
-    <color name="overlay">#0A000000</color>
+    <!-- Background & Surface (Animeze Elevation Ladder: Base Black -> Surface -> Raised -> Elevated) -->
+    <color name="background">#000000</color>
+    <color name="surface">#121214</color>
+    <color name="surface_container_low">#0A0A0C</color>
+    <color name="surface_container">#16161A</color>
+    <color name="surface_container_high">#1C1C22</color>
+    <color name="surface_container_highest">#24242C</color>
+    <color name="surface_variant">#1E1E24</color>
+    <color name="card_background">#121216</color>
+    <color name="overlay">#99000000</color>
 
-    <!-- Text Colors (Light) -->
-    <color name="text_primary">#1C1B1F</color>
-    <color name="text_secondary">#49454F</color>
-    <color name="text_hint">#79747E</color>
+    <!-- Text Colors (High Contrast Animeze/Apple Standard) -->
+    <color name="text_primary">#FFFFFF</color>
+    <color name="text_secondary">#8E8E93</color>
+    <color name="text_hint">#55555A</color>
 
     <!-- Functional Colors -->
     <color name="black">#000000</color>
     <color name="white">#FFFFFF</color>
-    <color name="error">#B00020</color>
+    <color name="error">#FF453A</color>
+    
+    <!-- Discord RPC Tokens -->
+    <color name="discord_blurple">#5865F2</color>
+    <color name="discord_blurple_dark">#4752C4</color>
+    <color name="discord_dark">#1E1F22</color>
+    <color name="discord_card">#2B2D31</color>
+    <color name="discord_button">#4E5058</color>
+    <color name="discord_green">#23A55A</color>
+    <color name="discord_amber">#F0B232</color>
+    <color name="discord_muted">#80848E</color>
     
     <!-- Material 3 Specific -->
-    <color name="on_primary">#FFFFFF</color>
-    <color name="on_background">#1C1B1F</color>
-    <color name="on_surface">#1C1B1F</color>
-    <color name="on_error">#FFFFFF</color>
+    <color name="on_primary">#000000</color>
+    <color name="on_background">#FFFFFF</color>
+    <color name="on_surface">#FFFFFF</color>
+    <color name="on_error">#000000</color>
 
-    <!-- Glassmorphism Elements (Light) -->
-    <color name="glass_background">#CCFFFFFF</color>
-    <color name="glass_border">#33000000</color>
-    <color name="ripple_light">#1A000000</color>
-    <color name="ripple_accent">#1A7A2BE2</color>
+    <!-- Animeze Glassmorphism & Bubble Navigation Tokens -->
+    <color name="nav_bar_background">#F2121216</color>
+    <color name="nav_bar_border">#1FFFFFFF</color>
+    <color name="nav_pill_active_bg">#24FFFFFF</color>
+    <color name="nav_pill_active_border">#2EFFFFFF</color>
+    <color name="nav_icon_inactive">#73FFFFFF</color>
+
+    <color name="glass_background">#F2121216</color>
+    <color name="glass_border">#1AFFFFFF</color>
+    <color name="ripple_light">#1AFFFFFF</color>
+    <color name="ripple_accent">#33FFFFFF</color>
 
     <!-- Gradient Tokens -->
-    <color name="gradient_start">#7A2BE2</color>
-    <color name="gradient_end">#B27BFF</color>
+    <color name="gradient_start">#FFFFFF</color>
+    <color name="gradient_end">#F3F4F6</color>
 
     <!-- Legacy / Compatibility Aliases -->
-    <color name="colorPrimary">#7A2BE2</color>
-    <color name="colorPrimaryDark">#5E21B0</color>
-    <color name="colorAccent">#9C4DFF</color>
-    <color name="colorBackground">#F8F9FA</color>
-    <color name="colorSurface">#FFFFFF</color>
-    <color name="colorBottomNav">#FFFFFF</color>
-    <color name="colorOnBackground">#1C1B1F</color>
-    <color name="colorOnSurface">#1C1B1F</color>
-    <color name="colorSecondaryText">#49454F</color>
-    <color name="colorEnabled">#7A2BE2</color>
-    <color name="colorDisabled">#BDBDBD</color>
+    <color name="colorPrimary">#FFFFFF</color>
+    <color name="colorPrimaryDark">#121216</color>
+    <color name="colorAccent">#FFFFFF</color>
+    <color name="colorBackground">#000000</color>
+    <color name="colorSurface">#121214</color>
+    <color name="colorBottomNav">#121216</color>
+    <color name="colorOnBackground">#FFFFFF</color>
+    <color name="colorOnSurface">#FFFFFF</color>
+    <color name="colorSecondaryText">#8E8E93</color>
+    <color name="colorEnabled">#FFFFFF</color>
+    <color name="colorDisabled">#3A3A3C</color>
     
     <!-- Player specific -->
-    <color name="gray_light">#9E9E9E</color>
-    <color name="gray_dark">#616161</color>
-    <color name="accent_20">#337A2BE2</color>
+    <color name="gray_light">#8E8E93</color>
+    <color name="gray_dark">#3A3A3C</color>
+    <color name="accent_20">#33FFFFFF</color>
 </resources>

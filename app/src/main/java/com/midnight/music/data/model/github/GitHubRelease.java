@@ -13,8 +13,15 @@ public class GitHubRelease {
     @SerializedName("body")
     private String body; // Description/release notes
 
+    @SerializedName("html_url")
+    private String htmlUrl;
+
     @SerializedName("assets")
     private List<GitHubAsset> assets;
+
+    public String getHtmlUrl() {
+        return htmlUrl;
+    }
 
     public String getTagName() {
         return tagName;

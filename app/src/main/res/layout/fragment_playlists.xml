@@ -14,77 +14,66 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:clipToPadding="false"
             android:orientation="vertical"
-            android:paddingBottom="80dp">
+            android:paddingTop="12dp"
+            android:paddingBottom="130dp">
 
-            <!-- Header Section -->
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:paddingHorizontal="20dp"
-                android:paddingTop="32dp"
-                android:paddingBottom="20dp">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Your Playlists"
-                    android:textColor="@color/text_primary"
-                    android:textSize="28sp"
-                    android:fontFamily="@font/poppins_bold" />
-
-                <TextView
-                    android:id="@+id/playlist_count"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
-                    android:fontFamily="@font/poppins"
-                    tools:text="5 playlists" />
-            </LinearLayout>
-
-            <!-- Liked Songs Quick Access -->
+            <!-- Liked Songs Hero Card -->
             <com.google.android.material.card.MaterialCardView
                 android:id="@+id/liked_songs_card"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginHorizontal="16dp"
                 android:layout_marginBottom="20dp"
-                app:cardBackgroundColor="@color/accent_20"
+                android:clickable="true"
+                android:focusable="true"
+                android:foreground="?attr/selectableItemBackground"
+                app:cardBackgroundColor="@android:color/transparent"
                 app:cardCornerRadius="24dp"
-                app:cardElevation="0dp">
+                app:cardElevation="0dp"
+                app:strokeWidth="0dp">
 
                 <androidx.constraintlayout.widget.ConstraintLayout
+                    android:id="@+id/liked_hero_layout"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:padding="20dp"
-                    android:foreground="?attr/selectableItemBackground">
+                    android:background="@drawable/bg_liked_songs_hero"
+                    android:padding="20dp">
 
-                    <ImageView
-                        android:id="@+id/liked_icon"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:src="@drawable/ic_heart_filled"
-                        app:tint="@color/accent"
-                        android:contentDescription="@string/liked_songs"
+                    <!-- Gradient Heart Badge -->
+                    <FrameLayout
+                        android:id="@+id/liked_icon_container"
+                        android:layout_width="56dp"
+                        android:layout_height="56dp"
+                        android:background="@drawable/bg_liked_icon_container"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintStart_toStartOf="parent"
-                        app:layout_constraintTop_toTopOf="parent" />
+                        app:layout_constraintTop_toTopOf="parent">
+
+                        <ImageView
+                            android:id="@+id/liked_icon"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_heart_filled"
+                            app:tint="@color/white"
+                            android:contentDescription="@string/liked_songs" />
+                    </FrameLayout>
 
                     <TextView
                         android:id="@+id/liked_title"
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
+                        android:layout_marginEnd="12dp"
                         android:text="@string/liked_songs"
-                        android:textColor="@color/text_primary"
+                        android:textColor="@color/white"
                         android:textSize="18sp"
                         android:fontFamily="@font/poppins_bold"
                         app:layout_constraintBottom_toTopOf="@id/liked_count"
                         app:layout_constraintEnd_toStartOf="@id/liked_play_btn"
-                        app:layout_constraintStart_toEndOf="@id/liked_icon"
+                        app:layout_constraintStart_toEndOf="@id/liked_icon_container"
                         app:layout_constraintTop_toTopOf="parent"
                         app:layout_constraintVertical_chainStyle="packed" />
 
@@ -93,23 +82,26 @@
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_marginStart="16dp"
+                        android:layout_marginEnd="12dp"
                         android:layout_marginTop="2dp"
-                        android:textColor="@color/text_secondary"
+                        android:textColor="#B3FFFFFF"
                         android:textSize="13sp"
                         android:fontFamily="@font/poppins"
                         app:layout_constraintBottom_toBottomOf="parent"
                         app:layout_constraintEnd_toStartOf="@id/liked_play_btn"
-                        app:layout_constraintStart_toEndOf="@id/liked_icon"
+                        app:layout_constraintStart_toEndOf="@id/liked_icon_container"
                         app:layout_constraintTop_toBottomOf="@id/liked_title"
-                        tools:text="42 songs" />
+                        tools:text="42 songs • Auto-playlist" />
 
+                    <!-- Circular Play Button -->
                     <com.google.android.material.floatingactionbutton.FloatingActionButton
                         android:id="@+id/liked_play_btn"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:src="@drawable/ic_play"
                         app:backgroundTint="@color/primary"
-                        app:fabSize="mini"
+                        app:fabCustomSize="44dp"
+                        app:elevation="2dp"
                         app:tint="@color/on_primary"
                         android:contentDescription="@string/play_pause"
                         app:layout_constraintBottom_toBottomOf="parent"
@@ -119,13 +111,33 @@
                 </androidx.constraintlayout.widget.ConstraintLayout>
             </com.google.android.material.card.MaterialCardView>
 
-            <!-- Divider -->
-            <View
+            <!-- Section Label Row -->
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="1dp"
-                android:layout_marginHorizontal="24dp"
-                android:layout_marginBottom="8dp"
-                android:background="@color/surface_variant" />
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:paddingHorizontal="20dp"
+                android:layout_marginBottom="8dp">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Playlists"
+                    android:textColor="@color/text_primary"
+                    android:textSize="17sp"
+                    android:fontFamily="@font/poppins_bold" />
+
+                <TextView
+                    android:id="@+id/playlist_count"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/poppins"
+                    tools:text="5 playlists" />
+            </LinearLayout>
 
             <!-- Playlists RecyclerView -->
             <androidx.recyclerview.widget.RecyclerView
@@ -135,7 +147,6 @@
                 android:nestedScrollingEnabled="false"
                 android:clipToPadding="false"
                 android:paddingHorizontal="4dp"
-                android:paddingTop="8dp"
                 app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
                 tools:itemCount="5"
                 tools:listitem="@layout/item_playlist" />
@@ -147,73 +158,40 @@
                 android:layout_height="wrap_content"
                 android:orientation="vertical"
                 android:gravity="center"
-                android:padding="48dp"
+                android:paddingHorizontal="32dp"
+                android:paddingVertical="48dp"
                 android:visibility="gone"
                 tools:visibility="visible">
 
                 <ImageView
-                    android:layout_width="80dp"
-                    android:layout_height="80dp"
+                    android:layout_width="72dp"
+                    android:layout_height="72dp"
                     android:src="@drawable/ic_library"
                     app:tint="@color/text_secondary"
-                    android:alpha="0.5"
+                    android:alpha="0.3"
                     android:contentDescription="@null" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="20dp"
+                    android:layout_marginTop="16dp"
                     android:text="No playlists yet"
                     android:textColor="@color/text_primary"
-                    android:textSize="18sp"
+                    android:textSize="17sp"
                     android:fontFamily="@font/poppins_bold" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_marginTop="6dp"
                     android:text="Create your first playlist to get started"
                     android:textColor="@color/text_secondary"
-                    android:textSize="14sp"
+                    android:textSize="13sp"
                     android:fontFamily="@font/poppins"
                     android:gravity="center" />
             </LinearLayout>
 
         </LinearLayout>
     </androidx.core.widget.NestedScrollView>
-
-    <!-- FABs -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_margin="24dp"
-        android:orientation="vertical"
-        android:gravity="end"
-        app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior">
-
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/fab_import_playlist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="16dp"
-            android:text="Import Playlist"
-            android:textColor="@color/on_primary"
-            android:fontFamily="@font/poppins_medium"
-            app:backgroundTint="@color/primary"
-            app:icon="@drawable/ic_download_done"
-            app:iconTint="@color/on_primary" />
-
-        <com.google.android.material.floatingactionbutton.ExtendedFloatingActionButton
-            android:id="@+id/fab_create_playlist"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/create_playlist"
-            android:textColor="@color/on_primary"
-            android:fontFamily="@font/poppins_medium"
-            app:backgroundTint="@color/primary"
-            app:icon="@drawable/ic_add"
-            app:iconTint="@color/on_primary" />
-    </LinearLayout>
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

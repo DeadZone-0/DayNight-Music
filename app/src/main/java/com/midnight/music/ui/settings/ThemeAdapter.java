@@ -44,18 +44,16 @@ public class ThemeAdapter extends RecyclerView.Adapter<ThemeAdapter.ThemeViewHol
     }
 
     private void initializeThemes() {
-        themes.add(new ThemeItem("midnight", "Midnight", 
-            new int[]{Color.parseColor("#BB86FC"), Color.parseColor("#0F0F0F")}));
-        themes.add(new ThemeItem("ocean", "Ocean", 
-            new int[]{Color.parseColor("#64B5F6"), Color.parseColor("#0D1B2A")}));
-        themes.add(new ThemeItem("sunset", "Sunset", 
-            new int[]{Color.parseColor("#FF6D00"), Color.parseColor("#1A0F0A")}));
-        themes.add(new ThemeItem("forest", "Forest", 
-            new int[]{Color.parseColor("#69F0AE"), Color.parseColor("#0A1A0F")}));
-        themes.add(new ThemeItem("light", "Light", 
-            new int[]{Color.parseColor("#7A2BE2"), Color.parseColor("#FFFFFF")}));
-        themes.add(new ThemeItem("amoled", "AMOLED", 
-            new int[]{Color.parseColor("#BB86FC"), Color.parseColor("#000000")}));
+        themes.add(new ThemeItem(ThemeManager.THEME_MONOCHROME, "Monochrome B&W", 
+            new int[]{Color.parseColor("#FFFFFF"), Color.parseColor("#000000")}));
+        themes.add(new ThemeItem(ThemeManager.THEME_CYBER_NEON, "Cyberpunk Cyan", 
+            new int[]{Color.parseColor("#00E5FF"), Color.parseColor("#000000")}));
+        themes.add(new ThemeItem(ThemeManager.THEME_SAKURA_BLOOM, "Sakura Bloom", 
+            new int[]{Color.parseColor("#FF4081"), Color.parseColor("#000000")}));
+        themes.add(new ThemeItem(ThemeManager.THEME_AMBER_GOLD, "Amber Gold", 
+            new int[]{Color.parseColor("#FFB300"), Color.parseColor("#000000")}));
+        themes.add(new ThemeItem(ThemeManager.THEME_EVA_PURPLE, "EVA Violet", 
+            new int[]{Color.parseColor("#B388FF"), Color.parseColor("#000000")}));
     }
 
     public void setSelectedTheme(String theme) {
@@ -104,6 +102,10 @@ public class ThemeAdapter extends RecyclerView.Adapter<ThemeAdapter.ThemeViewHol
             float radiusPx = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 100, context.getResources().getDisplayMetrics());
             drawable.setGradientRadius(radiusPx);
             drawable.setColors(new int[]{theme.colors[0], theme.colors[1]});
+            
+            int strokeWidth = (int) ((isSelected ? 2.5f : 1f) * context.getResources().getDisplayMetrics().density);
+            int strokeColor = isSelected ? Color.WHITE : Color.parseColor("#26FFFFFF");
+            drawable.setStroke(strokeWidth, strokeColor);
             
             themeCircle.setBackground(drawable);
 

@@ -54,11 +54,37 @@ public class LibraryFragment extends Fragment {
                     }
                 }).attach();
 
-        // Observe accent colour and tint tab indicator
+        // Observe accent colour and tint tab indicator & create button
         ThemeManager.getInstance(requireContext())
                 .getAccentColor().observe(getViewLifecycleOwner(), color -> {
                     tabLayout.setSelectedTabIndicatorColor(color);
+                    binding.btnCreatePlaylist.setImageTintList(android.content.res.ColorStateList.valueOf(color));
                 });
+
+        binding.btnCreatePlaylist.setOnClickListener(v -> {
+            binding.viewPager.setCurrentItem(0, true);
+            PlaylistsFragment pf = getPlaylistsFragment();
+            if (pf != null) {
+                pf.showCreatePlaylistDialog();
+            }
+        });
+
+        binding.btnImportPlaylist.setOnClickListener(v -> {
+            binding.viewPager.setCurrentItem(0, true);
+            PlaylistsFragment pf = getPlaylistsFragment();
+            if (pf != null) {
+                pf.showImportPlaylistDialog();
+            }
+        });
+    }
+
+    private PlaylistsFragment getPlaylistsFragment() {
+        for (Fragment f : getChildFragmentManager().getFragments()) {
+            if (f instanceof PlaylistsFragment) {
+                return (PlaylistsFragment) f;
+            }
+        }
+        return null;
     }
 
     @Override

@@ -15,6 +15,9 @@ import android.view.MenuItem;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.media3.common.Player;
 import androidx.media3.common.MediaItem;
 import androidx.palette.graphics.Palette;
@@ -23,6 +26,7 @@ import androidx.lifecycle.LiveData;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.CustomTarget;
 import com.midnight.music.R;
+import com.midnight.music.data.repository.LyricsRepository;
 import androidx.annotation.Nullable;
 import android.graphics.drawable.Drawable;
 import com.midnight.music.data.model.Song;
@@ -74,7 +78,8 @@ public class PlayerActivity extends AppCompatActivity
     private Animation slideUpAnimation;
     private Animation slideDownAnimation;
     private boolean isQueueVisible = false;
-    private final Executor executor = Executors.newSingleThreadExecutor();
+    // ponytail: use shared databaseWriteExecutor
+    private final Executor executor = com.midnight.music.data.db.AppDatabase.databaseWriteExecutor;
     private static final String TAG = "PlayerActivity";
     private Player.Listener playerListener;
     private AlertDialog currentPlaylistDialog = null;
@@ -84,7 +89,6 @@ public class PlayerActivity extends AppCompatActivity
     private LyricsAdapter lyricsAdapter;
     private boolean isLyricsVisible = false;
     private List<LrcParser.LyricLine> currentLyrics;
-    private LrcLibService lrcLibService;
     private String lastFetchedSongId = null;
 
     @Override
@@ -105,6 +109,24 @@ public class PlayerActivity extends AppCompatActivity
 
         playerManager = MusicPlayerManager.getInstance(this);
         handler = new Handler(Looper.getMainLooper());
+
+        // Respect system bars / navigation bar insets so controls are never clipped on compact screens
+        ViewCompat.setOnApplyWindowInsetsListener(binding.playerRootLayout, (v, insets) -> {
+            Insets sysBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            binding.topBarLayout.setPadding(
+                    binding.topBarLayout.getPaddingLeft(),
+                    sysBars.top,
+                    binding.topBarLayout.getPaddingRight(),
+                    binding.topBarLayout.getPaddingBottom()
+            );
+            binding.controlsContainer.setPadding(
+                    binding.controlsContainer.getPaddingLeft(),
+                    binding.controlsContainer.getPaddingTop(),
+                    binding.controlsContainer.getPaddingRight(),
+                    sysBars.bottom + (int) (8 * getResources().getDisplayMetrics().density)
+            );
+            return insets;
+        });
 
         // Load animations
         slideUpAnimation = AnimationUtils.loadAnimation(this, R.anim.slide_up);
@@ -365,6 +387,10 @@ public class PlayerActivity extends AppCompatActivity
     private void updateQueueDisplay() {
         List<Song> queue = playerManager.getQueue();
         queueAdapter.submitList(queue);
+        Song current = playerManager.getCurrentSong();
+        if (current != null) {
+            queueAdapter.setCurrentPlayingSongId(current.getId());
+        }
     }
 
     private void showQueue() {
@@ -378,12 +404,8 @@ public class PlayerActivity extends AppCompatActivity
         binding.queueContainer.setVisibility(View.VISIBLE);
         binding.queueContainer.startAnimation(slideUpAnimation);
 
-        // Hide the queue button with fade out
-        binding.btnShowQueue.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .withEndAction(() -> binding.btnShowQueue.setVisibility(View.GONE))
-                .start();
+        binding.btnShowQueue.setColorFilter(
+                getResources().getColor(R.color.accent, getTheme()));
 
         isQueueVisible = true;
     }
@@ -401,14 +423,7 @@ public class PlayerActivity extends AppCompatActivity
             @Override
             public void onAnimationEnd(Animation animation) {
                 binding.queueContainer.setVisibility(View.GONE);
-
-                // Show the queue button again with fade in
-                binding.btnShowQueue.setVisibility(View.VISIBLE);
-                binding.btnShowQueue.setAlpha(0f);
-                binding.btnShowQueue.animate()
-                        .alpha(1f)
-                        .setDuration(200)
-                        .start();
+                binding.btnShowQueue.setColorFilter(0xFFFFFFFF);
             }
 
             @Override
@@ -603,6 +618,17 @@ public class PlayerActivity extends AppCompatActivity
                             return;
                         }
                         binding.imgAlbumArt.setImageBitmap(bitmap);
+                        // ponytail: extract palette directly from loaded bitmap instead of firing 2nd duplicate network load
+                        if (bitmap != null) {
+                            Palette.from(bitmap).generate(palette -> {
+                                if (palette != null && binding != null) {
+                                    int dominantColor = palette.getDominantColor(
+                                            ContextCompat.getColor(PlayerActivity.this, R.color.white));
+                                    binding.seekBar.setProgressTintList(android.content.res.ColorStateList.valueOf(dominantColor));
+                                    binding.seekBar.setThumbTintList(android.content.res.ColorStateList.valueOf(dominantColor));
+                                }
+                            });
+                        }
                     }
 
                     @Override
@@ -620,28 +646,6 @@ public class PlayerActivity extends AppCompatActivity
                 .transform(new BlurTransformation(25, 3))
                 .transition(com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions.withCrossFade(400))
                 .into(binding.backgroundImage);
-
-        // Extract dominant color for seekbar accent tint
-        Glide.with(this)
-                .asBitmap()
-                .load(song.getImageUrl())
-                .into(new com.bumptech.glide.request.target.SimpleTarget<Bitmap>() {
-                    @Override
-                    public void onResourceReady(Bitmap bitmap,
-                            com.bumptech.glide.request.transition.Transition<? super Bitmap> transition) {
-                        Palette.from(bitmap).generate(palette -> {
-                            if (palette != null) {
-                                int dominantColor = palette.getDominantColor(
-                                        ContextCompat.getColor(PlayerActivity.this, R.color.white));
-                                // Tint the seekbar progress layer
-                                binding.seekBar
-                                        .setProgressTintList(android.content.res.ColorStateList.valueOf(dominantColor));
-                                binding.seekBar
-                                        .setThumbTintList(android.content.res.ColorStateList.valueOf(dominantColor));
-                            }
-                        });
-                    }
-                });
 
         // Start vinyl disc continuous rotation
         startVinylRotation();
@@ -877,6 +881,9 @@ public class PlayerActivity extends AppCompatActivity
         // This is called directly from the player manager
         runOnUiThread(() -> {
             updateSongUI(song);
+            if (song != null && queueAdapter != null) {
+                queueAdapter.setCurrentPlayingSongId(song.getId());
+            }
             // Make sure play state is updated when song changes
             updatePlayPauseButton(playerManager.isPlaying());
         });
@@ -1030,15 +1037,14 @@ public class PlayerActivity extends AppCompatActivity
     // ═══════════════════════════════════════
 
     private void setupLyrics() {
-        // Build LRCLib Retrofit client
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(LrcLibService.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-        lrcLibService = retrofit.create(LrcLibService.class);
-
-        // Setup RecyclerView adapter
-        lyricsAdapter = new LyricsAdapter();
+        // Setup RecyclerView adapter with tap-to-seek support
+        lyricsAdapter = new LyricsAdapter(line -> {
+            if (line != null && playerManager != null) {
+                playerManager.seekTo(line.getTimeMs());
+            }
+        });
+        int accent = ThemeManager.getInstance(this).getAccentColorValue();
+        lyricsAdapter.setAccentColor(accent);
         binding.lyricsRecyclerView.setAdapter(lyricsAdapter);
         binding.lyricsRecyclerView.setLayoutManager(
                 new LinearLayoutManager(this));
@@ -1060,6 +1066,9 @@ public class PlayerActivity extends AppCompatActivity
 
         // If no lyrics loaded yet, fetch for current song
         Song currentSong = playerManager.getCurrentSong();
+        if (currentSong != null && binding.lyricsSubtitle != null) {
+            binding.lyricsSubtitle.setText(currentSong.getSong() + " • " + currentSong.getSingers());
+        }
         if (currentLyrics == null && currentSong != null) {
             fetchLyrics(currentSong);
         }
@@ -1068,12 +1077,12 @@ public class PlayerActivity extends AppCompatActivity
         binding.lyricsContainer.setAlpha(0f);
         binding.lyricsContainer.animate()
                 .alpha(1f)
-                .setDuration(300)
+                .setDuration(250)
                 .start();
 
         // Highlight lyrics button
         binding.btnLyrics.setColorFilter(
-                getResources().getColor(R.color.accent, getTheme()));
+                ThemeManager.getInstance(this).getAccentColorValue());
 
         isLyricsVisible = true;
     }
@@ -1112,54 +1121,22 @@ public class PlayerActivity extends AppCompatActivity
             binding.lyricsRecyclerView.setVisibility(View.GONE);
         }
 
-        String trackName = song.getSong();
-        String artistName = song.getSingers();
-
-        if (trackName == null || trackName.isEmpty()) return;
-
-        // Clean up track name (remove things in parentheses/brackets for better search)
-        String cleanTrack = trackName.replaceAll("\\s*[\\(\\[].*?[\\)\\]]", "").trim();
-        String cleanArtist = artistName != null ? artistName.split(",")[0].trim() : "";
-
-        Call<List<LrcResponse>> call = lrcLibService.searchLyrics(cleanTrack, cleanArtist);
-        call.enqueue(new Callback<List<LrcResponse>>() {
+        LyricsRepository.getInstance().fetchLyrics(song, new LyricsRepository.LyricsCallback() {
             @Override
-            public void onResponse(Call<List<LrcResponse>> call, Response<List<LrcResponse>> response) {
+            public void onSuccess(List<LrcParser.LyricLine> lines, boolean isSynced) {
                 runOnUiThread(() -> {
-                    if (binding == null) return; // Activity destroyed
-
-                    if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
-                        // Find the first result with synced lyrics
-                        LrcResponse bestMatch = null;
-                        for (LrcResponse lrc : response.body()) {
-                            if (lrc.hasSyncedLyrics()) {
-                                bestMatch = lrc;
-                                break;
-                            }
-                        }
-
-                        if (bestMatch != null && bestMatch.getSyncedLyrics() != null) {
-                            currentLyrics = LrcParser.parse(bestMatch.getSyncedLyrics());
-                            lyricsAdapter.setLyrics(currentLyrics);
-                            binding.txtLyricsStatus.setVisibility(View.GONE);
-                            binding.lyricsRecyclerView.setVisibility(View.VISIBLE);
-                        } else if (!response.body().isEmpty() && response.body().get(0).getPlainLyrics() != null) {
-                            // Fallback to plain lyrics (no sync)
-                            showPlainLyrics(response.body().get(0).getPlainLyrics());
-                        } else {
-                            showNoLyrics();
-                        }
-                    } else {
-                        showNoLyrics();
-                    }
+                    if (binding == null) return;
+                    currentLyrics = lines;
+                    lyricsAdapter.setLyrics(lines);
+                    binding.txtLyricsStatus.setVisibility(View.GONE);
+                    binding.lyricsRecyclerView.setVisibility(View.VISIBLE);
                 });
             }
 
             @Override
-            public void onFailure(Call<List<LrcResponse>> call, Throwable t) {
+            public void onError(String message) {
                 runOnUiThread(() -> {
                     if (binding == null) return;
-                    Log.e(TAG, "Failed to fetch lyrics", t);
                     showNoLyrics();
                 });
             }
@@ -1189,7 +1166,7 @@ public class PlayerActivity extends AppCompatActivity
     }
 
     private void syncLyrics(long positionMs) {
-        if (currentLyrics == null || currentLyrics.isEmpty()) return;
+        if (currentLyrics == null || currentLyrics.isEmpty() || lyricsAdapter == null) return;
 
         int newIndex = LrcParser.findActiveLine(currentLyrics, positionMs);
         int oldIndex = lyricsAdapter.getActiveIndex();
@@ -1197,11 +1174,29 @@ public class PlayerActivity extends AppCompatActivity
         if (newIndex != oldIndex && newIndex >= 0) {
             lyricsAdapter.setActiveIndex(newIndex);
 
-            // Smooth scroll to keep the active line in the upper third
+            // Silky smooth fluid scroll keeping active line in upper-center area
             LinearLayoutManager lm = (LinearLayoutManager) binding.lyricsRecyclerView.getLayoutManager();
             if (lm != null) {
-                int offset = binding.lyricsRecyclerView.getHeight() / 3;
-                lm.scrollToPositionWithOffset(Math.max(0, newIndex - 1), offset);
+                androidx.recyclerview.widget.LinearSmoothScroller smoothScroller =
+                        new androidx.recyclerview.widget.LinearSmoothScroller(this) {
+                            @Override
+                            protected int getVerticalSnapPreference() {
+                                return SNAP_TO_START;
+                            }
+
+                            @Override
+                            public int calculateDtToFit(int viewStart, int viewEnd, int boxStart, int boxEnd, int snapPreference) {
+                                int boxTarget = boxStart + (boxEnd - boxStart) / 4;
+                                return boxTarget - viewStart;
+                            }
+
+                            @Override
+                            protected float calculateSpeedPerPixel(android.util.DisplayMetrics displayMetrics) {
+                                return 120f / displayMetrics.densityDpi;
+                            }
+                        };
+                smoothScroller.setTargetPosition(newIndex);
+                lm.startSmoothScroll(smoothScroller);
             }
         }
     }

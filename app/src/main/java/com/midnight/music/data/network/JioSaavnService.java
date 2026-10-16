@@ -7,7 +7,7 @@ import retrofit2.http.Query;
 import java.util.List;
 
 public interface JioSaavnService {
-    String BASE_URL = "https://saavnapi-nine.vercel.app";
+    String BASE_URL = "https://midnight.ze68.workers.dev/";
 
     @GET("result/")
     Call<List<SongResponse>> searchSongs(

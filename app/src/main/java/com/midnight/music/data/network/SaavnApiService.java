@@ -10,7 +10,10 @@ import retrofit2.http.Query;
  * Base URL is loaded from local.properties via BuildConfig.
  */
 public interface SaavnApiService {
-    String BASE_URL = BuildConfig.SAAVN_API_URL;
+    // ponytail: sanitize base URL and guarantee trailing slash to prevent Retrofit IllegalArgumentException
+    String BASE_URL = (BuildConfig.SAAVN_API_URL == null || BuildConfig.SAAVN_API_URL.trim().isEmpty() || BuildConfig.SAAVN_API_URL.contains("PLACEHOLDER"))
+            ? "https://midnight.ze68.workers.dev/"
+            : (BuildConfig.SAAVN_API_URL.endsWith("/") ? BuildConfig.SAAVN_API_URL : BuildConfig.SAAVN_API_URL + "/");
 
     /**
      * Search for songs with pagination.
@@ -55,7 +58,7 @@ public interface SaavnApiService {
      * @param artistId The artist ID
      * @param limit Number of top songs to fetch
      */
-    @GET("api/artists/{id}/top-songs")
+    @GET("api/artists/{id}/songs")
     Call<SaavnArtistSongsResponse> getArtistTopSongs(
             @retrofit2.http.Path("id") String artistId,
             @Query("limit") int limit);

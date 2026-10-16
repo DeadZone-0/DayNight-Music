@@ -16,9 +16,13 @@ import androidx.lifecycle.MutableLiveData;
 import com.midnight.music.data.db.AppDatabase;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.repository.MusicRepository;
+import com.midnight.music.data.network.NetworkClient;
 import com.midnight.music.data.network.SaavnApiService;
 import com.midnight.music.data.network.SaavnSearchResponse;
 import com.midnight.music.data.network.SaavnSongResult;
+import com.midnight.music.data.discord.DiscordRpcManager;
+import com.midnight.music.data.network.JioSaavnService;
+import com.midnight.music.data.network.SongResponse;
 import com.midnight.music.service.MusicService;
 import com.midnight.music.utils.AudioCacheManager;
 import java.util.ArrayList;
@@ -49,10 +53,12 @@ public class MusicPlayerManager {
     private final AtomicBoolean isProcessingAction = new AtomicBoolean(false);
     private volatile boolean isResolvingUrl = false;
     private SaavnApiService saavnApiService;
-    private final Executor diskIO = Executors.newSingleThreadExecutor();
+    private JioSaavnService fallbackSaavnService;
+    // ponytail: use shared databaseWriteExecutor instead of leaking ad-hoc thread executor
+    private final Executor diskIO = AppDatabase.databaseWriteExecutor;
 
-    // Auto-queue recommendations (only for search-sourced songs)
-    private boolean autoQueueEnabled = false;
+    // Auto-queue recommendations (Continuous Spotify-style playback)
+    private boolean autoQueueEnabled = true;
     private volatile boolean isFetchingRecommendations = false;
     private static final String LASTFM_API_KEY = com.midnight.music.BuildConfig.LASTFM_API_KEY;
 
@@ -77,9 +83,17 @@ public class MusicPlayerManager {
 
         Retrofit saavnRetrofit = new Retrofit.Builder()
                 .baseUrl(SaavnApiService.BASE_URL)
+                .client(NetworkClient.getInstance())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         this.saavnApiService = saavnRetrofit.create(SaavnApiService.class);
+
+        Retrofit fallbackRetrofit = new Retrofit.Builder()
+                .baseUrl(JioSaavnService.BASE_URL)
+                .client(NetworkClient.getInstance())
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        this.fallbackSaavnService = fallbackRetrofit.create(JioSaavnService.class);
 
         player.addListener(new Player.Listener() {
             @Override
@@ -150,6 +164,13 @@ public class MusicPlayerManager {
 
                     // Update the notification to reflect new play/pause state
                     MusicService.updateNotification(context);
+
+                    // Update Discord Rich Presence
+                    Song current = getCurrentSong();
+                    if (current != null) {
+                        long duration = player.getDuration() > 0 ? player.getDuration() : 0;
+                        DiscordRpcManager.getInstance(context).updatePresence(current, isPlaying, player.getCurrentPosition(), duration);
+                    }
                 } catch (Exception e) {
                     Log.e(TAG, "Error in onIsPlayingChanged", e);
                 }
@@ -177,6 +198,10 @@ public class MusicPlayerManager {
 
                         // Update the notification with new song info
                         MusicService.updateNotification(context);
+
+                        // Update Discord Rich Presence on song change
+                        long duration = player.getDuration() > 0 ? player.getDuration() : 0;
+                        DiscordRpcManager.getInstance(context).updatePresence(song, player.isPlaying(), 0, duration);
                     }
                 } catch (Exception e) {
                     Log.e(TAG, "Error in onMediaItemTransition", e);
@@ -241,8 +266,9 @@ public class MusicPlayerManager {
                 return;
             }
 
-            // Reset stale fetch flag â€” any in-flight fetch from old song is irrelevant
+            // Reset stale fetch flag — any in-flight fetch from old song is irrelevant
             isFetchingRecommendations = false;
+            autoQueueEnabled = true;
 
             synchronized (queue) {
                 queue.clear();
@@ -268,8 +294,8 @@ public class MusicPlayerManager {
                 startIndex = 0;
             }
 
-            // Disable auto-queue for playlist/queue sources
-            autoQueueEnabled = false;
+            // Keep auto-queue active for continuous playback after playlist ends
+            autoQueueEnabled = true;
 
             synchronized (queue) {
                 queue.clear();
@@ -563,12 +589,13 @@ public class MusicPlayerManager {
 
         Log.d(TAG, "Resolving URL for: " + query);
         final Song targetSong = song;
+        final String finalQuery = query;
 
         // Show loading toast immediately so user knows something is happening
         mainHandler.post(() -> Toast.makeText(context, "Loading song...", Toast.LENGTH_SHORT).show());
 
         // Try with more results to find a match
-        saavnApiService.searchSongs(query, 0, 5).enqueue(new Callback<SaavnSearchResponse>() {
+        saavnApiService.searchSongs(finalQuery, 0, 5).enqueue(new Callback<SaavnSearchResponse>() {
             @Override
             public void onResponse(@NonNull Call<SaavnSearchResponse> call,
                                    @NonNull Response<SaavnSearchResponse> response) {
@@ -607,20 +634,59 @@ public class MusicPlayerManager {
                             }
                         }
                     }
-                    // No playable URL found
-                    Log.e(TAG, "Could not resolve URL for: " + targetSong.getSong());
+                    // ponytail: fallback to live JioSaavn endpoint before giving up
+                    fallbackResolveAndPlay(targetSong, finalQuery);
+                } catch (Exception e) {
+                    Log.e(TAG, "Error resolving URL", e);
+                    fallbackResolveAndPlay(targetSong, finalQuery);
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<SaavnSearchResponse> call, @NonNull Throwable t) {
+                Log.e(TAG, "Primary URL resolution failed, falling back", t);
+                fallbackResolveAndPlay(targetSong, finalQuery);
+            }
+        });
+    }
+
+    private void fallbackResolveAndPlay(Song targetSong, String query) {
+        Log.d(TAG, "Resolving URL via fallback JioSaavn API for: " + query);
+        fallbackSaavnService.searchSongs(query, false).enqueue(new Callback<List<SongResponse>>() {
+            @Override
+            public void onResponse(@NonNull Call<List<SongResponse>> call,
+                                   @NonNull Response<List<SongResponse>> response) {
+                try {
+                    if (response.isSuccessful() && response.body() != null && !response.body().isEmpty()) {
+                        for (SongResponse sr : response.body()) {
+                            if (sr.getMediaUrl() != null && !sr.getMediaUrl().isEmpty()) {
+                                Song resolved = sr.toSong();
+                                targetSong.setMediaUrl(resolved.getMediaUrl());
+                                targetSong.setDownloadUrl(resolved.getDownloadUrl());
+                                targetSong.setPermaUrl(resolved.getPermaUrl());
+
+                                diskIO.execute(() -> {
+                                    AppDatabase.getInstance(context).songDao().update(targetSong);
+                                    isResolvingUrl = false;
+                                    mainHandler.post(() -> playCurrentSong());
+                                });
+                                return;
+                            }
+                        }
+                    }
+                    Log.e(TAG, "Fallback also could not resolve URL for: " + targetSong.getSong());
                     isResolvingUrl = false;
                     mainHandler.post(() -> Toast.makeText(context, "Song not available", Toast.LENGTH_SHORT).show());
                 } catch (Exception e) {
-                    Log.e(TAG, "Error resolving URL", e);
+                    Log.e(TAG, "Error in fallback URL resolution", e);
                     isResolvingUrl = false;
                     mainHandler.post(() -> Toast.makeText(context, "Could not load song", Toast.LENGTH_SHORT).show());
                 }
             }
 
             @Override
-            public void onFailure(@NonNull Call<SaavnSearchResponse> call, @NonNull Throwable t) {
-                Log.e(TAG, "URL resolution failed", t);
+            public void onFailure(@NonNull Call<List<SongResponse>> call, @NonNull Throwable t) {
+                Log.e(TAG, "Fallback URL resolution network error", t);
                 isResolvingUrl = false;
                 mainHandler.post(() -> Toast.makeText(context, "Could not load song", Toast.LENGTH_SHORT).show());
             }
@@ -684,6 +750,9 @@ public class MusicPlayerManager {
 
             // Stop the foreground service / dismiss notification
             MusicService.stopService(context);
+
+            // Clear Discord Presence
+            DiscordRpcManager.getInstance(context).clearPresence();
         } catch (Exception e) {
             Log.e(TAG, "Error in clearQueue", e);
         }
@@ -692,6 +761,7 @@ public class MusicPlayerManager {
     public void release() {
         try {
             mainHandler.removeCallbacksAndMessages(null);
+            DiscordRpcManager.getInstance(context).clearPresence();
             player.release();
         } catch (Exception e) {
             Log.e(TAG, "Error in release", e);
@@ -750,6 +820,11 @@ public class MusicPlayerManager {
     public void seekTo(long position) {
         try {
             player.seekTo(position);
+            Song current = getCurrentSong();
+            if (current != null) {
+                long duration = player.getDuration() > 0 ? player.getDuration() : 0;
+                DiscordRpcManager.getInstance(context).updatePresence(current, player.isPlaying(), position, duration);
+            }
         } catch (Exception e) {
             Log.e(TAG, "Error in seekTo", e);
         }

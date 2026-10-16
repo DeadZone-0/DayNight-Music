@@ -141,11 +141,15 @@ public class AuthActivity extends AppCompatActivity {
     }
 
     private void initGoogleSignIn() {
-        GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
-                .requestIdToken(getString(R.string.google_web_client_id))
-                .requestEmail()
-                .build();
-        googleSignInClient = GoogleSignIn.getClient(this, gso);
+        // ponytail: avoid IllegalArgumentException when google_web_client_id is empty
+        String clientId = getString(R.string.google_web_client_id);
+        if (clientId != null && !clientId.trim().isEmpty()) {
+            GoogleSignInOptions gso = new GoogleSignInOptions.Builder(GoogleSignInOptions.DEFAULT_SIGN_IN)
+                    .requestIdToken(clientId)
+                    .requestEmail()
+                    .build();
+            googleSignInClient = GoogleSignIn.getClient(this, gso);
+        }
     }
 
     private void bindViews() {
@@ -176,6 +180,11 @@ public class AuthActivity extends AppCompatActivity {
 
         // Email/Password submit
         btnSubmit.setOnClickListener(v -> {
+            if (!com.midnight.music.data.network.SupabaseConfig.isConfigured()) {
+                showError("Cloud authentication backend is not configured in this build.");
+                return;
+            }
+
             String email = getText(etEmail);
             String password = getText(etPassword);
 
@@ -203,6 +212,10 @@ public class AuthActivity extends AppCompatActivity {
 
         // Google Sign-In
         btnGoogleSignIn.setOnClickListener(v -> {
+            if (googleSignInClient == null) {
+                Toast.makeText(this, "Google Sign-In is not configured in this build", Toast.LENGTH_SHORT).show();
+                return;
+            }
             setLoading(true);
             tvError.setVisibility(View.GONE);
             // Sign out first to force account picker

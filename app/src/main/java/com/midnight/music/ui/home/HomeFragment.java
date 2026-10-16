@@ -64,11 +64,28 @@ public class HomeFragment extends Fragment implements
         super.onViewCreated(view, savedInstanceState);
         viewModel = new ViewModelProvider(this).get(HomeViewModel.class);
         setupHeader();
+        setupAnimezePromo();
         setupRecyclerViews();
         observeData();
 
         // Observe accent colour and tint header gradient
         ThemeManager.getInstance(requireContext()).getAccentColor().observe(getViewLifecycleOwner(), this::applyAccentToHeader);
+    }
+
+    private void setupAnimezePromo() {
+        binding.cardAnimezePromo.setOnClickListener(v -> {
+            try {
+                Intent launchIntent = requireContext().getPackageManager().getLaunchIntentForPackage("com.animeze.app");
+                if (launchIntent != null) {
+                    startActivity(launchIntent);
+                } else {
+                    Intent webIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("https://animeze.bond"));
+                    startActivity(webIntent);
+                }
+            } catch (Exception e) {
+                Toast.makeText(requireContext(), "Animeze: https://animeze.bond", Toast.LENGTH_SHORT).show();
+            }
+        });
     }
 
     private void applyAccentToHeader(int color) {
@@ -89,8 +106,9 @@ public class HomeFragment extends Fragment implements
         binding.btnNotifications
                 .setOnClickListener(v -> Toast.makeText(requireContext(), "Notifications", Toast.LENGTH_SHORT).show());
 
-        binding.btnHistory
-                .setOnClickListener(v -> Toast.makeText(requireContext(), "History", Toast.LENGTH_SHORT).show());
+        binding.btnHistory.setOnClickListener(v -> {
+            startActivity(new android.content.Intent(requireContext(), com.midnight.music.ui.history.HistoryActivity.class));
+        });
 
         binding.btnSettings.setOnClickListener(v -> {
             startActivity(new android.content.Intent(requireContext(), com.midnight.music.ui.settings.SettingsActivity.class));
@@ -197,6 +215,7 @@ public class HomeFragment extends Fragment implements
             if (songs != null && !songs.isEmpty()) {
                 trendingSongs = songs;
                 trendingAdapter.updateData(songs);
+                updateHeroSpotlight(songs.get(0));
                 setVisible(binding.newReleasesTitle, true);
                 setVisible(binding.newReleasesSubtitle, true);
                 setVisible(binding.newReleasesRecycler, true);
@@ -208,6 +227,25 @@ public class HomeFragment extends Fragment implements
                 setVisible(binding.trendingErrorState, true);
             }
         });
+    }
+
+    private void updateHeroSpotlight(Song song) {
+        if (song == null || binding == null) return;
+        binding.heroSongTitle.setText(song.getSong());
+        binding.heroSongArtist.setText(song.getSingers() != null ? song.getSingers() : song.getAlbum());
+
+        String imgUrl = song.getImageUrl();
+        if (imgUrl != null && !imgUrl.isEmpty()) {
+            com.bumptech.glide.Glide.with(this)
+                    .load(imgUrl)
+                    .placeholder(R.drawable.placeholder_album)
+                    .error(R.drawable.placeholder_album)
+                    .centerCrop()
+                    .into(binding.heroBackdropImage);
+        }
+
+        binding.heroPlayBtn.setOnClickListener(v -> playSongFromList(song));
+        binding.heroSpotlightCard.setOnClickListener(v -> playSongFromList(song));
     }
 
     // RecentCompactAdapter.OnSongClickListener
@@ -222,9 +260,11 @@ public class HomeFragment extends Fragment implements
 
     @Override
     public void onPlaylistClick(PlaylistWithSongs playlist) {
-        Toast.makeText(requireContext(),
-                "Opening: " + playlist.playlist.getName(),
-                Toast.LENGTH_SHORT).show();
+        if (playlist != null && playlist.playlist != null) {
+            Intent intent = new Intent(requireContext(), com.midnight.music.ui.playlist.PlaylistDetailActivity.class);
+            intent.putExtra("playlist_id", playlist.playlist.getId());
+            startActivity(intent);
+        }
     }
 
     private void playSongFromList(Song song) {
@@ -273,29 +313,29 @@ public class HomeFragment extends Fragment implements
     }
 
     private void setVisible(View view, boolean visible) {
+        if (view == null) return;
+        view.animate().cancel();
         if (visible) {
-            view.animate().cancel();
-            if (view.getVisibility() != View.VISIBLE) {
-                view.setAlpha(0f);
-                view.setVisibility(View.VISIBLE);
+            view.setVisibility(View.VISIBLE);
+            if (view.getAlpha() < 1f) {
                 view.animate()
                         .alpha(1f)
-                        .setDuration(300)
+                        .setDuration(250)
                         .setInterpolator(new android.view.animation.DecelerateInterpolator())
                         .start();
             }
         } else {
-            view.animate().cancel();
             if (view.getVisibility() == View.VISIBLE) {
                 view.animate()
                         .alpha(0f)
-                        .setDuration(200)
+                        .setDuration(150)
                         .withEndAction(() -> {
-                            if (view.getAlpha() == 0f) {
-                                view.setVisibility(View.GONE);
-                            }
+                            view.setVisibility(View.GONE);
                         })
                         .start();
+            } else {
+                view.setVisibility(View.GONE);
+                view.setAlpha(0f);
             }
         }
     }

@@ -12,7 +12,7 @@
     android:layout_width="0dp"
     android:layout_height="0dp"
     app:defaultNavHost="true"
-    app:layout_constraintBottom_toTopOf="@id/bottomNav"
+    app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent"
     app:layout_constraintTop_toTopOf="parent"
@@ -34,10 +34,16 @@
   <include
     android:id="@+id/miniPlayer"
     layout="@layout/layout_mini_player"
-    android:layout_width="match_parent"
+    android:layout_width="0dp"
     android:layout_height="wrap_content"
+    android:layout_marginStart="16dp"
+    android:layout_marginEnd="16dp"
+    android:layout_marginBottom="10dp"
     android:visibility="gone"
-    app:layout_constraintBottom_toTopOf="@id/bottomNav" />
+    android:elevation="16dp"
+    app:layout_constraintBottom_toTopOf="@id/bottomNav"
+    app:layout_constraintLeft_toLeftOf="parent"
+    app:layout_constraintRight_toRightOf="parent" />
 
   <!-- Floating Download Progress Overlay -->
   <include
@@ -50,22 +56,17 @@
     app:layout_constraintLeft_toLeftOf="parent"
     app:layout_constraintRight_toRightOf="parent" />
 
-  <com.google.android.material.bottomnavigation.BottomNavigationView
+  <!-- Signature Animeze Floating Navigation Bar -->
+  <com.midnight.music.ui.components.BubbleNavBar
     android:id="@+id/bottomNav"
     android:layout_width="0dp"
-    android:layout_height="64dp"
+    android:layout_height="62dp"
     android:layout_marginStart="16dp"
     android:layout_marginEnd="16dp"
     android:layout_marginBottom="16dp"
-    android:background="@drawable/bg_bottom_nav"
-    android:elevation="8dp"
-    app:itemIconSize="26dp"
-    app:itemRippleColor="@color/ripple_accent"
-    app:itemIconTint="@color/primary"
-    app:labelVisibilityMode="unlabeled"
+    android:elevation="20dp"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintLeft_toLeftOf="parent"
-    app:layout_constraintRight_toRightOf="parent"
-    app:menu="@menu/bottom_nav_menu" />
+    app:layout_constraintRight_toRightOf="parent" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -178,9 +178,9 @@ public class SaavnSongResult {
      */
     public Song toSong(String preferredQuality) {
         Song song = new Song(id);
-        song.setSong(name);
-        song.setSingers(getArtistString());
-        song.setAlbum(album != null ? album.getName() : "");
+        song.setSong(cleanHtml(name));
+        song.setSingers(cleanHtml(getArtistString()));
+        song.setAlbum(cleanHtml(album != null ? album.getName() : ""));
         song.setAlbumUrl(album != null ? album.getUrl() : "");
         song.setDuration(String.valueOf(duration));
         song.setImageUrl(getBestImageUrl());
@@ -193,5 +193,10 @@ public class SaavnSongResult {
         song.setLabel(label);
         song.setHasLyrics(hasLyrics);
         return song;
+    }
+
+    private static String cleanHtml(String text) {
+        if (text == null) return "";
+        return android.text.Html.fromHtml(text, android.text.Html.FROM_HTML_MODE_LEGACY).toString().trim();
     }
 }

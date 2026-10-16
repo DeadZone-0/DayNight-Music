@@ -7,8 +7,9 @@ import androidx.annotation.NonNull;
 
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.network.JioSaavnService;
-import com.midnight.music.data.network.SongResponse;
+import com.midnight.music.data.network.NetworkClient;
 import com.midnight.music.data.network.PlaylistResponse;
+import com.midnight.music.data.network.SongResponse;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +43,7 @@ public class PlaylistImportManager {
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(JioSaavnService.BASE_URL)
+                .client(NetworkClient.getInstance())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         this.apiService = retrofit.create(JioSaavnService.class);

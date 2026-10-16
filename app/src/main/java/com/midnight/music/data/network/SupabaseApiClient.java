@@ -44,8 +44,13 @@ public class SupabaseApiClient {
                 .addInterceptor(logging)
                 .build();
 
+        // ponytail: safe fallback baseUrl so Retrofit doesn't throw IllegalArgumentException when unconfigured
+        String baseUrl = SupabaseConfig.isConfigured()
+                ? (SupabaseConfig.PROJECT_URL.endsWith("/") ? SupabaseConfig.PROJECT_URL : SupabaseConfig.PROJECT_URL + "/")
+                : "https://localhost/";
+
         Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(SupabaseConfig.PROJECT_URL + "/")
+                .baseUrl(baseUrl)
                 .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();

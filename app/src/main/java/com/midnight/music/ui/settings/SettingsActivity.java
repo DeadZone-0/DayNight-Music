@@ -2,6 +2,7 @@ package com.midnight.music.ui.settings;
 
 import android.app.AlertDialog;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -17,7 +18,9 @@ import androidx.recyclerview.widget.GridLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.midnight.music.R;
+import com.midnight.music.data.discord.DiscordRpcManager;
 import com.midnight.music.databinding.FragmentSettingsBinding;
+import com.midnight.music.ui.discord.DiscordRpcActivity;
 import com.midnight.music.utils.ThemeManager;
 
 import java.io.File;
@@ -46,6 +49,7 @@ public class SettingsActivity extends AppCompatActivity {
         setupDynamicAccent();
         setupAudioQuality();
         setupClearCacheButton();
+        setupDiscordRpc();
         setupAppInfoButton();
         setupCheckUpdatesButton();
 
@@ -61,6 +65,7 @@ public class SettingsActivity extends AppCompatActivity {
             if (binding == null) return;
             binding.headerAppearance.setTextColor(color);
             binding.headerData.setTextColor(color);
+            binding.headerIntegrations.setTextColor(color);
             binding.headerAbout.setTextColor(color);
         });
 
@@ -73,34 +78,34 @@ public class SettingsActivity extends AppCompatActivity {
     }
 
     private String mapThemeToKey(String theme) {
-        if (ThemeManager.THEME_PURPLE_NIGHT.equals(theme)) return "midnight";
-        if (ThemeManager.THEME_OCEAN_BLUE.equals(theme)) return "ocean";
-        if (ThemeManager.THEME_SUNSET.equals(theme)) return "sunset";
-        if (ThemeManager.THEME_FOREST.equals(theme)) return "forest";
-        if (ThemeManager.THEME_LIGHT.equals(theme)) return "light";
-        if (ThemeManager.THEME_AMOLED.equals(theme)) return "amoled";
-        return "midnight";
+        if (ThemeManager.THEME_MONOCHROME.equals(theme)) return ThemeManager.THEME_MONOCHROME;
+        if (ThemeManager.THEME_CYBER_NEON.equals(theme)) return ThemeManager.THEME_CYBER_NEON;
+        if (ThemeManager.THEME_SAKURA_BLOOM.equals(theme)) return ThemeManager.THEME_SAKURA_BLOOM;
+        if (ThemeManager.THEME_AMBER_GOLD.equals(theme)) return ThemeManager.THEME_AMBER_GOLD;
+        if (ThemeManager.THEME_EVA_PURPLE.equals(theme)) return ThemeManager.THEME_EVA_PURPLE;
+        // Legacy fallback
+        if (ThemeManager.THEME_PURPLE_NIGHT.equals(theme) || ThemeManager.THEME_AMOLED.equals(theme)) return ThemeManager.THEME_MONOCHROME;
+        if (ThemeManager.THEME_OCEAN_BLUE.equals(theme) || ThemeManager.THEME_FOREST.equals(theme)) return ThemeManager.THEME_CYBER_NEON;
+        if (ThemeManager.THEME_SUNSET.equals(theme)) return ThemeManager.THEME_AMBER_GOLD;
+        return ThemeManager.THEME_MONOCHROME;
     }
 
     private String mapKeyToTheme(String key) {
-        if ("midnight".equals(key)) return ThemeManager.THEME_PURPLE_NIGHT;
-        if ("ocean".equals(key)) return ThemeManager.THEME_OCEAN_BLUE;
-        if ("sunset".equals(key)) return ThemeManager.THEME_SUNSET;
-        if ("forest".equals(key)) return ThemeManager.THEME_FOREST;
-        if ("light".equals(key)) return ThemeManager.THEME_LIGHT;
-        if ("amoled".equals(key)) return ThemeManager.THEME_AMOLED;
-        return ThemeManager.THEME_PURPLE_NIGHT;
+        if (ThemeManager.THEME_CYBER_NEON.equals(key)) return ThemeManager.THEME_CYBER_NEON;
+        if (ThemeManager.THEME_SAKURA_BLOOM.equals(key)) return ThemeManager.THEME_SAKURA_BLOOM;
+        if (ThemeManager.THEME_AMBER_GOLD.equals(key)) return ThemeManager.THEME_AMBER_GOLD;
+        if (ThemeManager.THEME_EVA_PURPLE.equals(key)) return ThemeManager.THEME_EVA_PURPLE;
+        return ThemeManager.THEME_MONOCHROME;
     }
 
     private void updateThemeName(String theme) {
         String name = switch (theme) {
-            case ThemeManager.THEME_PURPLE_NIGHT -> "Midnight";
-            case ThemeManager.THEME_OCEAN_BLUE -> "Ocean";
-            case ThemeManager.THEME_SUNSET -> "Sunset";
-            case ThemeManager.THEME_FOREST -> "Forest";
-            case ThemeManager.THEME_LIGHT -> "Light";
-            case ThemeManager.THEME_AMOLED -> "AMOLED";
-            default -> "Midnight";
+            case ThemeManager.THEME_MONOCHROME -> "Monochrome B&W";
+            case ThemeManager.THEME_CYBER_NEON -> "Cyberpunk Cyan";
+            case ThemeManager.THEME_SAKURA_BLOOM -> "Sakura Bloom";
+            case ThemeManager.THEME_AMBER_GOLD -> "Amber Gold";
+            case ThemeManager.THEME_EVA_PURPLE -> "EVA Violet";
+            default -> "Monochrome B&W";
         };
         binding.currentThemeName.setText(name);
     }
@@ -115,7 +120,7 @@ public class SettingsActivity extends AppCompatActivity {
             applyTheme(newTheme);
         });
 
-        binding.themeGrid.setLayoutManager(new GridLayoutManager(this, 3, GridLayoutManager.HORIZONTAL, false));
+        binding.themeGrid.setLayoutManager(new GridLayoutManager(this, 3));
         binding.themeGrid.setAdapter(themeAdapter);
         binding.themeGrid.setNestedScrollingEnabled(false);
     }
@@ -136,7 +141,7 @@ public class SettingsActivity extends AppCompatActivity {
         binding.dynamicAccentSwitch.setOnCheckedChangeListener((btn, checked) -> {
             themeManager.setDynamicAccentEnabled(checked);
             if (checked) {
-                Toast.makeText(this, "Dynamic accent enabled - will follow album art", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Dynamic accent enabled - highlights follow album art", Toast.LENGTH_SHORT).show();
             }
         });
     }
@@ -159,7 +164,7 @@ public class SettingsActivity extends AppCompatActivity {
             }
 
             new AlertDialog.Builder(this, R.style.AlertDialogTheme)
-                    .setTitle("Audio Quality")
+                    .setTitle("Audio Streaming Quality")
                     .setSingleChoiceItems(qualityLabels, checkedIndex, (dialog, which) -> {
                         String selected = qualityValues[which];
                         sharedPreferences.edit().putString(AUDIO_QUALITY_KEY, selected).apply();
@@ -180,16 +185,18 @@ public class SettingsActivity extends AppCompatActivity {
                 binding.qualitySubtitle.setText("Standard (160kbps)");
                 break;
             case "320kbps":
+            default:
                 binding.qualitySubtitle.setText("High Quality (320kbps)");
                 break;
         }
     }
 
     private void setupClearCacheButton() {
+        updateCacheSizeSubtitle();
         binding.clearCacheButton.setOnClickListener(v -> {
             new AlertDialog.Builder(this, R.style.AlertDialogTheme)
                     .setTitle("Clear Cache")
-                    .setMessage("This will remove all temporarily stored data. Downloaded songs will not be affected.")
+                    .setMessage("This will remove all temporarily stored audio streams and images. Your downloaded songs will remain safe.")
                     .setPositiveButton("Clear", (dialog, which) -> {
                         clearCache();
                     })
@@ -198,11 +205,50 @@ public class SettingsActivity extends AppCompatActivity {
         });
     }
 
+    private void updateCacheSizeSubtitle() {
+        new Thread(() -> {
+            long totalBytes = getDirSize(getCacheDir()) + getDirSize(getCodeCacheDir());
+            String formatted = formatFileSize(totalBytes);
+            runOnUiThread(() -> {
+                if (binding != null) {
+                    binding.cacheSubtitle.setText(formatted + " cached • Tap to clear");
+                }
+            });
+        }).start();
+    }
+
+    private long getDirSize(File dir) {
+        long size = 0;
+        if (dir != null && dir.isDirectory()) {
+            File[] files = dir.listFiles();
+            if (files != null) {
+                for (File f : files) {
+                    if (f.isDirectory()) {
+                        size += getDirSize(f);
+                    } else {
+                        size += f.length();
+                    }
+                }
+            }
+        } else if (dir != null && dir.isFile()) {
+            size += dir.length();
+        }
+        return size;
+    }
+
+    private String formatFileSize(long bytes) {
+        if (bytes <= 0) return "0 B";
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format(java.util.Locale.US, "%.1f KB", bytes / 1024.0);
+        return String.format(java.util.Locale.US, "%.1f MB", bytes / (1024.0 * 1024.0));
+    }
+
     private void clearCache() {
         try {
             File cacheDir = getCacheDir();
             deleteDir(cacheDir);
-            Toast.makeText(this, "Cache cleared", Toast.LENGTH_SHORT).show();
+            updateCacheSizeSubtitle();
+            Toast.makeText(this, "Cache cleared successfully", Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(this, "Failed to clear cache", Toast.LENGTH_SHORT).show();
         }
@@ -224,19 +270,61 @@ public class SettingsActivity extends AppCompatActivity {
         return false;
     }
 
-    private void setupAppInfoButton() {
-        binding.appInfoButton.setOnClickListener(v -> {
-            String version = "1.0.0";
-            try {
-                PackageInfo pInfo = getPackageManager().getPackageInfo(getPackageName(), 0);
-                version = pInfo.versionName;
-            } catch (PackageManager.NameNotFoundException e) {
-                Log.e("SettingsActivity", "Failed to get package info for version", e);
-            }
+    private void setupDiscordRpc() {
+        binding.discordRpcButton.setOnClickListener(v -> {
+            startActivity(new Intent(this, DiscordRpcActivity.class));
+        });
 
+        DiscordRpcManager rpcManager = DiscordRpcManager.getInstance(this);
+        rpcManager.getUserProfile().observe(this, profile -> {
+            if (binding == null) return;
+            if (profile != null) {
+                binding.discordRpcStatusSubtitle.setText("Connected as " + profile.getUsername());
+            } else {
+                binding.discordRpcStatusSubtitle.setText("Broadcast live listening activity to Discord");
+            }
+        });
+
+        rpcManager.getConnectionStatus().observe(this, status -> {
+            if (binding == null) return;
+            if (status == null) status = "Disconnected";
+            switch (status) {
+                case "Ready":
+                case "Connected":
+                    binding.discordRpcBadge.setText("ONLINE");
+                    binding.discordRpcBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF23A55A));
+                    binding.discordRpcBadge.setTextColor(android.graphics.Color.WHITE);
+                    break;
+                case "Connecting":
+                    binding.discordRpcBadge.setText("CONNECTING");
+                    binding.discordRpcBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFFEE75C));
+                    binding.discordRpcBadge.setTextColor(0xFF000000);
+                    break;
+                case "Failed":
+                case "Error":
+                    binding.discordRpcBadge.setText("ERROR");
+                    binding.discordRpcBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFFED4245));
+                    binding.discordRpcBadge.setTextColor(android.graphics.Color.WHITE);
+                    break;
+                case "Disconnected":
+                default:
+                    binding.discordRpcBadge.setText("OFFLINE");
+                    binding.discordRpcBadge.setBackgroundTintList(android.content.res.ColorStateList.valueOf(0xFF4E5058));
+                    binding.discordRpcBadge.setTextColor(0xFFDBDEE1);
+                    break;
+            }
+        });
+    }
+
+    private void setupAppInfoButton() {
+        String version = com.midnight.music.BuildConfig.VERSION_NAME;
+        binding.infoSubtitle.setText("Version " + version + " • Open Source");
+        binding.infoVersionBadge.setText("v" + version);
+
+        binding.appInfoButton.setOnClickListener(v -> {
             new AlertDialog.Builder(this, R.style.AlertDialogTheme)
-                    .setTitle("DayNight Music")
-                    .setMessage("Version: " + version + "\n\nA premium music streaming experience.")
+                    .setTitle("Midnight Music")
+                    .setMessage("Version: " + version + "\n\nA modern, high-fidelity music streaming client with dynamic acoustics & real-time synchronized lyrics.")
                     .setPositiveButton("OK", null)
                     .show();
         });
@@ -244,7 +332,7 @@ public class SettingsActivity extends AppCompatActivity {
 
     private void setupCheckUpdatesButton() {
         binding.checkUpdatesButton.setOnClickListener(v -> {
-            Toast.makeText(this, "You're on the latest version!", Toast.LENGTH_SHORT).show();
+            new com.midnight.music.utils.UpdateManager(this).checkForUpdates(true);
         });
     }
 }

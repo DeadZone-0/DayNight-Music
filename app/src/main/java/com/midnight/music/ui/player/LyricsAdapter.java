@@ -1,5 +1,6 @@
 package com.midnight.music.ui.player;
 
+import android.content.res.ColorStateList;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,13 +16,34 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * RecyclerView adapter for displaying synchronized lyrics.
- * Highlights the currently active lyric line with a larger, bold, white style.
- * Other lines are shown dimmed and smaller.
+ * Modern RecyclerView adapter for displaying synchronized karaoke lyrics.
+ * Highlights the active lyric line with 100% white opacity and an accent pill indicator,
+ * keeping font metrics stable to ensure jitter-free, smooth scrolling.
  */
 public class LyricsAdapter extends RecyclerView.Adapter<LyricsAdapter.LyricViewHolder> {
+    public interface OnLyricClickListener {
+        void onLyricClick(LrcParser.LyricLine line);
+    }
+
     private List<LrcParser.LyricLine> lyrics = new ArrayList<>();
     private int activeIndex = -1;
+    private int accentColor = 0;
+    private OnLyricClickListener onLyricClickListener;
+
+    public LyricsAdapter() {}
+
+    public LyricsAdapter(OnLyricClickListener onLyricClickListener) {
+        this.onLyricClickListener = onLyricClickListener;
+    }
+
+    public void setOnLyricClickListener(OnLyricClickListener onLyricClickListener) {
+        this.onLyricClickListener = onLyricClickListener;
+    }
+
+    public void setAccentColor(int color) {
+        this.accentColor = color;
+        notifyDataSetChanged();
+    }
 
     public void setLyrics(List<LrcParser.LyricLine> newLyrics) {
         this.lyrics = newLyrics != null ? newLyrics : new ArrayList<>();
@@ -66,12 +88,27 @@ public class LyricsAdapter extends RecyclerView.Adapter<LyricsAdapter.LyricViewH
         holder.txtLyric.setText(line.getText());
 
         boolean isActive = (position == activeIndex);
-        holder.txtLyric.setAlpha(isActive ? 1.0f : 0.4f);
-        holder.txtLyric.setTextSize(isActive ? 26f : 18f);
-        holder.txtLyric.setTypeface(
-                androidx.core.content.res.ResourcesCompat.getFont(
-                        holder.itemView.getContext(),
-                        isActive ? R.font.poppins_bold : R.font.poppins_medium));
+        if (activeIndex == -1) {
+            holder.txtLyric.setAlpha(0.92f);
+            if (holder.indicator != null) {
+                holder.indicator.setVisibility(View.INVISIBLE);
+            }
+        } else {
+            holder.txtLyric.setAlpha(isActive ? 1.0f : 0.28f);
+            if (holder.indicator != null) {
+                holder.indicator.setVisibility(isActive ? View.VISIBLE : View.INVISIBLE);
+                if (accentColor != 0) {
+                    holder.indicator.setBackgroundTintList(ColorStateList.valueOf(accentColor));
+                }
+            }
+        }
+
+        holder.itemView.setOnClickListener(v -> {
+            int pos = holder.getAdapterPosition();
+            if (pos != RecyclerView.NO_POSITION && onLyricClickListener != null && pos < lyrics.size()) {
+                onLyricClickListener.onLyricClick(lyrics.get(pos));
+            }
+        });
     }
 
     @Override
@@ -81,10 +118,12 @@ public class LyricsAdapter extends RecyclerView.Adapter<LyricsAdapter.LyricViewH
 
     static class LyricViewHolder extends RecyclerView.ViewHolder {
         final TextView txtLyric;
+        final View indicator;
 
         LyricViewHolder(@NonNull View itemView) {
             super(itemView);
             txtLyric = itemView.findViewById(R.id.txtLyricLine);
+            indicator = itemView.findViewById(R.id.lyric_indicator);
         }
     }
 }

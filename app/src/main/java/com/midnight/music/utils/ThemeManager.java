@@ -38,6 +38,13 @@ public class ThemeManager {
     private static final String KEY_DYNAMIC_ACCENT = "dynamic_accent_enabled";
     private static final String KEY_FOLLOW_SYSTEM = "follow_system_theme";
 
+    public static final String THEME_MONOCHROME = "monochrome";
+    public static final String THEME_CYBER_NEON = "cyber_neon";
+    public static final String THEME_SAKURA_BLOOM = "sakura_bloom";
+    public static final String THEME_AMBER_GOLD = "amber_gold";
+    public static final String THEME_EVA_PURPLE = "eva_purple";
+
+    // Compatibility legacy aliases
     public static final String THEME_PURPLE_NIGHT = "purple_night";
     public static final String THEME_OCEAN_BLUE = "ocean_blue";
     public static final String THEME_SUNSET = "sunset";
@@ -45,7 +52,7 @@ public class ThemeManager {
     public static final String THEME_LIGHT = "light";
     public static final String THEME_AMOLED = "amoled";
 
-    public static final String DEFAULT_THEME = THEME_PURPLE_NIGHT;
+    public static final String DEFAULT_THEME = THEME_MONOCHROME;
 
     private static volatile ThemeManager instance;
 
@@ -57,7 +64,7 @@ public class ThemeManager {
     private volatile String selectedTheme;
     private final AtomicBoolean dynamicAccentEnabled = new AtomicBoolean(false);
     private final AtomicBoolean followSystemEnabled = new AtomicBoolean(false);
-    private final AtomicInteger dynamicColor = new AtomicInteger(Color.parseColor("#BB86FC"));
+    private final AtomicInteger dynamicColor = new AtomicInteger(Color.WHITE);
     
     private final Map<String, ThemeColors> themeColorsMap = new HashMap<>();
 
@@ -100,59 +107,68 @@ public class ThemeManager {
     }
 
     private void initializeThemeColors() {
-        themeColorsMap.put(THEME_PURPLE_NIGHT, new ThemeColors(
-                Color.parseColor("#BB86FC"), Color.parseColor("#9C4DFF"),
-                Color.parseColor("#0F0F0F"), Color.parseColor("#1A1A1A"),
-                Color.parseColor("#2B2B2B"), Color.parseColor("#242424"),
-                Color.parseColor("#E1E1E1"), Color.parseColor("#AAAAAA"),
-                Color.parseColor("#1ABB86FC"), Color.parseColor("#33BB86FC"),
-                Color.parseColor("#BB86FC"), Color.parseColor("#9C4DFF")
-        ));
-        
-        themeColorsMap.put(THEME_OCEAN_BLUE, new ThemeColors(
-                Color.parseColor("#64B5F6"), Color.parseColor("#2196F3"),
-                Color.parseColor("#0D1B2A"), Color.parseColor("#152535"),
-                Color.parseColor("#1E3347"), Color.parseColor("#1A2D40"),
-                Color.parseColor("#E3F2FD"), Color.parseColor("#90CAF9"),
-                Color.parseColor("#1A64B5F6"), Color.parseColor("#3364B5F6"),
-                Color.parseColor("#64B5F6"), Color.parseColor("#2196F3")
-        ));
-        
-        themeColorsMap.put(THEME_SUNSET, new ThemeColors(
-                Color.parseColor("#FFAB40"), Color.parseColor("#FF6D00"),
-                Color.parseColor("#1A0F0A"), Color.parseColor("#251510"),
-                Color.parseColor("#332015"), Color.parseColor("#2A1810"),
-                Color.parseColor("#FFF3E0"), Color.parseColor("#FFCC80"),
-                Color.parseColor("#1AFFAB40"), Color.parseColor("#33FFAB40"),
-                Color.parseColor("#FF6D00"), Color.parseColor("#FFAB40")
-        ));
-        
-        themeColorsMap.put(THEME_FOREST, new ThemeColors(
-                Color.parseColor("#69F0AE"), Color.parseColor("#4CAF50"),
-                Color.parseColor("#0A1A0F"), Color.parseColor("#102015"),
-                Color.parseColor("#153020"), Color.parseColor("#0F2518"),
-                Color.parseColor("#E8F5E9"), Color.parseColor("#A5D6A7"),
-                Color.parseColor("#1A69F0AE"), Color.parseColor("#3369F0AE"),
-                Color.parseColor("#4CAF50"), Color.parseColor("#69F0AE")
-        ));
-        
-        themeColorsMap.put(THEME_LIGHT, new ThemeColors(
-                Color.parseColor("#7A2BE2"), Color.parseColor("#5E21B0"),
-                Color.parseColor("#F5F5F7"), Color.parseColor("#FFFFFF"),
-                Color.parseColor("#F0EDF2"), Color.parseColor("#FFFFFF"),
-                Color.parseColor("#1C1B1F"), Color.parseColor("#49454F"),
-                Color.parseColor("#1A7A2BE2"), Color.parseColor("#337A2BE2"),
-                Color.parseColor("#7A2BE2"), Color.parseColor("#9C4DFF")
-        ));
-        
-        themeColorsMap.put(THEME_AMOLED, new ThemeColors(
-                Color.parseColor("#BB86FC"), Color.parseColor("#9C4DFF"),
-                Color.parseColor("#000000"), Color.parseColor("#000000"),
-                Color.parseColor("#121212"), Color.parseColor("#0D0D0D"),
-                Color.parseColor("#E1E1E1"), Color.parseColor("#AAAAAA"),
-                Color.parseColor("#1ABB86FC"), Color.parseColor("#33BB86FC"),
-                Color.parseColor("#BB86FC"), Color.parseColor("#9C4DFF")
-        ));
+        // 1. Monochrome B&W (Default: Pure White on OLED Black)
+        ThemeColors monochrome = new ThemeColors(
+                Color.parseColor("#FFFFFF"), Color.parseColor("#E2E8F0"),
+                Color.parseColor("#000000"), Color.parseColor("#121214"),
+                Color.parseColor("#16161A"), Color.parseColor("#121216"),
+                Color.parseColor("#FFFFFF"), Color.parseColor("#8E8E93"),
+                Color.parseColor("#26FFFFFF"), Color.parseColor("#33FFFFFF"),
+                Color.parseColor("#FFFFFF"), Color.parseColor("#FFFFFF")
+        );
+        themeColorsMap.put(THEME_MONOCHROME, monochrome);
+
+        // 2. Cyberpunk Cyan (#00E5FF)
+        ThemeColors cyberNeon = new ThemeColors(
+                Color.parseColor("#00E5FF"), Color.parseColor("#00B4D8"),
+                Color.parseColor("#000000"), Color.parseColor("#121214"),
+                Color.parseColor("#16161A"), Color.parseColor("#121216"),
+                Color.parseColor("#FFFFFF"), Color.parseColor("#8E8E93"),
+                Color.parseColor("#2600E5FF"), Color.parseColor("#3300E5FF"),
+                Color.parseColor("#00E5FF"), Color.parseColor("#0077B6")
+        );
+        themeColorsMap.put(THEME_CYBER_NEON, cyberNeon);
+
+        // 3. Sakura Bloom (#FF4081)
+        ThemeColors sakuraBloom = new ThemeColors(
+                Color.parseColor("#FF4081"), Color.parseColor("#F50057"),
+                Color.parseColor("#000000"), Color.parseColor("#121214"),
+                Color.parseColor("#16161A"), Color.parseColor("#121216"),
+                Color.parseColor("#FFFFFF"), Color.parseColor("#8E8E93"),
+                Color.parseColor("#26FF4081"), Color.parseColor("#33FF4081"),
+                Color.parseColor("#FF4081"), Color.parseColor("#C51162")
+        );
+        themeColorsMap.put(THEME_SAKURA_BLOOM, sakuraBloom);
+
+        // 4. Amber Gold (#FFB300)
+        ThemeColors amberGold = new ThemeColors(
+                Color.parseColor("#FFB300"), Color.parseColor("#FFA000"),
+                Color.parseColor("#000000"), Color.parseColor("#121214"),
+                Color.parseColor("#16161A"), Color.parseColor("#121216"),
+                Color.parseColor("#FFFFFF"), Color.parseColor("#8E8E93"),
+                Color.parseColor("#26FFB300"), Color.parseColor("#33FFB300"),
+                Color.parseColor("#FFB300"), Color.parseColor("#FF6F00")
+        );
+        themeColorsMap.put(THEME_AMBER_GOLD, amberGold);
+
+        // 5. EVA Unit-01 Violet (#B388FF)
+        ThemeColors evaPurple = new ThemeColors(
+                Color.parseColor("#B388FF"), Color.parseColor("#7C4DFF"),
+                Color.parseColor("#000000"), Color.parseColor("#121214"),
+                Color.parseColor("#16161A"), Color.parseColor("#121216"),
+                Color.parseColor("#FFFFFF"), Color.parseColor("#8E8E93"),
+                Color.parseColor("#26B388FF"), Color.parseColor("#33B388FF"),
+                Color.parseColor("#B388FF"), Color.parseColor("#651FFF")
+        );
+        themeColorsMap.put(THEME_EVA_PURPLE, evaPurple);
+
+        // Legacy compatibility mappings
+        themeColorsMap.put(THEME_PURPLE_NIGHT, monochrome);
+        themeColorsMap.put(THEME_AMOLED, monochrome);
+        themeColorsMap.put(THEME_OCEAN_BLUE, cyberNeon);
+        themeColorsMap.put(THEME_FOREST, cyberNeon);
+        themeColorsMap.put(THEME_SUNSET, amberGold);
+        themeColorsMap.put(THEME_LIGHT, monochrome);
     }
 
     // ─── Getters ──────────────────────────────────────────────

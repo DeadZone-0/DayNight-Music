@@ -82,7 +82,8 @@ public class ProfileFragment extends Fragment {
     }
 
     private void fetchUserStats() {
-        Executors.newSingleThreadExecutor().execute(() -> {
+        // ponytail: use shared databaseWriteExecutor
+        AppDatabase.databaseWriteExecutor.execute(() -> {
             try {
                 AppDatabase db = AppDatabase.getInstance(requireContext());
                 int playlistCount = db.playlistDao().getAllPlaylistsSync().size();
@@ -129,7 +130,7 @@ public class ProfileFragment extends Fragment {
             String accessToken = sessionManager.getAccessToken();
             if (accessToken != null) {
                 // Background execution for network call
-                Executors.newSingleThreadExecutor().execute(() -> {
+                AppDatabase.databaseWriteExecutor.execute(() -> {
                     new AuthRepository().signOut(accessToken);
                 });
             }

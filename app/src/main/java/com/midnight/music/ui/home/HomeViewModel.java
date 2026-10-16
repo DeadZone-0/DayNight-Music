@@ -72,7 +72,22 @@ public class HomeViewModel extends AndroidViewModel {
      */
     public void loadRecommendations(List<Song> recentSongs) {
         if (recentSongs == null || recentSongs.isEmpty()) {
-            recommendations.postValue(new ArrayList<>());
+            // ponytail: provide top hits for new users so the home screen is never barren
+            repository.searchSongs("Top Hits", new MusicRepository.SearchCallback() {
+                @Override
+                public void onSuccess(List<Song> songs) {
+                    if (songs != null && !songs.isEmpty()) {
+                        recommendations.postValue(songs.size() > 10 ? new ArrayList<>(songs.subList(0, 10)) : songs);
+                    } else {
+                        recommendations.postValue(new ArrayList<>());
+                    }
+                }
+
+                @Override
+                public void onError(Exception e) {
+                    recommendations.postValue(new ArrayList<>());
+                }
+            });
             return;
         }
 
@@ -157,5 +172,21 @@ public class HomeViewModel extends AndroidViewModel {
 
     public void saveSongToHistory(Song song) {
         repository.saveSong(song);
+    }
+
+    public void loadGenreRecommendations(String genre) {
+        repository.searchSongs(genre + " Hits", new MusicRepository.SearchCallback() {
+            @Override
+            public void onSuccess(List<Song> songs) {
+                if (songs != null && !songs.isEmpty()) {
+                    recommendations.postValue(songs.size() > 10 ? new ArrayList<>(songs.subList(0, 10)) : songs);
+                }
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.e(TAG, "Failed to load genre songs for " + genre, e);
+            }
+        });
     }
 }

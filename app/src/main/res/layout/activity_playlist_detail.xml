@@ -5,94 +5,137 @@
     android:id="@+id/coordinator_layout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#0e0e12"
+    android:background="@color/background"
     tools:context=".ui.playlist.PlaylistDetailActivity">
 
     <com.google.android.material.appbar.AppBarLayout
         android:id="@+id/appbar"
         android:layout_width="match_parent"
-        android:layout_height="380dp"
-        android:background="@android:color/transparent"
+        android:layout_height="wrap_content"
+        android:background="@color/background"
         android:theme="@style/ThemeOverlay.AppCompat.Dark.ActionBar"
-        android:fitsSystemWindows="true">
+        android:fitsSystemWindows="true"
+        app:elevation="0dp">
 
         <com.google.android.material.appbar.CollapsingToolbarLayout
             android:id="@+id/collapsingToolbar"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
             android:fitsSystemWindows="true"
-            app:contentScrim="#0e0e12"
-            app:expandedTitleMarginStart="24dp"
-            app:expandedTitleMarginBottom="72dp"
-            app:expandedTitleTextAppearance="@style/TextAppearance.AppCompat.Headline"
-            app:layout_scrollFlags="scroll|exitUntilCollapsed|snap"
-            app:title="Playlist Title"
-            app:titleEnabled="true">
+            app:contentScrim="@color/background"
+            app:layout_scrollFlags="scroll|exitUntilCollapsed"
+            app:titleEnabled="false">
 
-            <ImageView
-                android:id="@+id/playlist_image"
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scaleType="centerCrop"
-                android:fitsSystemWindows="true"
-                app:layout_collapseMode="parallax"
-                app:layout_collapseParallaxMultiplier="0.7"
-                tools:src="@drawable/placeholder_album" />
-
-            <!-- Gradient overlay to fade to dark background -->
-            <View
-                android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:background="@drawable/gradient_album_fade"
-                android:fitsSystemWindows="true" />
-
+            <!-- Hero Header Container -->
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_gravity="bottom"
-                android:layout_marginBottom="24dp"
-                android:layout_marginStart="24dp"
-                android:layout_marginEnd="24dp"
                 android:orientation="vertical"
-                app:layout_collapseMode="parallax">
-                
+                android:gravity="center_horizontal"
+                android:paddingTop="56dp"
+                android:paddingBottom="24dp"
+                android:paddingHorizontal="24dp"
+                app:layout_collapseMode="parallax"
+                app:layout_collapseParallaxMultiplier="0.6">
+
+                <!-- Floating Rounded Artwork Card -->
+                <com.google.android.material.card.MaterialCardView
+                    android:id="@+id/artwork_container"
+                    android:layout_width="168dp"
+                    android:layout_height="168dp"
+                    android:layout_marginTop="12dp"
+                    app:cardCornerRadius="24dp"
+                    app:cardElevation="8dp"
+                    app:strokeColor="@color/nav_bar_border"
+                    app:strokeWidth="1dp"
+                    app:cardBackgroundColor="@color/surface_container">
+
+                    <FrameLayout
+                        android:id="@+id/artwork_frame"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent">
+
+                        <ImageView
+                            android:id="@+id/playlist_image"
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/placeholder_album"
+                            android:contentDescription="Playlist Cover" />
+
+                        <!-- Liked Songs Center Glowing Heart (Shown for Liked Songs) -->
+                        <ImageView
+                            android:id="@+id/icon_liked_detail"
+                            android:layout_width="56dp"
+                            android:layout_height="56dp"
+                            android:layout_gravity="center"
+                            android:src="@drawable/ic_heart_filled"
+                            android:visibility="gone"
+                            app:tint="@color/white"
+                            android:contentDescription="@string/liked_songs" />
+                    </FrameLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Hero Playlist Title -->
+                <TextView
+                    android:id="@+id/playlist_title_hero"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:paddingHorizontal="16dp"
+                    android:textSize="22sp"
+                    android:textColor="@color/text_primary"
+                    android:fontFamily="@font/poppins_bold"
+                    android:gravity="center"
+                    tools:text="Liked Songs" />
+
+                <!-- Subtitle / Metadata Tag -->
                 <TextView
                     android:id="@+id/song_count"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
-                    android:textSize="14sp"
-                    android:textColor="#B3FFFFFF"
-                    tools:text="12 songs" />
+                    android:textSize="13sp"
+                    android:textColor="@color/text_secondary"
+                    android:fontFamily="@font/poppins_medium"
+                    tools:text="12 songs • 45 mins" />
 
-                <!-- Action Buttons Row -->
+                <!-- Action Controls Row -->
                 <LinearLayout
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="18dp"
                     android:orientation="horizontal"
                     android:gravity="center_vertical">
-                    
+
+                    <!-- Shuffle Action -->
                     <ImageButton
                         android:id="@+id/btn_shuffle"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:background="@drawable/bg_circle_glass"
                         android:src="@drawable/ic_shuffle"
-                        app:tint="@color/white" />
-                        
+                        android:padding="11dp"
+                        android:scaleType="centerInside"
+                        android:contentDescription="Shuffle Playlist"
+                        app:tint="@color/text_primary" />
+
+                    <!-- Download All Action -->
                     <FrameLayout
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="8dp">
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="12dp">
 
                         <ImageButton
                             android:id="@+id/btn_download"
                             android:layout_width="match_parent"
                             android:layout_height="match_parent"
-                            android:background="?attr/selectableItemBackgroundBorderless"
+                            android:background="@drawable/bg_circle_glass"
                             android:src="@drawable/ic_download"
-                            app:tint="@color/white" />
+                            android:padding="11dp"
+                            android:scaleType="centerInside"
+                            android:contentDescription="Download Playlist"
+                            app:tint="@color/text_primary" />
 
                         <com.google.android.material.progressindicator.CircularProgressIndicator
                             android:id="@+id/progress_download"
@@ -100,23 +143,46 @@
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:indeterminate="true"
-                            app:indicatorColor="@color/white"
+                            app:indicatorColor="@color/primary"
                             android:visibility="gone"
                             app:indicatorSize="24dp"
-                            app:trackThickness="2dp" />
+                            app:trackThickness="2.5dp" />
                     </FrameLayout>
 
+                    <!-- More Options -->
                     <ImageButton
                         android:id="@+id/btn_more"
-                        android:layout_width="48dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="8dp"
-                        android:background="?attr/selectableItemBackgroundBorderless"
+                        android:layout_width="44dp"
+                        android:layout_height="44dp"
+                        android:layout_marginStart="12dp"
+                        android:background="@drawable/bg_circle_glass"
                         android:src="@drawable/ic_more_vert"
-                        app:tint="@color/white" />
+                        android:padding="11dp"
+                        android:scaleType="centerInside"
+                        android:contentDescription="@string/more_options"
+                        app:tint="@color/text_primary" />
+
+                    <View
+                        android:layout_width="0dp"
+                        android:layout_height="1dp"
+                        android:layout_weight="1" />
+
+                    <!-- Floating Play Button -->
+                    <com.google.android.material.floatingactionbutton.FloatingActionButton
+                        android:id="@+id/fab_play"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:src="@drawable/ic_play"
+                        app:backgroundTint="@color/primary"
+                        app:fabCustomSize="52dp"
+                        app:elevation="4dp"
+                        app:tint="@color/on_primary"
+                        android:contentDescription="@string/play_pause" />
                 </LinearLayout>
+
             </LinearLayout>
 
+            <!-- Pinned Top Toolbar -->
             <androidx.appcompat.widget.Toolbar
                 android:id="@+id/toolbar"
                 android:layout_width="match_parent"
@@ -132,7 +198,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingBottom="80dp"
+        android:paddingBottom="100dp"
         app:layout_behavior="@string/appbar_scrolling_view_behavior">
 
         <FrameLayout
@@ -153,30 +219,17 @@
                 android:id="@+id/empty_view"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="32dp"
+                android:layout_marginTop="48dp"
                 android:gravity="center"
                 android:text="No songs in this playlist yet"
-                android:textSize="16sp"
+                android:textSize="15sp"
+                android:fontFamily="@font/poppins_medium"
                 android:textColor="@color/text_secondary"
                 android:visibility="gone" />
 
         </FrameLayout>
 
     </androidx.core.widget.NestedScrollView>
-
-    <!-- Glowing Play Button -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/fab_play"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="24dp"
-        app:layout_anchor="@id/appbar"
-        app:layout_anchorGravity="bottom|end"
-        android:src="@drawable/ic_play"
-        app:tint="@color/white"
-        app:backgroundTint="@color/accent"
-        app:elevation="4dp" 
-        app:pressedTranslationZ="8dp" />
 
     <!-- Floating Download Progress Overlay -->
     <include
@@ -185,7 +238,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:layout_marginBottom="72dp"
+        android:layout_marginBottom="86dp"
         android:visibility="gone" />
 
     <include
@@ -194,6 +247,10 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:layout_marginStart="16dp"
+        android:layout_marginEnd="16dp"
+        android:layout_marginBottom="16dp"
+        android:elevation="16dp"
         android:visibility="gone" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

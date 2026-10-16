@@ -39,6 +39,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
     private FragmentPlaylistsBinding binding;
     private PlaylistAdapter adapter;
     private PlaylistViewModel viewModel;
+    private long likedPlaylistId = -1;
 
     @Nullable
     @Override
@@ -53,19 +54,40 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        // Force recreate database instance to handle schema changes
-        AppDatabase.destroyInstance();
 
         setupViewModel();
         setupRecyclerView();
         setupCreatePlaylistButton();
+
+        // Setup Liked Songs click listener
+        View.OnClickListener onLikedClick = v -> {
+            if (likedPlaylistId != -1) {
+                openPlaylist(likedPlaylistId);
+            } else {
+                viewModel.getOrCreateLikedPlaylist(
+                        new com.midnight.music.data.repository.MusicRepository.PlaylistCallback() {
+                            @Override
+                            public void onSuccess(long playlistId) {
+                                likedPlaylistId = playlistId;
+                                openPlaylist(playlistId);
+                            }
+
+                            @Override
+                            public void onError(Exception e) {
+                                Toast.makeText(requireContext(), "Could not open Liked Songs", Toast.LENGTH_SHORT).show();
+                            }
+                        });
+            }
+        };
+        binding.likedSongsCard.setOnClickListener(onLikedClick);
+        binding.likedHeroLayout.setOnClickListener(onLikedClick);
 
         // Ensure "Liked Songs" playlist exists via ViewModel
         viewModel.getOrCreateLikedPlaylist(
                 new com.midnight.music.data.repository.MusicRepository.PlaylistCallback() {
                     @Override
                     public void onSuccess(long playlistId) {
-                        // Liked songs playlist confirmed
+                        likedPlaylistId = playlistId;
                     }
 
                     @Override
@@ -81,19 +103,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
 
     private void applyAccentColor(int color) {
         if (binding == null) return;
-        // Liked songs card background (20% alpha of accent)
-        int cardBg = android.graphics.Color.argb(51,
-                android.graphics.Color.red(color),
-                android.graphics.Color.green(color),
-                android.graphics.Color.blue(color));
-        binding.likedSongsCard.setCardBackgroundColor(cardBg);
-        // Liked heart icon tint
-        binding.likedIcon.setImageTintList(android.content.res.ColorStateList.valueOf(color));
-        // Play FAB
         binding.likedPlayBtn.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
-        // Import and Create Playlist FABs
-        binding.fabImportPlaylist.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
-        binding.fabCreatePlaylist.setBackgroundTintList(android.content.res.ColorStateList.valueOf(color));
     }
 
     private void setupViewModel() {
@@ -122,7 +132,9 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
                     final long likedId = likedSongsPlaylist.playlist.getId();
                     final List<Song> likedSongs = likedSongsPlaylist.songs;
                     
-                    binding.likedSongsCard.setOnClickListener(v -> openPlaylist(likedId));
+                    View.OnClickListener openLiked = v -> openPlaylist(likedId);
+                    binding.likedSongsCard.setOnClickListener(openLiked);
+                    binding.likedHeroLayout.setOnClickListener(openLiked);
                     binding.likedPlayBtn.setOnClickListener(v -> {
                         if (likedSongs != null && !likedSongs.isEmpty()) {
                             com.midnight.music.player.MusicPlayerManager.getInstance(requireContext()).playQueue(likedSongs, 0);
@@ -143,7 +155,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
             // Observe liked songs count separately for the badge/text
             viewModel.getLikedSongsCount().observe(getViewLifecycleOwner(), count -> {
                 if (count != null) {
-                    binding.likedCount.setText(count + " songs");
+                    binding.likedCount.setText(count == 1 ? "1 song" : count + " songs");
                 } else {
                     binding.likedCount.setText("0 songs");
                 }
@@ -192,11 +204,10 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
     }
 
     private void setupCreatePlaylistButton() {
-        binding.fabCreatePlaylist.setOnClickListener(v -> showCreatePlaylistDialog());
-        binding.fabImportPlaylist.setOnClickListener(v -> showImportPlaylistDialog());
+        // Buttons handled by LibraryFragment header
     }
 
-    private void showCreatePlaylistDialog() {
+    public void showCreatePlaylistDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_create_playlist, null);
         EditText editText = dialogView.findViewById(R.id.edit_playlist_name);
@@ -227,7 +238,7 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
         dialog.show();
     }
 
-    private void showImportPlaylistDialog() {
+    public void showImportPlaylistDialog() {
         View dialogView = LayoutInflater.from(getContext())
                 .inflate(R.layout.dialog_import_playlist, null);
         EditText editLink = dialogView.findViewById(R.id.edit_playlist_link);
@@ -416,21 +427,13 @@ public class PlaylistsFragment extends Fragment implements PlaylistAdapter.Playl
     }
 
     private void clearRoomDatabase() {
-        try {
-            File dbFile = requireContext().getDatabasePath("midnight_music_db");
-            if (dbFile.exists())
-                dbFile.delete();
-            File shmFile = new File(dbFile.getPath() + "-shm");
-            if (shmFile.exists())
-                shmFile.delete();
-            File walFile = new File(dbFile.getPath() + "-wal");
-            if (walFile.exists())
-                walFile.delete();
-
-            AppDatabase.destroyInstance();
-            Toast.makeText(requireContext(), "Database cleared", Toast.LENGTH_SHORT).show();
-        } catch (Exception e) {
-            Toast.makeText(requireContext(), "Failed to clear database: " + e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
+        // ponytail: use native Room clearAllTables on background executor instead of unsafe file tampering
+        AppDatabase.databaseWriteExecutor.execute(() -> {
+            try {
+                AppDatabase.getInstance(requireContext()).clearAllTables();
+            } catch (Exception e) {
+                // Log and ignore
+            }
+        });
     }
 }

@@ -17,6 +17,7 @@ import com.midnight.music.R;
 import com.midnight.music.data.model.Artist;
 import com.midnight.music.data.model.Song;
 import com.midnight.music.data.network.LastFmService;
+import com.midnight.music.data.network.NetworkClient;
 import com.midnight.music.data.network.SaavnApiService;
 import com.midnight.music.data.network.SaavnSearchResponse;
 import com.midnight.music.data.network.SaavnSongResult;
@@ -88,6 +89,7 @@ public class ArtistDetailActivity extends AppCompatActivity {
         // Saavn API
         Retrofit saavnRetrofit = new Retrofit.Builder()
                 .baseUrl(SaavnApiService.BASE_URL)
+                .client(NetworkClient.getInstance())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         saavnApi = saavnRetrofit.create(SaavnApiService.class);
@@ -95,6 +97,7 @@ public class ArtistDetailActivity extends AppCompatActivity {
         // Last.fm API
         Retrofit lastFmRetrofit = new Retrofit.Builder()
                 .baseUrl(LastFmService.BASE_URL)
+                .client(NetworkClient.getInstance())
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
         lastFmApi = lastFmRetrofit.create(LastFmService.class);

@@ -41,7 +41,7 @@ public class MusicService extends Service {
     private static final int NOTIFICATION_ID = 1;
     private static final int POSITION_UPDATE_INTERVAL_MS = 1000;
 
-    // Broadcast action constants
+    // Broadcast action constants dfgfg
     public static final String ACTION_PLAY_PAUSE = "com.midnight.music.ACTION_PLAY_PAUSE";
     public static final String ACTION_NEXT = "com.midnight.music.ACTION_NEXT";
     public static final String ACTION_PREVIOUS = "com.midnight.music.ACTION_PREVIOUS";

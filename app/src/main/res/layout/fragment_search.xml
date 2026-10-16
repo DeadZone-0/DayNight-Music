@@ -21,45 +21,103 @@
             app:contentInsetStart="0dp"
             app:contentInsetEnd="0dp">
 
-            <androidx.cardview.widget.CardView
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="52dp"
+                android:layout_height="50dp"
                 android:layout_marginHorizontal="20dp"
                 android:layout_marginVertical="8dp"
-                app:cardBackgroundColor="@color/surface"
-                app:cardCornerRadius="26dp"
-                app:cardElevation="0dp">
+                android:background="@drawable/bg_search_input"
+                android:gravity="center_vertical"
+                android:orientation="horizontal"
+                android:paddingHorizontal="16dp">
 
-                <LinearLayout
-                    android:layout_width="match_parent"
+                <ImageView
+                    android:layout_width="22dp"
+                    android:layout_height="22dp"
+                    android:src="@drawable/ic_search"
+                    app:tint="@color/text_secondary" />
+
+                <EditText
+                    android:id="@+id/search_input"
+                    android:layout_width="0dp"
                     android:layout_height="match_parent"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical"
-                    android:paddingHorizontal="16dp">
-
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_search"
-                        app:tint="@color/text_secondary" />
-
-                    <EditText
-                        android:id="@+id/search_input"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1"
-                        android:layout_marginStart="12dp"
-                        android:background="@null"
-                        android:hint="Search songs, artists, or albums"
-                        android:imeOptions="actionSearch"
-                        android:inputType="text"
-                        android:maxLines="1"
-                        android:textColor="@color/text_primary"
-                        android:textColorHint="@color/text_secondary"
-                        android:textSize="15sp" />
-                </LinearLayout>
-            </androidx.cardview.widget.CardView>
+                    android:layout_weight="1"
+                    android:layout_marginStart="12dp"
+                    android:background="@null"
+                    android:hint="Search songs, artists, or albums"
+                    android:imeOptions="actionSearch"
+                    android:inputType="text"
+                    android:maxLines="1"
+                    android:textColor="@color/text_primary"
+                    android:textColorHint="@color/text_secondary"
+                    android:textSize="14sp" />
+                <ImageView
+                    android:id="@+id/btn_clear_search"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:padding="5dp"
+                    android:src="@drawable/ic_close"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:visibility="gone"
+                    android:contentDescription="Clear search"
+                    app:tint="@color/text_secondary" />
+            </LinearLayout>
         </androidx.appcompat.widget.Toolbar>
+
+        <!-- Category Filter Chips -->
+        <HorizontalScrollView
+            android:id="@+id/filter_scroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none"
+            android:paddingHorizontal="20dp"
+            android:paddingBottom="10dp"
+            android:clipToPadding="false">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:id="@+id/chip_all"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="All"
+                    android:textColor="@color/black"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/poppins_semibold"
+                    android:background="@drawable/bg_filter_chip_active" />
+
+                <TextView
+                    android:id="@+id/chip_songs"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="Songs"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/poppins_medium"
+                    android:background="@drawable/bg_filter_chip_inactive" />
+
+                <TextView
+                    android:id="@+id/chip_artists"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="8dp"
+                    android:gravity="center"
+                    android:paddingHorizontal="16dp"
+                    android:text="Artists"
+                    android:textColor="@color/text_secondary"
+                    android:textSize="13sp"
+                    android:fontFamily="@font/poppins_medium"
+                    android:background="@drawable/bg_filter_chip_inactive" />
+            </LinearLayout>
+        </HorizontalScrollView>
     </com.google.android.material.appbar.AppBarLayout>
 
     <FrameLayout
@@ -74,7 +132,7 @@
             android:layout_height="match_parent"
             android:orientation="vertical">
 
-            <!-- Artists Section - Max 3 -->
+            <!-- Artists Section (Horizontal preview for All tab) -->
             <LinearLayout
                 android:id="@+id/artists_section"
                 android:layout_width="match_parent"
@@ -86,48 +144,64 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="12dp"
                     android:text="@string/header_artists"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:fontFamily="@font/poppins_bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/artists_recycler"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:layout_marginTop="12dp"
+                    android:layout_marginTop="8dp"
                     android:clipToPadding="false"
                     android:paddingHorizontal="16dp"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
             </LinearLayout>
 
-            <!-- Songs Section -->
+            <!-- Songs Section (Expanded to fill available height) -->
             <LinearLayout
                 android:id="@+id/songs_section"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content"
+                android:layout_height="0dp"
+                android:layout_weight="1"
                 android:orientation="vertical"
                 android:visibility="gone">
 
                 <TextView
+                    android:id="@+id/songs_header_title"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginStart="20dp"
-                    android:layout_marginTop="16dp"
+                    android:layout_marginTop="12dp"
                     android:text="@string/header_songs"
                     android:textColor="@color/text_primary"
-                    android:textSize="16sp"
+                    android:textSize="15sp"
                     android:fontFamily="@font/poppins_bold" />
 
                 <androidx.recyclerview.widget.RecyclerView
                     android:id="@+id/search_results_recycler"
                     android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="6dp"
                     android:paddingHorizontal="8dp"
+                    android:paddingBottom="130dp"
+                    android:clipToPadding="false"
                     app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
             </LinearLayout>
+
+            <!-- Full Artists Section (Vertical list for Artists tab) -->
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/artists_full_recycler"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:paddingHorizontal="16dp"
+                android:paddingTop="12dp"
+                android:paddingBottom="130dp"
+                android:clipToPadding="false"
+                android:visibility="gone"
+                app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager" />
         </LinearLayout>
 
         <!-- Loading indicator -->
